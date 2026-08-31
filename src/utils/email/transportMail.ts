@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { ServerClient } from "postmark";
+import nodemailer, { type Transporter } from "nodemailer";
 import { Resend } from "resend";
 
 export interface Attachment {
@@ -16,23 +16,40 @@ export interface transportMailType {
   attachments?: Attachment[];
 }
 
-const { SENDER_EMAIL, REPLYTO_EMAIL, POSTMARK_SERVER_TOKEN, RESEND_API_KEY } = process.env;
+const {
+  SENDER_EMAIL,
+  REPLYTO_EMAIL,
+  RESEND_API_KEY,
+  SMTP_HOST,
+  SMTP_PORT,
+  SMTP_USER,
+  SMTP_PASS,
+} = process.env;
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
 /*
-  Both clients are built on first use, not at import. Postmark throws from its
-  constructor on an empty token, so building it eagerly took the whole server
-  down on any environment without production email credentials — including every
-  local one, where Postmark is never the provider anyway.
+  Both clients are built on first use, not at import. A provider constructed
+  eagerly took the whole server down on any environment missing that provider's
+  credentials — including every local one, where Resend is never the transport
+  anyway. Building lazily keeps the failure inside the send, where the email
+  queue already retries and logs it.
 */
-let postmark: ServerClient | null = null;
+let smtp: Transporter | null = null;
 let resend: Resend | null = null;
 
-const getPostmark = () => {
-  if (!POSTMARK_SERVER_TOKEN) throw new Error("POSTMARK_SERVER_TOKEN is not set");
+const getSmtp = () => {
+  if (!SMTP_HOST) throw new Error("SMTP_HOST is not set");
 
-  return (postmark ??= new ServerClient(POSTMARK_SERVER_TOKEN));
+  const port = Number(SMTP_PORT ?? 587);
+
+  return (smtp ??= nodemailer.createTransport({
+    host: SMTP_HOST,
+    port,
+    // 465 is implicit TLS; every other port negotiates STARTTLS instead.
+    secure: port === 465,
+    auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+  }));
 };
 
 const getResend = () => {
@@ -43,7 +60,7 @@ const getResend = () => {
 
 export async function transportMail(formData: transportMailType) {
   if (isDevelopment) {
-    return await getResend().emails.send({
+    return await getSmtp().sendMail({
       from: SENDER_EMAIL!,
       to: formData.email,
       subject: formData.subject,
@@ -52,21 +69,21 @@ export async function transportMail(formData: transportMailType) {
       attachments: formData.attachments?.map(a => ({
         filename: a.filename,
         content: a.content,
+        contentType: a.contentType,
       })),
     });
   }
 
-  await getPostmark().sendEmail({
-    From: SENDER_EMAIL!,
-    To: formData.email,
-    Subject: formData.subject,
-    HtmlBody: formData.message,
-    ReplyTo: REPLYTO_EMAIL,
-    Attachments: formData.attachments?.map((a, idx) => ({
-      Name: a.filename,
-      Content: a.content.toString("base64"),
-      ContentType: a.contentType ?? "application/pdf",
-      ContentID: `attachment-${idx + 1}`,
+  await getResend().emails.send({
+    from: SENDER_EMAIL!,
+    to: formData.email,
+    subject: formData.subject,
+    html: formData.message,
+    replyTo: REPLYTO_EMAIL,
+    attachments: formData.attachments?.map(a => ({
+      filename: a.filename,
+      content: a.content,
+      contentType: a.contentType,
     })),
   });
 }
