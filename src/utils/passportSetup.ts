@@ -11,13 +11,21 @@ const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL } = process.
   endpoint runs.
 */
 export const passportSetup = function () {
+  // The strategy constructor throws without a client id, which would take the
+  // whole server down on any environment where Google sign-in is not set up
+  // yet. Skipping registration leaves only the /auth/google/* routes broken.
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    console.warn("⚠️  Google OAuth is not configured — /auth/google/* is unavailable.");
+    return;
+  }
+
   const oauthService = new AuthOAuthService();
 
   passport.use(
     new GoogleStrategy(
       {
-        clientID: GOOGLE_CLIENT_ID as string,
-        clientSecret: GOOGLE_CLIENT_SECRET as string,
+        clientID: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
         callbackURL: GOOGLE_CALLBACK_URL,
         passReqToCallback: true,
       },

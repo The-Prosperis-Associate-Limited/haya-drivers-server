@@ -20,12 +20,30 @@ const { SENDER_EMAIL, REPLYTO_EMAIL, POSTMARK_SERVER_TOKEN, RESEND_API_KEY } = p
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
-const postmark = new ServerClient(POSTMARK_SERVER_TOKEN!);
-const resend = new Resend(RESEND_API_KEY!);
+/*
+  Both clients are built on first use, not at import. Postmark throws from its
+  constructor on an empty token, so building it eagerly took the whole server
+  down on any environment without production email credentials — including every
+  local one, where Postmark is never the provider anyway.
+*/
+let postmark: ServerClient | null = null;
+let resend: Resend | null = null;
+
+const getPostmark = () => {
+  if (!POSTMARK_SERVER_TOKEN) throw new Error("POSTMARK_SERVER_TOKEN is not set");
+
+  return (postmark ??= new ServerClient(POSTMARK_SERVER_TOKEN));
+};
+
+const getResend = () => {
+  if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY is not set");
+
+  return (resend ??= new Resend(RESEND_API_KEY));
+};
 
 export async function transportMail(formData: transportMailType) {
   if (isDevelopment) {
-    return await resend.emails.send({
+    return await getResend().emails.send({
       from: SENDER_EMAIL!,
       to: formData.email,
       subject: formData.subject,
@@ -38,7 +56,7 @@ export async function transportMail(formData: transportMailType) {
     });
   }
 
-  await postmark.sendEmail({
+  await getPostmark().sendEmail({
     From: SENDER_EMAIL!,
     To: formData.email,
     Subject: formData.subject,
