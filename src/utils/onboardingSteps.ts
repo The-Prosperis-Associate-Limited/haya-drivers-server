@@ -1,0 +1,35 @@
+import type { $Enums } from "../generated/prisma/client";
+
+// The order the onboarding screens run in. `onboarding_step` on the profile is
+// how far the driver has got, so the client can resume where they stopped.
+export const ONBOARDING_ORDER: $Enums.OnboardingStep[] = [
+  "PERSONAL_INFORMATION",
+  "EXPERIENCE",
+  "ACADEMIC_QUALIFICATION",
+  "WORK_EXPERIENCE",
+  "GUARANTORS",
+  "ADDITIONAL_INFORMATION",
+  "DOCUMENTS",
+  "REVIEW",
+];
+
+// Never moves a driver backwards. Editing an earlier step after reaching the
+// review screen must not send them back to the start of the wizard.
+export const advanceStep = (current: $Enums.OnboardingStep, completed: $Enums.OnboardingStep): $Enums.OnboardingStep => {
+  const next = ONBOARDING_ORDER[Math.min(ONBOARDING_ORDER.indexOf(completed) + 1, ONBOARDING_ORDER.length - 1)];
+
+  return ONBOARDING_ORDER.indexOf(next) > ONBOARDING_ORDER.indexOf(current) ? next : current;
+};
+
+// The three the review screen refuses to submit without. Proof of address and
+// the guarantor files are collected but do not block a first submission.
+export const REQUIRED_DOCUMENTS: $Enums.DocumentType[] = ["NIN_SLIP", "PASSPORT_PHOTO", "DRIVERS_LICENCE"];
+
+export const DOCUMENT_LABELS: Record<$Enums.DocumentType, string> = {
+  NIN_SLIP: "NIN slip",
+  PASSPORT_PHOTO: "Passport photo",
+  DRIVERS_LICENCE: "Driver licence",
+  PROOF_OF_ADDRESS: "Proof of address",
+  GUARANTOR_PASSPORT: "Guarantor passport photo",
+  GUARANTOR_NIN_SLIP: "Guarantor NIN slip",
+};

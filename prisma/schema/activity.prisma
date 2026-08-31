@@ -1,0 +1,36 @@
+enum ActivityType {
+  ACCOUNT_CREATED
+  PROFILE_UPDATED
+  ONBOARDING_SUBMITTED
+  DOCUMENT_UPLOADED
+  VERIFICATION_APPROVED
+  VERIFICATION_REJECTED
+  BOOKING_CREATED
+  BOOKING_ACCEPTED
+  BOOKING_DECLINED
+  BOOKING_CANCELLED
+  BOOKING_COMPLETED
+  PAYOUT_REQUESTED
+  PAYOUT_PAID
+  PAYOUT_FAILED
+  COURSE_COMPLETED
+  CERTIFICATION_ISSUED
+  ACCOUNT_SUSPENDED
+  ACCOUNT_REACTIVATED
+}
+
+model Activity {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("UserActivity", fields: [userId], references: [id], onDelete: Cascade)
+
+  type        ActivityType
+  title       String
+  description String?
+  metadata    Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([type, createdAt(sort: Desc)])
+}

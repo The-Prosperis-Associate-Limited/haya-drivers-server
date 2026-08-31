@@ -1,0 +1,115 @@
+enum UserRole {
+  DRIVER
+  CLIENT
+  ADMIN
+}
+
+enum AuthProvider {
+  PASSWORD
+  GOOGLE
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+model User {
+  id                  String        @id @default(cuid())
+  first_name          String?
+  last_name           String?
+  email               String        @unique
+  password            String?
+  phone_no            String?
+  whatsapp_number     String?
+  profile_pic         String?
+  bio                 String?
+  role                UserRole
+  gender              Gender?
+  date_of_birth       DateTime?
+  marital_status      MaritalStatus?
+  country             String?
+  state_of_residence  String?
+  city                String?
+  address             String?
+  timezone            String?
+  // Auth
+  has_validated_email Boolean       @default(false)
+  terms_accepted_at   DateTime?
+  googleId            String?       @unique
+  authProvider        AuthProvider  @default(PASSWORD)
+  failedLoginAttempts Int           @default(0)
+  isLocked            Boolean       @default(false)
+  lastLogin           DateTime      @default(now())
+  account_status      AccountStatus @default(ACTIVE)
+  // Sessions minted before this instant are refused. Set on password reset so
+  // "signed out on all other devices" is true rather than a claim in the copy.
+  sessions_valid_from DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  driver_profile      DriverProfile?
+  driver_verification DriverVerification? @relation("DriverVerificationOwner")
+  documents           DriverDocument[]    @relation("DriverDocumentOwner")
+  client_profile   ClientProfile?
+  emailOtps        EmailOtp[]
+  deviceTokens     DeviceToken[]
+  pushSubscription PushSubscription?
+
+  driver_bookings   Booking[]      @relation("DriverBookings")
+  client_bookings   Booking[]      @relation("ClientBookings")
+  reviews_written   Review[]       @relation("ReviewAuthor")
+  reviews_received  Review[]       @relation("ReviewSubject")
+  wallet            Wallet?
+  payouts           Payout[]
+  bank_accounts     BankAccount[]
+  enrollments       CourseEnrollment[]
+  certifications    Certification[]
+
+  received_notifications Notification[] @relation("RecipientNotifications")
+  sent_notifications     Notification[] @relation("SenderNotifications")
+  activities             Activity[]     @relation("UserActivity")
+
+  created_tickets  Ticket[]        @relation("TicketCreator")
+  assigned_tickets Ticket[]        @relation("TicketAssignee")
+  ticket_comments  TicketComment[]
+
+  reviewed_documents     DriverDocument[]     @relation("DocumentReviewer")
+  reviewed_verifications DriverVerification[] @relation("VerificationReviewer")
+
+  @@index([role, account_status])
+}
+
+model ClientProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  client_type       ClientType @default(INDIVIDUAL)
+  organisation_name String?
+  organisation_size Int?
+  industry          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ClientType {
+  INDIVIDUAL
+  ORGANISATION
+}

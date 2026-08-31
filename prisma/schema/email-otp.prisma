@@ -1,0 +1,24 @@
+enum EmailOtpPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model EmailOtp {
+  id      String          @id @default(cuid())
+  userId  String
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose EmailOtpPurpose @default(EMAIL_VERIFICATION)
+  // Never stored in the clear. Six digits is a small enough space that hashing
+  // alone would not stop an attacker holding the database — what bounds this is
+  // `attempts` plus the short `expiresAt`. The hash is here so a leaked row,
+  // log line or backup is not a live credential.
+  codeHash String
+  attempts Int @default(0)
+
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  consumedAt DateTime?
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+}

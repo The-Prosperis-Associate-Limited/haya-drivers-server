@@ -1,0 +1,104 @@
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model Course {
+  id     String @id @default(cuid())
+  slug   String @unique
+  title  String
+  summary String?
+  cover_image String?
+
+  status CourseStatus @default(DRAFT)
+  // Added to a driver's trust score once, on completion.
+  trust_score_reward Int @default(0)
+  // Months a certification earned here stays valid; null means it never expires.
+  certificate_validity_months Int?
+  estimated_minutes Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  modules     CourseModule[]
+  enrollments CourseEnrollment[]
+  certifications Certification[]
+
+  @@index([status])
+}
+
+model CourseModule {
+  id       String @id @default(cuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  video_url   String?
+  content     String?
+  position    Int
+  duration_minutes Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  progress ModuleProgress[]
+
+  @@unique([courseId, position])
+}
+
+model CourseEnrollment {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  status       EnrollmentStatus @default(IN_PROGRESS)
+  // Whole percent, derived from ModuleProgress by the training service.
+  progress     Int              @default(0)
+  minutes_spent Int             @default(0)
+  started_at   DateTime         @default(now())
+  completed_at DateTime?
+
+  module_progress ModuleProgress[]
+
+  @@unique([userId, courseId])
+  @@index([userId, status])
+}
+
+model ModuleProgress {
+  id           String           @id @default(cuid())
+  enrollmentId String
+  enrollment   CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  moduleId     String
+  module       CourseModule     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  completed_at   DateTime?
+  minutes_spent  Int @default(0)
+
+  @@unique([enrollmentId, moduleId])
+}
+
+model Certification {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+
+  reference   String  @unique
+  issued_at   DateTime @default(now())
+  expires_at  DateTime?
+  document_url String?
+
+  @@unique([userId, courseId])
+  @@index([userId, issued_at])
+}

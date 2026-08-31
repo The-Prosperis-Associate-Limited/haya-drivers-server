@@ -1,0 +1,70 @@
+enum DriverVerificationStatus {
+  UNSUBMITTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DocumentType {
+  NIN_SLIP
+  PASSPORT_PHOTO
+  DRIVERS_LICENCE
+  PROOF_OF_ADDRESS
+  GUARANTOR_PASSPORT
+  GUARANTOR_NIN_SLIP
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model DriverVerification {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation("DriverVerificationOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  status        DriverVerificationStatus @default(UNSUBMITTED)
+  submitted_at  DateTime?
+  reviewed_at   DateTime?
+  reviewerId    String?
+  reviewer      User?                    @relation("VerificationReviewer", fields: [reviewerId], references: [id])
+  // Set only when the whole submission is refused. A partial refusal lives on
+  // the individual DriverDocument rows instead, so the driver re-uploads the
+  // two that failed rather than starting over.
+  rejection_reason String?
+  attempts         Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, submitted_at])
+}
+
+model DriverDocument {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("DriverDocumentOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  type       DocumentType
+  url        String
+  public_id  String
+  file_name  String?
+  mime_type  String?
+  size_bytes Int?
+
+  status           DocumentStatus @default(PENDING)
+  rejection_reason String?
+  reviewerId       String?
+  reviewer         User?          @relation("DocumentReviewer", fields: [reviewerId], references: [id])
+  reviewed_at      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // One live document per type per driver. A re-upload replaces the row, so a
+  // rejected licence cannot sit beside its own replacement in the review queue.
+  @@unique([userId, type])
+  @@index([status])
+}

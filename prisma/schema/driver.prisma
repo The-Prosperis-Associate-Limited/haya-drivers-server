@@ -1,0 +1,125 @@
+enum DriverType {
+  CORPORATE_DRIVER
+  PRIVATE_DRIVER
+  LOGISTICS_DRIVER
+  RIDE_HAILING_DRIVER
+  HEAVY_DUTY_DRIVER
+}
+
+enum VehicleClass {
+  SALOON
+  SUV
+  BUS
+  TRUCK
+  TRAILER
+  MOTORCYCLE
+}
+
+enum AcademicLevel {
+  NONE
+  PRIMARY
+  SECONDARY
+  OND
+  HND
+  BSC
+  MSC
+  PHD
+}
+
+enum OnboardingStep {
+  PERSONAL_INFORMATION
+  EXPERIENCE
+  ACADEMIC_QUALIFICATION
+  WORK_EXPERIENCE
+  GUARANTORS
+  ADDITIONAL_INFORMATION
+  DOCUMENTS
+  REVIEW
+}
+
+enum GuarantorRelationship {
+  FAMILY
+  FRIEND
+  FORMER_EMPLOYER
+  COLLEAGUE
+  RELIGIOUS_LEADER
+  COMMUNITY_LEADER
+  OTHER
+}
+
+model DriverProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  state_of_origin String?
+  years_of_experience Int?
+  driver_type         DriverType?
+  vehicle_classes     VehicleClass[]
+  license_number      String?
+  license_expires_at  DateTime?
+
+  academic_level  AcademicLevel?
+  institution     String?
+  course_of_study String?
+
+  languages       String[]
+  language_count  Int?
+  religion        String?
+
+  // Denormalised from DriverVerification so the discoverability filter on the
+  // client-facing search costs no join.
+  verification_status DriverVerificationStatus @default(UNSUBMITTED)
+  is_discoverable     Boolean                  @default(false)
+
+  // 0-100. Recomputed by TrustScoreService, never written by hand.
+  trust_score Int @default(0)
+
+  onboarding_step         OnboardingStep @default(PERSONAL_INFORMATION)
+  onboarding_completed_at DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  work_experiences WorkExperience[]
+  guarantors       Guarantor[]
+
+  @@index([verification_status, is_discoverable])
+  @@index([driver_type])
+}
+
+model WorkExperience {
+  id       String        @id @default(cuid())
+  driverId String
+  driver   DriverProfile @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  employer   String
+  job_title  String
+  started_at DateTime
+  ended_at   DateTime?
+  is_current Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([driverId])
+}
+
+model Guarantor {
+  id       String        @id @default(cuid())
+  driverId String
+  driver   DriverProfile @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  full_name    String
+  relationship GuarantorRelationship
+  phone_no     String
+  address      String
+  nin          String
+  passport_url String?
+  nin_slip_url String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([driverId])
+}

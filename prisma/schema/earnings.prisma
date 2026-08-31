@@ -1,0 +1,128 @@
+enum WalletTransactionType {
+  BOOKING_PAYMENT
+  PLATFORM_FEE
+  PAYOUT
+  PAYOUT_REVERSAL
+  ADJUSTMENT
+}
+
+enum WalletTransactionStatus {
+  PENDING
+  AVAILABLE
+  PAID_OUT
+  REVERSED
+}
+
+enum PayoutStatus {
+  REQUESTED
+  PROCESSING
+  PAID
+  FAILED
+  REVERSED
+}
+
+enum PaymentProvider {
+  PAYSTACK
+  STRIPE
+  MANUAL
+}
+
+// Balances are derived from WalletTransaction, never incremented in place —
+// `available_minor` and `pending_minor` are a cache the WalletService rebuilds,
+// so a lost update cannot invent money.
+model Wallet {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  currency        String @default("NGN")
+  available_minor Int    @default(0)
+  pending_minor   Int    @default(0)
+  lifetime_minor  Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id       String @id @default(cuid())
+  walletId String
+  wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+  payoutId  String?
+  payout    Payout?  @relation(fields: [payoutId], references: [id])
+
+  type     WalletTransactionType
+  status   WalletTransactionStatus @default(PENDING)
+  // Signed: credits positive, debits negative. Summing the column must always
+  // reproduce the balance.
+  amount_minor Int
+  currency     String @default("NGN")
+  description  String?
+  reference    String @unique
+
+  available_at DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([walletId, status, createdAt])
+  @@index([walletId, createdAt])
+}
+
+model BankAccount {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider        PaymentProvider @default(PAYSTACK)
+  bank_code       String
+  bank_name       String
+  account_number  String
+  account_name    String
+  country         String          @default("NG")
+  currency        String          @default("NGN")
+  // Provider-side handle a transfer is addressed to (Paystack recipient_code,
+  // Stripe external account id). Regenerated if the provider is switched.
+  recipient_code  String?
+  is_default      Boolean         @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payouts Payout[]
+
+  @@unique([userId, bank_code, account_number])
+  @@index([userId])
+}
+
+model Payout {
+  id        String @id @default(cuid())
+  reference String @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  bankAccountId String?
+  bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
+
+  provider        PaymentProvider @default(PAYSTACK)
+  provider_ref    String?
+  amount_minor    Int
+  fee_minor       Int             @default(0)
+  currency        String          @default("NGN")
+  status          PayoutStatus    @default(REQUESTED)
+  failure_reason  String?
+  processed_at    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions WalletTransaction[]
+
+  @@index([userId, status, createdAt])
+}

@@ -1,0 +1,64 @@
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketCategory {
+  ACCOUNT
+  VERIFICATION
+  BOOKING
+  PAYMENT
+  TRAINING
+  BUG_REPORT
+  OTHER
+}
+
+model Ticket {
+  id        String @id @default(cuid())
+  reference String @unique
+
+  creatorId String
+  creator   User   @relation("TicketCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  assigneeId String?
+  assignee   User?  @relation("TicketAssignee", fields: [assigneeId], references: [id])
+
+  subject     String
+  description String
+  category    TicketCategory @default(OTHER)
+  priority    TicketPriority @default(MEDIUM)
+  status      TicketStatus   @default(OPEN)
+  resolved_at DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments TicketComment[]
+
+  @@index([status, createdAt])
+  @@index([creatorId, createdAt])
+}
+
+model TicketComment {
+  id       String @id @default(cuid())
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  message String
+  // Visible to staff only. The driver never sees these on their ticket.
+  is_internal Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+}

@@ -1,0 +1,99 @@
+enum BookingStatus {
+  REQUESTED
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  IN_PROGRESS
+  COMPLETED
+  DISPUTED
+}
+
+enum EngagementType {
+  ONE_OFF
+  DAILY
+  WEEKLY
+  MONTHLY
+  CONTRACT
+}
+
+model Booking {
+  id        String @id @default(cuid())
+  reference String @unique
+
+  clientId String
+  client   User   @relation("ClientBookings", fields: [clientId], references: [id])
+  driverId String?
+  driver   User?  @relation("DriverBookings", fields: [driverId], references: [id])
+
+  title           String
+  description     String?
+  driver_type     DriverType
+  engagement_type EngagementType @default(ONE_OFF)
+
+  pickup_address String
+  dropoff_address String?
+  country        String
+  state          String
+  city           String?
+
+  starts_at DateTime
+  ends_at   DateTime?
+
+  // Minor units (kobo/cents) in `currency`. Never store money as a float.
+  amount   Int
+  currency String @default("NGN")
+
+  status       BookingStatus @default(REQUESTED)
+  accepted_at  DateTime?
+  declined_at  DateTime?
+  decline_reason String?
+  cancelled_at DateTime?
+  cancelled_by String?
+  started_at   DateTime?
+  completed_at DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  status_events BookingStatusEvent[]
+  review        Review?
+  transactions  WalletTransaction[]
+
+  @@index([driverId, status, starts_at])
+  @@index([clientId, status, createdAt])
+  @@index([status, starts_at])
+}
+
+model BookingStatusEvent {
+  id        String @id @default(cuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  from_status BookingStatus?
+  to_status   BookingStatus
+  changed_by  String?
+  note        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([bookingId, createdAt])
+}
+
+model Review {
+  id        String  @id @default(cuid())
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  authorId  String
+  author    User   @relation("ReviewAuthor", fields: [authorId], references: [id])
+  subjectId String
+  subject   User   @relation("ReviewSubject", fields: [subjectId], references: [id])
+
+  rating  Int
+  comment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([subjectId, createdAt])
+}

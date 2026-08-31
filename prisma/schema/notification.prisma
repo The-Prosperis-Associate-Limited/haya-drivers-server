@@ -1,0 +1,74 @@
+enum NotificationType {
+  INFO              @map("info")
+  SUCCESS           @map("success")
+  WARNING           @map("warning")
+  ERROR             @map("error")
+  BOOKING_REQUEST   @map("booking_request")
+  BOOKING_STATUS    @map("booking_status")
+  PAYMENT           @map("payment")
+  PAYOUT            @map("payout")
+  VERIFICATION      @map("verification")
+  DOCUMENT_REVIEW   @map("document_review")
+  TRAINING          @map("training")
+  MESSAGE           @map("message")
+}
+
+enum NotificationStatus {
+  UNREAD @map("unread")
+  READ   @map("read")
+}
+
+model Notification {
+  id          String @id @default(cuid())
+  recipientId String
+  recipient   User   @relation("RecipientNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  senderId    String?
+  sender      User?  @relation("SenderNotifications", fields: [senderId], references: [id])
+
+  type              NotificationType
+  title             String?
+  message           String
+  status            NotificationStatus @default(UNREAD)
+  isSystemGenerated Boolean            @default(false)
+  actionUrl         String?            @map("action_url")
+  actionLabel       String?            @map("action_label")
+  metadata          Json?
+  readAt            DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([recipientId, status, createdAt(sort: Desc)])
+}
+
+model PushSubscription {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint       String    @unique
+  p256dh         String?
+  auth           String?
+  expirationTime DateTime?
+}
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+}
+
+// Expo push tokens. Keyed on the token rather than the user: a driver can carry
+// two phones, and re-registering a token re-points it at its new owner instead
+// of delivering their notifications to the previous one.
+model DeviceToken {
+  id         String          @id @default(cuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String          @unique
+  platform   DevicePlatform?
+  deviceName String?
+
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+
+  @@index([userId])
+}
