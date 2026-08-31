@@ -33,6 +33,8 @@ export class PushSubscriptionController {
     }
   };
 
+  // Subscriptions are collected but nothing sends Web Push yet — the Expo path
+  // is the live one. Wire a sender before relying on these rows.
   subscribeWebPush = async (req: IUserRequest, res: Response) => {
     try {
       const { endpoint, keys, expirationTime } = req.body;
