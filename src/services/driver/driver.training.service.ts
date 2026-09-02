@@ -102,26 +102,45 @@ export class DriverTrainingService {
     if (!course.modules.some(module => module.id === moduleId)) throw new BadRequestError("That module is not part of this course");
 
     const enrollment = await this.enrollmentRepo.ensure(userId, course.id);
+    const existing = await this.enrollmentRepo.findModuleProgress(enrollment.id, moduleId);
+
+    /*
+      Completion never moves backwards. A driver rewatching a module they already
+      finished sends position pings with `completed` undefined, and those must not
+      clear the tick — losing it would drop their course progress and, on the last
+      module, un-finish a course they have already been certified for.
+    */
+    const completed_at = existing?.completed_at ?? (data.completed ? new Date() : null);
+
+    // Furthest point reached, not most recent: scrubbing back to re-watch
+    // something should not lose the driver's place.
+    const last_position_seconds = Math.max(existing?.last_position_seconds ?? 0, data.position_seconds ?? 0);
 
     await this.enrollmentRepo.upsertModuleProgress(enrollment.id, moduleId, {
-      completed_at: data.completed ? new Date() : null,
-      minutes_spent: data.minutes_spent,
+      completed_at,
+      minutes_spent: Math.max(existing?.minutes_spent ?? 0, data.minutes_spent),
+      last_position_seconds,
+      duration_seconds: data.duration_seconds ?? existing?.duration_seconds ?? null,
     });
 
     const completedModules = await this.enrollmentRepo.countCompletedModules(enrollment.id);
     const progress = course.modules.length ? Math.round((completedModules / course.modules.length) * 100) : 0;
     const isComplete = progress >= 100;
 
+    // Only a module that just crossed the line adds time; a position ping on a
+    // module already finished would otherwise inflate the total every few seconds.
+    const isNewlyCompleted = !existing?.completed_at && !!completed_at;
+
     await this.enrollmentRepo.update(enrollment.id, {
       progress,
       status: isComplete ? "COMPLETED" : "IN_PROGRESS",
-      minutes_spent: { increment: data.minutes_spent },
-      completed_at: isComplete ? new Date() : null,
+      ...(isNewlyCompleted && { minutes_spent: { increment: data.minutes_spent } }),
+      completed_at: isComplete ? (enrollment.completed_at ?? new Date()) : null,
     });
 
     if (isComplete) await this.issueCertification(userId, course);
 
-    return { progress, completed: isComplete };
+    return { progress, completed: isComplete, last_position_seconds };
   }
 
   async listCertifications(userId: string) {

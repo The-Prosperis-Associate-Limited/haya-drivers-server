@@ -89,6 +89,11 @@ model ModuleProgress {
 
   completed_at   DateTime?
   minutes_spent  Int @default(0)
+  // Where the driver stopped, so the player can pick the module back up. Both in
+  // seconds; duration is stored because a YouTube module only reveals its length
+  // once the player has loaded it.
+  last_position_seconds Int  @default(0)
+  duration_seconds      Int?
 
   @@unique([enrollmentId, moduleId])
 }

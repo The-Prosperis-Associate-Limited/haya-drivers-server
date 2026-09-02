@@ -30,9 +30,16 @@ export const createModuleSchema = z.object({
 
 export const updateModuleSchema = createModuleSchema.partial();
 
+/*
+  `completed` is deliberately not defaulted. An autosave ping every few seconds
+  says only "here is where I am"; leaving it undefined is how the service knows
+  not to touch the completion tick either way.
+*/
 export const moduleProgressSchema = z.object({
-  completed: z.boolean().optional().default(true),
+  completed: z.boolean().optional(),
   minutes_spent: z.coerce.number().int().min(0).optional().default(0),
+  position_seconds: z.coerce.number().int().min(0).optional(),
+  duration_seconds: z.coerce.number().int().min(1).optional(),
 });
 
 export type CreateCourseInput = z.infer<typeof createCourseSchema>;

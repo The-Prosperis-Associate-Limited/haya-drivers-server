@@ -42,12 +42,20 @@ export class EnrollmentRepository {
     return prisma.courseEnrollment.update({ where: { id }, data });
   }
 
-  async upsertModuleProgress(enrollmentId: string, moduleId: string, data: { completed_at?: Date | null; minutes_spent?: number }) {
+  async upsertModuleProgress(
+    enrollmentId: string,
+    moduleId: string,
+    data: { completed_at?: Date | null; minutes_spent?: number; last_position_seconds?: number; duration_seconds?: number | null },
+  ) {
     return prisma.moduleProgress.upsert({
       where: { enrollmentId_moduleId: { enrollmentId, moduleId } },
       create: { enrollmentId, moduleId, ...data },
       update: data,
     });
+  }
+
+  async findModuleProgress(enrollmentId: string, moduleId: string) {
+    return prisma.moduleProgress.findUnique({ where: { enrollmentId_moduleId: { enrollmentId, moduleId } } });
   }
 
   async countCompletedModules(enrollmentId: string) {
