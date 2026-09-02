@@ -10,6 +10,8 @@ const booking = new DriverBookingController();
 bookingRouter.use(requireVerifiedDriver);
 
 bookingRouter.get("/", booking.list);
+// Ahead of /:reference, or "summary" is read as a booking reference.
+bookingRouter.get("/summary", booking.summary);
 bookingRouter.get("/:reference", booking.get);
 bookingRouter.patch("/:reference/accept", booking.accept);
 bookingRouter.patch("/:reference/decline", booking.decline);

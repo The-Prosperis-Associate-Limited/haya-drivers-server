@@ -10,13 +10,32 @@ export class DriverBookingService {
   private statusEventRepo = new BookingStatusEventRepository();
   private transitionService = new BookingTransitionService();
 
-  async list(userId: string, query: Record<string, unknown>) {
+  async list(userId: string, query: Record<string, unknown>, status?: $Enums.BookingStatus[]) {
     const pagination = parsePagination(query);
-    const status = query.status as $Enums.BookingStatus | undefined;
 
     const { bookings, total } = await this.bookingRepo.findForDriver(userId, { ...pagination, status });
 
     return paginate(bookings, total, pagination);
+  }
+
+  async summary(userId: string) {
+    const [counts, answered, closed] = await Promise.all([
+      this.bookingRepo.countByStatusForDriver(userId),
+      this.bookingRepo.countAnsweredForDriver(userId),
+      this.bookingRepo.countClosedForDriver(userId),
+    ]);
+
+    const total = (...statuses: $Enums.BookingStatus[]) =>
+      counts.filter((row) => statuses.includes(row.status)).reduce((sum, row) => sum + row._count._all, 0);
+
+    return {
+      open: total("REQUESTED"),
+      accepted: total("ACCEPTED", "IN_PROGRESS", "COMPLETED", "DISPUTED"),
+      declined: total("DECLINED", "CANCELLED"),
+      // Null, not zero, until a request has actually closed — a driver who has
+      // never been asked has no record, and 0% reads as a bad one.
+      response_rate: closed ? Math.round((answered / closed) * 100) : null,
+    };
   }
 
   async get(userId: string, reference: string) {

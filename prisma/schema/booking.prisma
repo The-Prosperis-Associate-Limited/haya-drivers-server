@@ -27,6 +27,7 @@ model Booking {
 
   title           String
   description     String?
+  requirements    String[]       @default([])
   driver_type     DriverType
   engagement_type EngagementType @default(ONE_OFF)
 

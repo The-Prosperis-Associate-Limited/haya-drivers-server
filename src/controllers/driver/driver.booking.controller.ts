@@ -2,16 +2,28 @@ import { Response } from "express";
 import { handleErrors } from "../../helper/handleErrors";
 import { IUserRequest } from "../../interface";
 import { DriverBookingService } from "../../services/driver/driver.booking.service";
-import { declineBookingSchema } from "../../utils/types/bookingValidatorSchema";
+import { declineBookingSchema, jobRequestFilterSchema } from "../../utils/types/bookingValidatorSchema";
 
 export class DriverBookingController {
   private bookingService = new DriverBookingService();
 
   list = async (req: IUserRequest, res: Response) => {
     try {
-      const result = await this.bookingService.list(req.userId as string, req.query);
+      const { status } = jobRequestFilterSchema.parse(req.query);
+
+      const result = await this.bookingService.list(req.userId as string, req.query, status);
 
       res.status(200).json({ message: "Job requests fetched successfully", ...result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  summary = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.bookingService.summary(req.userId as string);
+
+      res.status(200).json({ message: "Job request summary fetched successfully", data: result });
     } catch (error) {
       handleErrors({ res, error });
     }

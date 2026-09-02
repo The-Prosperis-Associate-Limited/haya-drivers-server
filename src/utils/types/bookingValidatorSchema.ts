@@ -5,6 +5,7 @@ export const createBookingSchema = z
     driverId: z.string().min(1, "Choose a driver"),
     title: z.string().trim().min(3, "Give the job a title"),
     description: z.string().trim().optional(),
+    requirements: z.array(z.string().trim().min(1)).max(10).optional().default([]),
     driver_type: z.enum(["CORPORATE_DRIVER", "PRIVATE_DRIVER", "LOGISTICS_DRIVER", "RIDE_HAILING_DRIVER", "HEAVY_DUTY_DRIVER"]),
     engagement_type: z.enum(["ONE_OFF", "DAILY", "WEEKLY", "MONTHLY", "CONTRACT"]).optional().default("ONE_OFF"),
     pickup_address: z.string().trim().min(3, "Enter a pickup address"),
@@ -29,6 +30,22 @@ export const createBookingSchema = z
     }
   });
 
+const bookingStatusEnum = z.enum(["REQUESTED", "ACCEPTED", "DECLINED", "CANCELLED", "IN_PROGRESS", "COMPLETED", "DISPUTED"]);
+
+// The driver app files requests under three tabs, so one tab is several statuses.
+export const jobRequestFilterSchema = z.object({
+  status: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => {
+      const statuses = value?.split(",").map((part) => part.trim().toUpperCase()).filter(Boolean);
+
+      return statuses?.length ? statuses : undefined;
+    })
+    .pipe(z.array(bookingStatusEnum).min(1).optional()),
+});
+
 export const declineBookingSchema = z.object({
   reason: z.string().trim().min(3, "Let the client know why"),
 });
@@ -52,5 +69,6 @@ export const driverSearchSchema = z.object({
 });
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
+export type JobRequestFilterInput = z.infer<typeof jobRequestFilterSchema>;
 export type ReviewBookingInput = z.infer<typeof reviewBookingSchema>;
 export type DriverSearchInput = z.infer<typeof driverSearchSchema>;

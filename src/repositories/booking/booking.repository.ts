@@ -23,11 +23,11 @@ export class BookingRepository {
     return prisma.booking.update({ where: { id }, data, include: bookingParties });
   }
 
-  async findForDriver(driverId: string, params: { page: number; limit: number; status?: $Enums.BookingStatus }) {
+  async findForDriver(driverId: string, params: { page: number; limit: number; status?: $Enums.BookingStatus[] }) {
     const { page, limit, status } = params;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.BookingWhereInput = { driverId, ...(status && { status }) };
+    const where: Prisma.BookingWhereInput = { driverId, ...(status?.length && { status: { in: status } }) };
 
     const [bookings, total] = await Promise.all([
       prisma.booking.findMany({ where, skip, take: limit, orderBy: { starts_at: "desc" }, include: bookingParties }),
@@ -62,6 +62,22 @@ export class BookingRepository {
 
   async countForDriver(driverId: string, status: $Enums.BookingStatus) {
     return prisma.booking.count({ where: { driverId, status } });
+  }
+
+  async countByStatusForDriver(driverId: string) {
+    return prisma.booking.groupBy({ by: ["status"], where: { driverId }, _count: { _all: true } });
+  }
+
+  // A request the driver themselves moved on. A client cancellation or an expiry
+  // sweep leaves both stamps null, which is what makes it miss the response rate.
+  async countAnsweredForDriver(driverId: string) {
+    return prisma.booking.count({
+      where: { driverId, OR: [{ accepted_at: { not: null } }, { declined_at: { not: null } }] },
+    });
+  }
+
+  async countClosedForDriver(driverId: string) {
+    return prisma.booking.count({ where: { driverId, status: { not: "REQUESTED" } } });
   }
 
   // Everything the driver actually took on, so "22 of 24 completed" has a
