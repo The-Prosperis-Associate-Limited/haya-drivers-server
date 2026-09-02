@@ -30,20 +30,10 @@ export const createBookingSchema = z
     }
   });
 
-const bookingStatusEnum = z.enum(["REQUESTED", "ACCEPTED", "DECLINED", "CANCELLED", "IN_PROGRESS", "COMPLETED", "DISPUTED"]);
-
-// The driver app files requests under three tabs, so one tab is several statuses.
+// The bucket names, not raw statuses — booking.repository owns which statuses
+// each one covers, so the list and the summary cannot drift apart.
 export const jobRequestFilterSchema = z.object({
-  status: z
-    .string()
-    .trim()
-    .optional()
-    .transform((value) => {
-      const statuses = value?.split(",").map((part) => part.trim().toUpperCase()).filter(Boolean);
-
-      return statuses?.length ? statuses : undefined;
-    })
-    .pipe(z.array(bookingStatusEnum).min(1).optional()),
+  bucket: z.enum(["open", "accepted", "declined"]).optional(),
 });
 
 export const declineBookingSchema = z.object({

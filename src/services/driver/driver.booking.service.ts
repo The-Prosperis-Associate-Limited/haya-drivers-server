@@ -1,5 +1,4 @@
-import type { $Enums } from "../../generated/prisma/client";
-import { BookingRepository } from "../../repositories/booking/booking.repository";
+import { BookingRepository, JOB_REQUEST_BUCKETS, type JobRequestBucket } from "../../repositories/booking/booking.repository";
 import { BookingStatusEventRepository } from "../../repositories/booking/bookingStatusEvent.repository";
 import { ForbiddenError, NotFoundError } from "../../helper/errors";
 import { paginate, parsePagination } from "../../utils/pagination";
@@ -10,28 +9,27 @@ export class DriverBookingService {
   private statusEventRepo = new BookingStatusEventRepository();
   private transitionService = new BookingTransitionService();
 
-  async list(userId: string, query: Record<string, unknown>, status?: $Enums.BookingStatus[]) {
+  async list(userId: string, query: Record<string, unknown>, bucket?: JobRequestBucket) {
     const pagination = parsePagination(query);
 
-    const { bookings, total } = await this.bookingRepo.findForDriver(userId, { ...pagination, status });
+    const { bookings, total } = await this.bookingRepo.findForDriver(userId, { ...pagination, bucket });
 
     return paginate(bookings, total, pagination);
   }
 
   async summary(userId: string) {
-    const [counts, answered, closed] = await Promise.all([
-      this.bookingRepo.countByStatusForDriver(userId),
+    const [entries, answered, closed] = await Promise.all([
+      Promise.all(JOB_REQUEST_BUCKETS.map(async (bucket) => [bucket, await this.bookingRepo.countBucketForDriver(userId, bucket)] as const)),
       this.bookingRepo.countAnsweredForDriver(userId),
       this.bookingRepo.countClosedForDriver(userId),
     ]);
 
-    const total = (...statuses: $Enums.BookingStatus[]) =>
-      counts.filter((row) => statuses.includes(row.status)).reduce((sum, row) => sum + row._count._all, 0);
+    const counts = Object.fromEntries(entries) as Record<JobRequestBucket, number>;
 
     return {
-      open: total("REQUESTED"),
-      accepted: total("ACCEPTED", "IN_PROGRESS", "COMPLETED", "DISPUTED"),
-      declined: total("DECLINED", "CANCELLED"),
+      open: counts.open,
+      accepted: counts.accepted,
+      declined: counts.declined,
       // Null, not zero, until a request has actually closed — a driver who has
       // never been asked has no record, and 0% reads as a bad one.
       response_rate: closed ? Math.round((answered / closed) * 100) : null,

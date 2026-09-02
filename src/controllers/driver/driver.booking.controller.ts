@@ -9,9 +9,9 @@ export class DriverBookingController {
 
   list = async (req: IUserRequest, res: Response) => {
     try {
-      const { status } = jobRequestFilterSchema.parse(req.query);
+      const { bucket } = jobRequestFilterSchema.parse(req.query);
 
-      const result = await this.bookingService.list(req.userId as string, req.query, status);
+      const result = await this.bookingService.list(req.userId as string, req.query, bucket);
 
       res.status(200).json({ message: "Job requests fetched successfully", ...result });
     } catch (error) {

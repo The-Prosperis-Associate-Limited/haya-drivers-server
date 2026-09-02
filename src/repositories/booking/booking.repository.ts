@@ -6,6 +6,27 @@ const bookingParties = {
   client: { select: { id: true, first_name: true, last_name: true, profile_pic: true, phone_no: true, client_profile: { select: { organisation_name: true, client_type: true } } } },
 } satisfies Prisma.BookingInclude;
 
+/*
+  The three tabs the driver app files requests under, defined once so the list
+  and the summary cannot disagree about where a request belongs. CANCELLED
+  splits on accepted_at: a job the driver took on that the client later called
+  off is not a decline, and one that expired before they answered is not an
+  acceptance.
+*/
+const bucketFilters = {
+  open: { status: "REQUESTED" },
+  accepted: {
+    OR: [{ status: { in: ["ACCEPTED", "IN_PROGRESS", "COMPLETED", "DISPUTED"] } }, { status: "CANCELLED", accepted_at: { not: null } }],
+  },
+  declined: {
+    OR: [{ status: "DECLINED" }, { status: "CANCELLED", accepted_at: null }],
+  },
+} satisfies Record<string, Prisma.BookingWhereInput>;
+
+export type JobRequestBucket = keyof typeof bucketFilters;
+
+export const JOB_REQUEST_BUCKETS = Object.keys(bucketFilters) as JobRequestBucket[];
+
 export class BookingRepository {
   async create(data: Prisma.BookingUncheckedCreateInput) {
     return prisma.booking.create({ data, include: bookingParties });
@@ -23,11 +44,11 @@ export class BookingRepository {
     return prisma.booking.update({ where: { id }, data, include: bookingParties });
   }
 
-  async findForDriver(driverId: string, params: { page: number; limit: number; status?: $Enums.BookingStatus[] }) {
-    const { page, limit, status } = params;
+  async findForDriver(driverId: string, params: { page: number; limit: number; bucket?: JobRequestBucket }) {
+    const { page, limit, bucket } = params;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.BookingWhereInput = { driverId, ...(status?.length && { status: { in: status } }) };
+    const where: Prisma.BookingWhereInput = { driverId, ...(bucket && bucketFilters[bucket]) };
 
     const [bookings, total] = await Promise.all([
       prisma.booking.findMany({ where, skip, take: limit, orderBy: { starts_at: "desc" }, include: bookingParties }),
@@ -64,8 +85,8 @@ export class BookingRepository {
     return prisma.booking.count({ where: { driverId, status } });
   }
 
-  async countByStatusForDriver(driverId: string) {
-    return prisma.booking.groupBy({ by: ["status"], where: { driverId }, _count: { _all: true } });
+  async countBucketForDriver(driverId: string, bucket: JobRequestBucket) {
+    return prisma.booking.count({ where: { driverId, ...bucketFilters[bucket] } });
   }
 
   // A request the driver themselves moved on. A client cancellation or an expiry
