@@ -24,12 +24,44 @@ export class DriverTrainingService {
   private notificationService = new NotificationService();
   private activityService = new ActivityService();
 
-  async listCourses(query: Record<string, unknown>) {
+  async listCourses(userId: string, query: Record<string, unknown>) {
     const pagination = parsePagination(query);
 
-    const { courses, total } = await this.courseRepo.findPublished({ ...pagination, search: query.search as string | undefined });
+    const { courses, total } = await this.courseRepo.findPublished({
+      ...pagination,
+      userId,
+      search: query.search as string | undefined,
+      category: query.category as string | undefined,
+    });
 
-    return paginate(courses, total, pagination);
+    return paginate(courses.map(course => this.withEnrollment(course)), total, pagination);
+  }
+
+  /*
+    The required path is walked in order and each course unlocks the next, so a
+    driver cannot skip ahead to the assessment they like the look of. Locking is
+    presentational — the server still refuses progress on a course they have not
+    reached, because hiding a button is not a rule.
+  */
+  async requiredPath(userId: string) {
+    const courses = await this.courseRepo.findRequiredPath(userId);
+
+    let previousCompleted = true;
+
+    return courses.map(course => {
+      const withEnrollment = this.withEnrollment(course);
+      const locked = !previousCompleted && withEnrollment.enrollment?.status !== "COMPLETED";
+
+      previousCompleted = withEnrollment.enrollment?.status === "COMPLETED";
+
+      return { ...withEnrollment, locked };
+    });
+  }
+
+  private withEnrollment<T extends { enrollments?: unknown[] }>(course: T) {
+    const { enrollments, ...rest } = course;
+
+    return { ...rest, enrollment: (enrollments?.[0] as Record<string, unknown> | undefined) ?? null };
   }
 
   async getCourse(userId: string, slug: string) {
@@ -97,11 +129,13 @@ export class DriverTrainingService {
   }
 
   async stats(userId: string) {
-    const [certifications, inProgress, minutes, breakdown] = await Promise.all([
+    const [certifications, inProgress, minutes, breakdown, requiredCourses, requiredCompleted] = await Promise.all([
       this.certificationRepo.countForUser(userId),
       this.enrollmentRepo.countForUser(userId, "IN_PROGRESS"),
       this.enrollmentRepo.sumMinutesForUser(userId),
       this.trustScoreService.breakdown(userId),
+      this.courseRepo.countRequired(),
+      this.enrollmentRepo.countRequiredCompletedForUser(userId),
     ]);
 
     return {
@@ -109,6 +143,9 @@ export class DriverTrainingService {
       modules_in_progress: inProgress,
       trust_score_boost: breakdown.training,
       minutes_invested: minutes,
+      required_courses: requiredCourses,
+      required_courses_completed: requiredCompleted,
+      completion_percent: requiredCourses ? Math.round((requiredCompleted / requiredCourses) * 100) : 0,
     };
   }
 

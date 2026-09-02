@@ -64,6 +64,14 @@ export class BookingRepository {
     return prisma.booking.count({ where: { driverId, status } });
   }
 
+  // Everything the driver actually took on, so "22 of 24 completed" has a
+  // denominator that excludes requests they never accepted.
+  async countEngagedForDriver(driverId: string) {
+    return prisma.booking.count({
+      where: { driverId, status: { in: ["ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "DISPUTED"] } },
+    });
+  }
+
   async countDistinctClientsForDriver(driverId: string) {
     const rows = await prisma.booking.findMany({
       where: { driverId, status: "COMPLETED" },

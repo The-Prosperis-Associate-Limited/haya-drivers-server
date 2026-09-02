@@ -18,6 +18,11 @@ model Course {
   cover_image String?
 
   status CourseStatus @default(DRAFT)
+  // Groups the course on the driver's course grid: ONBOARDING, SAFETY, PAYMENTS...
+  category String?
+  // Required courses form the certification path and unlock in `position` order.
+  is_required Boolean @default(false)
+  position Int @default(0)
   // Added to a driver's trust score once, on completion.
   trust_score_reward Int @default(0)
   // Months a certification earned here stays valid; null means it never expires.
@@ -32,6 +37,7 @@ model Course {
   certifications Certification[]
 
   @@index([status])
+  @@index([is_required, position])
 }
 
 model CourseModule {

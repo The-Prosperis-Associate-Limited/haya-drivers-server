@@ -1,6 +1,7 @@
 import type { $Enums, Prisma } from "../../generated/prisma/client";
 import { NotificationRepository } from "../../repositories/platform/notification.repository";
 import { parsePagination, paginate } from "../../utils/pagination";
+import type { NotificationPreferenceInput } from "../../utils/types/notificationValidatorSchema";
 
 export class NotificationService {
   private notificationRepo = new NotificationRepository();
@@ -16,6 +17,14 @@ export class NotificationService {
     metadata?: Prisma.InputJsonValue;
   }) {
     return this.notificationRepo.sendNotificationToUser({ ...data, isSystemGenerated: !data.senderId });
+  }
+
+  async getPreferences(userId: string) {
+    return this.notificationRepo.ensurePreferences(userId);
+  }
+
+  async updatePreferences(userId: string, data: NotificationPreferenceInput) {
+    return this.notificationRepo.updatePreferences(userId, data);
   }
 
   async list(userId: string, query: Record<string, unknown>) {

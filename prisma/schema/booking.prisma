@@ -91,6 +91,9 @@ model Review {
 
   rating  Int
   comment String?
+  // What the client picked out: "Punctual", "Safe driving". Drives the driver's
+  // "What clients mention" panel; free text stays in `comment`.
+  tags    String[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

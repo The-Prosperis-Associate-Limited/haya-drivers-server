@@ -22,12 +22,18 @@ export class CourseRepository {
     return prisma.course.delete({ where: { id }, select: { id: true } });
   }
 
-  async findPublished(params: { page: number; limit: number; search?: string }) {
-    const { page, limit, search } = params;
+  /*
+    The caller's own enrollment is included so the course grid can show progress
+    without a second round trip per card. Ordering is `position` first because
+    the required path is meant to be read top to bottom.
+  */
+  async findPublished(params: { page: number; limit: number; search?: string; category?: string; userId?: string }) {
+    const { page, limit, search, category, userId } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.CourseWhereInput = {
       status: "PUBLISHED",
+      ...(category && { category }),
       ...(search && { title: { contains: search, mode: "insensitive" } }),
     };
 
@@ -36,13 +42,31 @@ export class CourseRepository {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
-        include: { _count: { select: { modules: true } } },
+        orderBy: [{ position: "asc" }, { createdAt: "desc" }],
+        include: {
+          _count: { select: { modules: true } },
+          ...(userId && { enrollments: { where: { userId }, take: 1 } }),
+        },
       }),
       prisma.course.count({ where }),
     ]);
 
     return { courses, total };
+  }
+
+  async findRequiredPath(userId: string) {
+    return prisma.course.findMany({
+      where: { status: "PUBLISHED", is_required: true },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      include: {
+        _count: { select: { modules: true } },
+        enrollments: { where: { userId }, take: 1 },
+      },
+    });
+  }
+
+  async countRequired() {
+    return prisma.course.count({ where: { status: "PUBLISHED", is_required: true } });
   }
 
   async findAllForAdmin(params: { page: number; limit: number; status?: $Enums.CourseStatus }) {

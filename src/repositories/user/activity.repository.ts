@@ -17,6 +17,14 @@ export class ActivityRepository {
     return { activities, total };
   }
 
+  async findByUserAndTypes(userId: string, types: $Enums.ActivityType[], limit: number) {
+    return prisma.activity.findMany({
+      where: { userId, type: { in: types } },
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   // Platform-wide, not scoped to the calling admin — admins generate almost no
   // activity of their own, so a per-user query renders an empty feed.
   async findRecentPlatformActivities(limit: number) {

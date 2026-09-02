@@ -53,8 +53,8 @@ export class TicketService {
     return paginate(tickets, total, pagination);
   }
 
-  async get(id: string, requesterId: string, role: string) {
-    const ticket = await this.ticketRepo.findById(id);
+  async get(idOrReference: string, requesterId: string, role: string) {
+    const ticket = await this.ticketRepo.findByIdOrReference(idOrReference);
 
     if (!ticket) throw new NotFoundError("Ticket not found");
 
@@ -62,11 +62,11 @@ export class TicketService {
 
     if (!isOwner && role !== "ADMIN") throw new ForbiddenError("That ticket belongs to someone else");
 
-    return { ...ticket, comments: await this.ticketRepo.findComments(id, role === "ADMIN") };
+    return { ...ticket, comments: await this.ticketRepo.findComments(ticket.id, role === "ADMIN") };
   }
 
-  async comment(id: string, authorId: string, role: string, data: TicketCommentInput) {
-    const ticket = await this.ticketRepo.findById(id);
+  async comment(idOrReference: string, authorId: string, role: string, data: TicketCommentInput) {
+    const ticket = await this.ticketRepo.findByIdOrReference(idOrReference);
 
     if (!ticket) throw new NotFoundError("Ticket not found");
     if (ticket.creatorId !== authorId && role !== "ADMIN") throw new ForbiddenError("That ticket belongs to someone else");
@@ -75,7 +75,7 @@ export class TicketService {
     // internal would hide it from the person meant to read it.
     const is_internal = role === "ADMIN" ? data.is_internal : false;
 
-    const comment = await this.ticketRepo.addComment({ ticketId: id, authorId, message: data.message, is_internal });
+    const comment = await this.ticketRepo.addComment({ ticketId: ticket.id, authorId, message: data.message, is_internal });
 
     if (!is_internal && ticket.creatorId !== authorId) {
       await this.notificationService.notify({

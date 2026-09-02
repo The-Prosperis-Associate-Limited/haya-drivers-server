@@ -81,6 +81,8 @@ model User {
   enrollments       CourseEnrollment[]
   certifications    Certification[]
 
+  notification_preference NotificationPreference?
+
   received_notifications Notification[] @relation("RecipientNotifications")
   sent_notifications     Notification[] @relation("SenderNotifications")
   activities             Activity[]     @relation("UserActivity")

@@ -8,7 +8,8 @@
     "type-check": "tsc --noEmit --watch",
     "build": "tsc",
     "prestart": "prisma migrate deploy && prisma generate",
-    "start": "tsx src/server.ts"
+    "start": "tsx src/server.ts",
+    "seed:courses": "tsx src/scripts/seed-courses.ts"
   },
   "keywords": [],
   "license": "ISC",

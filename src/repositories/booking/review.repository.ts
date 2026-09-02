@@ -19,7 +19,10 @@ export class ReviewRepository {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: { author: { select: { id: true, first_name: true, last_name: true, profile_pic: true } } },
+        include: {
+          author: { select: { id: true, first_name: true, last_name: true, profile_pic: true } },
+          booking: { select: { reference: true, title: true, starts_at: true } },
+        },
       }),
       prisma.review.count({ where: { subjectId } }),
     ]);
@@ -34,5 +37,28 @@ export class ReviewRepository {
     ]);
 
     return { average: aggregate._avg.rating ?? 0, total };
+  }
+
+  async countByRatingForSubject(subjectId: string) {
+    const rows = await prisma.review.groupBy({ by: ["rating"], where: { subjectId }, _count: { rating: true } });
+
+    return rows.reduce<Record<number, number>>((accumulator, row) => {
+      accumulator[row.rating] = row._count.rating;
+      return accumulator;
+    }, {});
+  }
+
+  // Tags are a small fixed vocabulary the client picks from, so counting them in
+  // memory is cheaper than a lateral unnest and keeps the query portable.
+  async tagCountsForSubject(subjectId: string) {
+    const rows = await prisma.review.findMany({ where: { subjectId }, select: { tags: true } });
+
+    const counts = new Map<string, number>();
+
+    for (const row of rows) {
+      for (const tag of row.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+
+    return [...counts.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count);
   }
 }

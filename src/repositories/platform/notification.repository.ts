@@ -6,6 +6,16 @@ import { ExpoPushService } from "../../services/shared/expoPush.service";
 const expoPush = new ExpoPushService();
 
 export class NotificationRepository {
+  // Created on first read so a driver who has never opened settings still has a
+  // row to toggle, with the defaults the schema declares.
+  async ensurePreferences(userId: string) {
+    return prisma.notificationPreference.upsert({ where: { userId }, create: { userId }, update: {} });
+  }
+
+  async updatePreferences(userId: string, data: Prisma.NotificationPreferenceUncheckedUpdateInput) {
+    return prisma.notificationPreference.upsert({ where: { userId }, create: { userId, ...(data as object) }, update: data });
+  }
+
   /*
     Every notification in the platform goes through here — several services call
     the repository directly rather than via NotificationService, so the socket

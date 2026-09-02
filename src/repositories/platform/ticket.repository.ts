@@ -6,6 +6,19 @@ export class TicketRepository {
     return prisma.ticket.create({ data });
   }
 
+  // Notification action urls carry the reference, the UI carries the id, so the
+  // lookup accepts either rather than 404ing on a link we sent ourselves.
+  async findByIdOrReference(idOrReference: string) {
+    return prisma.ticket.findFirst({
+      where: { OR: [{ id: idOrReference }, { reference: idOrReference }] },
+      include: {
+        creator: { select: { id: true, first_name: true, last_name: true, email: true, role: true } },
+        assignee: { select: { id: true, first_name: true, last_name: true } },
+        comments: { orderBy: { createdAt: "asc" }, include: { author: { select: { id: true, first_name: true, last_name: true, role: true } } } },
+      },
+    });
+  }
+
   async findById(id: string) {
     return prisma.ticket.findUnique({
       where: { id },

@@ -10,6 +10,13 @@ export class DriverProfileRepository {
     return prisma.driverProfile.findUnique({ where: { userId }, select });
   }
 
+  async findByUserIdWithUserState(userId: string) {
+    return prisma.driverProfile.findUnique({
+      where: { userId },
+      select: { trust_score: true, verification_status: true, user: { select: { state_of_residence: true } } },
+    });
+  }
+
   async findByUserIdWithRelations(userId: string) {
     return prisma.driverProfile.findUnique({
       where: { userId },
@@ -118,6 +125,28 @@ export class DriverProfileRepository {
       where: { verification_status: "APPROVED" },
       select: { userId: true },
     });
+  }
+
+  /*
+    The "more trusted than X% of drivers in Lagos" line. Scoped to approved
+    drivers in the same state, because a percentile against unverified accounts
+    would flatter every verified driver into the high nineties.
+  */
+  async trustScorePercentile(userId: string, trust_score: number, state: string | null) {
+    const where: Prisma.DriverProfileWhereInput = {
+      verification_status: "APPROVED",
+      userId: { not: userId },
+      ...(state && { user: { state_of_residence: state } }),
+    };
+
+    const [total, below] = await Promise.all([
+      prisma.driverProfile.count({ where }),
+      prisma.driverProfile.count({ where: { ...where, trust_score: { lt: trust_score } } }),
+    ]);
+
+    if (!total) return null;
+
+    return Math.round((below / total) * 100);
   }
 
   async countByStatus(status: $Enums.DriverVerificationStatus) {

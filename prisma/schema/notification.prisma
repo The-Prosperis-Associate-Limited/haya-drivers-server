@@ -72,3 +72,25 @@ model DeviceToken {
 
   @@index([userId])
 }
+
+/*
+  One row per user, created on first read. Defaults mirror what the driver would
+  expect out of the box: everything that affects their work is on, marketing is
+  off. The channels themselves are not wired to these yet — the settings screen
+  is, so a driver's choice is recorded rather than thrown away.
+*/
+model NotificationPreference {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  job_requests         Boolean @default(true)
+  sms_alerts           Boolean @default(true)
+  client_messages      Boolean @default(true)
+  verification_updates Boolean @default(true)
+  training_reminders   Boolean @default(false)
+  product_news         Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

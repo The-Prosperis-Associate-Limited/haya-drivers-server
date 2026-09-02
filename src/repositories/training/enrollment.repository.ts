@@ -63,4 +63,10 @@ export class EnrollmentRepository {
   async countForUser(userId: string, status: $Enums.EnrollmentStatus) {
     return prisma.courseEnrollment.count({ where: { userId, status } });
   }
+
+  async countRequiredCompletedForUser(userId: string) {
+    return prisma.courseEnrollment.count({
+      where: { userId, status: "COMPLETED", course: { is_required: true, status: "PUBLISHED" } },
+    });
+  }
 }

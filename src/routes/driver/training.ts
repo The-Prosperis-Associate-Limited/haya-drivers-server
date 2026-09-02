@@ -6,6 +6,7 @@ const training = new DriverTrainingController();
 
 trainingRouter.get("/stats", training.stats);
 trainingRouter.get("/courses", training.listCourses);
+trainingRouter.get("/path", training.requiredPath);
 trainingRouter.get("/enrollments", training.listEnrollments);
 trainingRouter.get("/certifications", training.listCertifications);
 

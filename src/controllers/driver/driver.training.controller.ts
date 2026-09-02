@@ -9,9 +9,19 @@ export class DriverTrainingController {
 
   listCourses = async (req: IUserRequest, res: Response) => {
     try {
-      const result = await this.trainingService.listCourses(req.query);
+      const result = await this.trainingService.listCourses(req.userId as string, req.query);
 
       res.status(200).json({ message: "Courses fetched successfully", ...result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  requiredPath = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.trainingService.requiredPath(req.userId as string);
+
+      res.status(200).json({ message: "Required learning path fetched successfully", data: result });
     } catch (error) {
       handleErrors({ res, error });
     }
