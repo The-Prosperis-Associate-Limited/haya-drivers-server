@@ -6,6 +6,10 @@ import { prisma } from "../../helper/prisma";
 import { paginate, parsePagination } from "../../utils/pagination";
 import type { DriverSearchInput } from "../../utils/types/bookingValidatorSchema";
 
+// A start stamped within this window of the scheduled time still counts as on
+// time — nobody should be marked late over a parking search.
+const ON_TIME_GRACE_MS = 15 * 60 * 1000;
+
 export class ClientDriverSearchService {
   private driverProfileRepo = new DriverProfileRepository();
   private reviewRepo = new ReviewRepository();
@@ -57,15 +61,22 @@ export class ClientDriverSearchService {
     };
   }
 
-  // on_time_rate stays null until a punctuality signal exists — the client
-  // renders it as "—" rather than a number nobody measured.
+  // On-time means the driver's own "start job" stamp landed within the grace
+  // window of the scheduled start. Both rates are null until measured — a
+  // driver nobody has booked has no record, not a bad one.
   private async quickStats(userId: string) {
-    const [completedJobs, answered] = await Promise.all([
+    const [completedJobs, answered, started] = await Promise.all([
       prisma.booking.count({ where: { driverId: userId, status: "COMPLETED" } }),
       prisma.booking.findMany({
         where: { driverId: userId, OR: [{ accepted_at: { not: null } }, { declined_at: { not: null } }] },
         select: { createdAt: true, accepted_at: true, declined_at: true },
         orderBy: { createdAt: "desc" },
+        take: 50,
+      }),
+      prisma.booking.findMany({
+        where: { driverId: userId, started_at: { not: null } },
+        select: { starts_at: true, started_at: true },
+        orderBy: { starts_at: "desc" },
         take: 50,
       }),
     ]);
@@ -79,10 +90,12 @@ export class ClientDriverSearchService {
 
     const responseTimeMinutes = valid.length ? Math.round(valid.reduce((sum, latency) => sum + latency, 0) / valid.length / 60000) : null;
 
+    const onTime = started.filter(booking => booking.started_at!.getTime() <= booking.starts_at.getTime() + ON_TIME_GRACE_MS);
+
     return {
       completed_jobs: completedJobs,
       response_time_minutes: responseTimeMinutes,
-      on_time_rate: null as number | null,
+      on_time_rate: started.length ? Math.round((onTime.length / started.length) * 100) : null,
     };
   }
 
