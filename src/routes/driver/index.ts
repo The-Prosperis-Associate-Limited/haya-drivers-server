@@ -4,6 +4,7 @@ import { bookingRouter } from "./booking";
 import { dashboardRouter } from "./dashboard";
 import { earningsRouter } from "./earnings";
 import { onboardingRouter } from "./onboarding";
+import { profileRouter } from "./profile";
 import { reviewRouter } from "./reviews";
 import { trainingRouter } from "./training";
 
@@ -15,6 +16,7 @@ const driverRouter = Router();
 driverRouter.use(validateAccessToken, validateDriverSession);
 
 driverRouter.use("/onboarding", onboardingRouter);
+driverRouter.use("/profile", profileRouter);
 driverRouter.use("/dashboard", dashboardRouter);
 driverRouter.use("/job-requests", bookingRouter);
 driverRouter.use("/earnings", earningsRouter);

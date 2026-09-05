@@ -1,9 +1,9 @@
-import type { $Enums } from "../../generated/prisma/client";
+import { Prisma, type $Enums } from "../../generated/prisma/client";
 import { DriverProfileRepository } from "../../repositories/driver/driverProfile.repository";
 import { UserRepository } from "../../repositories/user/user.repository";
 import { NotFoundError } from "../../helper/errors";
 import { advanceStep } from "../../utils/onboardingSteps";
-import type { AcademicQualificationInput, AdditionalInformationInput, ExperienceInput, PersonalInformationInput } from "../../utils/types/driverValidatorSchema";
+import type { AcademicQualificationInput, AdditionalInformationInput, ExperienceInput, PersonalInformationInput, WorkPreferencesInput } from "../../utils/types/driverValidatorSchema";
 
 export class DriverProfileService {
   private driverProfileRepo = new DriverProfileRepository();
@@ -15,6 +15,19 @@ export class DriverProfileService {
     if (!profile) throw new NotFoundError("Driver profile not found");
 
     return profile;
+  }
+
+  // Settings, not onboarding — no step advances here. Feeds the client
+  // marketplace's budget filter and availability panel.
+  async saveWorkPreferences(userId: string, data: WorkPreferencesInput) {
+    await this.requireProfile(userId);
+
+    const payload: Prisma.DriverProfileUncheckedUpdateInput = {};
+
+    if (data.expected_monthly_rate !== undefined) payload.expected_monthly_rate = data.expected_monthly_rate;
+    if (data.availability !== undefined) payload.availability = data.availability === null ? Prisma.DbNull : data.availability;
+
+    return this.driverProfileRepo.update(userId, payload);
   }
 
   // Personal information straddles both tables: the parts every account has

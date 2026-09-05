@@ -113,6 +113,23 @@ export const reviewVerificationSchema = z
     }
   });
 
+// Rate arrives in minor units — the app converts before sending. Null clears a
+// field; undefined leaves it untouched.
+export const workPreferencesSchema = z.object({
+  expected_monthly_rate: z.coerce.number().int().min(0).nullable().optional(),
+  availability: z
+    .array(
+      z.object({
+        day_range: z.string().trim().min(1, "Name the day or range"),
+        start: z.string().trim().min(1, "Set a start time"),
+        end: z.string().trim().min(1, "Set an end time"),
+      }),
+    )
+    .max(7, "Seven rows cover every day of the week")
+    .nullable()
+    .optional(),
+});
+
 export type PersonalInformationInput = z.infer<typeof personalInformationSchema>;
 export type ExperienceInput = z.infer<typeof experienceSchema>;
 export type AcademicQualificationInput = z.infer<typeof academicQualificationSchema>;
@@ -121,3 +138,4 @@ export type GuarantorInput = z.infer<typeof guarantorSchema>;
 export type AdditionalInformationInput = z.infer<typeof additionalInformationSchema>;
 export type ReviewDocumentInput = z.infer<typeof reviewDocumentSchema>;
 export type ReviewVerificationInput = z.infer<typeof reviewVerificationSchema>;
+export type WorkPreferencesInput = z.infer<typeof workPreferencesSchema>;
