@@ -67,6 +67,16 @@ model DriverProfile {
   language_count  Int?
   religion        String?
 
+  // What the driver expects to earn, in minor units of rate_currency. Drives the
+  // marketplace budget filter; a null rate never filters the driver out.
+  expected_monthly_rate Int?
+  rate_currency         String @default("NGN")
+
+  // Weekly working hours as { day_range, start, end }[] — collected by the
+  // driver app when its availability screen ships; the profile hides the panel
+  // while this is null.
+  availability Json?
+
   // Denormalised from DriverVerification so the discoverability filter on the
   // client-facing search costs no join.
   verification_status DriverVerificationStatus @default(UNSUBMITTED)

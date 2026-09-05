@@ -55,6 +55,11 @@ export const driverSearchSchema = z.object({
   vehicle_class: z.enum(["SALOON", "SUV", "BUS", "TRUCK", "TRAILER", "MOTORCYCLE"]).optional(),
   country: z.string().trim().optional(),
   state: z.string().trim().optional(),
+  city: z.string().trim().optional(),
+  // Minor units. A driver with no expected rate is never filtered out — an
+  // unknown rate is not the same as an unaffordable one.
+  budget_min: z.coerce.number().int().min(0).optional(),
+  budget_max: z.coerce.number().int().min(0).optional(),
   min_trust_score: z.coerce.number().int().min(0).max(100).optional(),
 });
 

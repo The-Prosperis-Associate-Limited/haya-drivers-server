@@ -31,6 +31,7 @@ export class DriverProfileRepository {
             email: true,
             phone_no: true,
             profile_pic: true,
+            bio: true,
             gender: true,
             date_of_birth: true,
             marital_status: true,
@@ -74,8 +75,20 @@ export class DriverProfileRepository {
     });
   }
 
-  async search(params: { page: number; limit: number; driver_type?: $Enums.DriverType; vehicle_class?: $Enums.VehicleClass; country?: string; state?: string; min_trust_score?: number; search?: string }) {
-    const { page, limit, driver_type, vehicle_class, country, state, min_trust_score, search } = params;
+  async search(params: {
+    page: number;
+    limit: number;
+    driver_type?: $Enums.DriverType;
+    vehicle_class?: $Enums.VehicleClass;
+    country?: string;
+    state?: string;
+    city?: string;
+    budget_min?: number;
+    budget_max?: number;
+    min_trust_score?: number;
+    search?: string;
+  }) {
+    const { page, limit, driver_type, vehicle_class, country, state, city, budget_min, budget_max, min_trust_score, search } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.DriverProfileWhereInput = {
@@ -89,6 +102,11 @@ export class DriverProfileRepository {
     if (min_trust_score) where.trust_score = { gte: min_trust_score };
     if (country) where.user = { ...(where.user as object), country };
     if (state) where.user = { ...(where.user as object), state_of_residence: state };
+    if (city) where.user = { ...(where.user as object), city: { equals: city, mode: "insensitive" } };
+
+    if (budget_min !== undefined || budget_max !== undefined) {
+      where.OR = [{ expected_monthly_rate: null }, { expected_monthly_rate: { ...(budget_min !== undefined && { gte: budget_min }), ...(budget_max !== undefined && { lte: budget_max }) } }];
+    }
 
     if (search) {
       where.user = {
@@ -139,10 +157,7 @@ export class DriverProfileRepository {
       ...(state && { user: { state_of_residence: state } }),
     };
 
-    const [total, below] = await Promise.all([
-      prisma.driverProfile.count({ where }),
-      prisma.driverProfile.count({ where: { ...where, trust_score: { lt: trust_score } } }),
-    ]);
+    const [total, below] = await Promise.all([prisma.driverProfile.count({ where }), prisma.driverProfile.count({ where: { ...where, trust_score: { lt: trust_score } } })]);
 
     if (!total) return null;
 

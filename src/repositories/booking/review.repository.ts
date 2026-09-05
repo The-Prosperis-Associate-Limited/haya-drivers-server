@@ -31,12 +31,24 @@ export class ReviewRepository {
   }
 
   async summaryForSubject(subjectId: string) {
-    const [aggregate, total] = await Promise.all([
-      prisma.review.aggregate({ where: { subjectId }, _avg: { rating: true } }),
-      prisma.review.count({ where: { subjectId } }),
-    ]);
+    const [aggregate, total] = await Promise.all([prisma.review.aggregate({ where: { subjectId }, _avg: { rating: true } }), prisma.review.count({ where: { subjectId } })]);
 
     return { average: aggregate._avg.rating ?? 0, total };
+  }
+
+  // One query for a whole page of search results — a summary per card would be
+  // an N+1 on the marketplace's hottest path.
+  async summariesForSubjects(subjectIds: string[]) {
+    if (!subjectIds.length) return new Map<string, { average: number; total: number }>();
+
+    const rows = await prisma.review.groupBy({
+      by: ["subjectId"],
+      where: { subjectId: { in: subjectIds } },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    return new Map(rows.map(row => [row.subjectId, { average: row._avg.rating ?? 0, total: row._count.rating }]));
   }
 
   async countByRatingForSubject(subjectId: string) {
