@@ -18,10 +18,7 @@ const emailField = z
   .email("Please enter a valid email address")
   .refine(value => !isDisposableEmailDomain(value), { message: DISPOSABLE_EMAIL_MESSAGE });
 
-const passwordField = z
-  .string()
-  .min(8, "Password must be at least 8 characters long")
-  .regex(passwordValidationRegex, "Password must include at least one letter, one number and one special character");
+const passwordField = z.string().min(8, "Password must be at least 8 characters long").regex(passwordValidationRegex, "Password must include at least one letter, one number and one special character");
 
 const otpCodeField = z
   .string()
@@ -37,6 +34,10 @@ export const registerValidationSchema = z
     role: z.enum(["DRIVER", "CLIENT"]),
     phone_no: z.string().trim().optional(),
     accepted_terms: z.boolean(),
+    // Client accounts choose what they hire as; organisation_name doubles as
+    // full_name on the organisation tab, so it only exists there.
+    client_type: z.enum(["INDIVIDUAL", "ORGANISATION"]).optional(),
+    organisation_name: z.string().trim().optional(),
     // Decides how the account proves its email: "web" sends the link, "mobile"
     // sends a code, because a link that opens the web app cannot finish a
     // signup still on screen in the app.

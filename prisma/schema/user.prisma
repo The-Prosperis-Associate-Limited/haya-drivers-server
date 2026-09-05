@@ -107,6 +107,16 @@ model ClientProfile {
   organisation_size Int?
   industry          String?
 
+  // Hiring preferences collected by the client onboarding wizard. All optional —
+  // the wizard is skippable and the marketplace works without them.
+  hiring_categories       ClientDriverCategory[] @default([])
+  drivers_needed          DriversNeededRange?
+  assignment_type         AssignmentType?
+  primary_location        String?
+  hiring_timeline         HiringTimeline?
+  budget_range            BudgetRange?
+  onboarding_completed_at DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -114,4 +124,39 @@ model ClientProfile {
 enum ClientType {
   INDIVIDUAL
   ORGANISATION
+}
+
+enum ClientDriverCategory {
+  CONTRACT
+  PRIVATE
+  CORPORATE
+  EXECUTIVE
+  SPY
+  EXPATRIATE
+}
+
+enum DriversNeededRange {
+  ONE
+  TWO_TO_FIVE
+  SIX_TO_FIFTEEN
+  SIXTEEN_PLUS
+}
+
+enum AssignmentType {
+  PERMANENT
+  TEMPORARY
+}
+
+enum HiringTimeline {
+  IMMEDIATELY
+  WITHIN_TWO_WEEKS
+  THIS_MONTH
+  EXPLORING
+}
+
+enum BudgetRange {
+  RANGE_150_200K
+  RANGE_201_250K
+  RANGE_251_300K
+  RANGE_301K_PLUS
 }

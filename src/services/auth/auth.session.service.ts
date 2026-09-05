@@ -6,9 +6,10 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "../../helper/err
 import { CustomJwtPayload } from "../../interface";
 import { queueEmail } from "../../workers/globalEmailQueueHandler";
 import { JOB_KEY } from "../../workers/jobKeys";
+import { surfaceUrlFor } from "../../utils/surfaceUrl";
 import { AuthOtpService } from "./auth.otp.service";
 
-const { EMAIL_VERIFICATION_TOKEN, CLIENT_URL } = process.env;
+const { EMAIL_VERIFICATION_TOKEN } = process.env;
 
 export class AuthSessionService {
   private userRepo = new UserRepository();
@@ -52,23 +53,24 @@ export class AuthSessionService {
   async validateEmailByToken(token: string) {
     const { id } = jwt.verify(token, EMAIL_VERIFICATION_TOKEN as Secret) as CustomJwtPayload;
 
-    const user = await this.userRepo.findUniqueUser({ id }, { id: true, first_name: true, email: true, has_validated_email: true });
+    const user = await this.userRepo.findUniqueUser({ id }, { id: true, first_name: true, email: true, has_validated_email: true, role: true });
 
     if (!user) throw new NotFoundError("Account not found");
 
     const name = encodeURIComponent(user.first_name ?? "there");
+    const baseUrl = surfaceUrlFor(user.role);
 
-    if (user.has_validated_email) return `${CLIENT_URL}/auth/email-verified?name=${name}`;
+    if (user.has_validated_email) return `${baseUrl}/auth/email-verified?name=${name}`;
 
     await this.userRepo.updateUser(id, { has_validated_email: true });
 
     await queueEmail(JOB_KEY.EMAIL_VERIFIED, {
       email: user.email as string,
       first_name: user.first_name ?? "there",
-      baseUrl: CLIENT_URL as string,
+      baseUrl,
     });
 
-    return `${CLIENT_URL}/auth/email-verified?name=${name}`;
+    return `${baseUrl}/auth/email-verified?name=${name}`;
   }
 
   // Same response whether or not the address has an account — anything else
@@ -96,7 +98,7 @@ export class AuthSessionService {
       await queueEmail(JOB_KEY.EMAIL_VERIFIED, {
         email: user.email,
         first_name: user.first_name ?? "there",
-        baseUrl: CLIENT_URL as string,
+        baseUrl: surfaceUrlFor(user.role),
       });
     }
 

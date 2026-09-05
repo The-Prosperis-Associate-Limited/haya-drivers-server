@@ -2,6 +2,7 @@ import { OAuth2Client } from "google-auth-library";
 import type { $Enums } from "../../generated/prisma/client";
 import { UserRepository } from "../../repositories/user/user.repository";
 import { DriverProfileRepository } from "../../repositories/driver/driverProfile.repository";
+import { ClientProfileRepository } from "../../repositories/user/clientProfile.repository";
 import { WalletRepository } from "../../repositories/earnings/wallet.repository";
 import { BadRequestError, ForbiddenError } from "../../helper/errors";
 import { generateTokenPair } from "../../helper/generateToken";
@@ -34,6 +35,7 @@ interface GoogleIdentity {
 export class AuthOAuthService {
   private userRepo = new UserRepository();
   private driverProfileRepo = new DriverProfileRepository();
+  private clientProfileRepo = new ClientProfileRepository();
   private walletRepo = new WalletRepository();
   private activityService = new ActivityService();
 
@@ -69,6 +71,12 @@ export class AuthOAuthService {
 
     if (user.role === "DRIVER") {
       await Promise.all([this.driverProfileRepo.create({ userId: user.id }), this.walletRepo.ensureForUser(user.id)]);
+    }
+
+    // Google tells us nothing about what they hire as — INDIVIDUAL until the
+    // onboarding wizard says otherwise.
+    if (user.role === "CLIENT") {
+      await this.clientProfileRepo.ensureForUser(user.id);
     }
 
     await this.activityService.record(user.id, "ACCOUNT_CREATED", "Account created with Google");

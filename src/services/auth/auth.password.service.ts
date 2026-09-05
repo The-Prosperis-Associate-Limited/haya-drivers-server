@@ -6,9 +6,10 @@ import { BadRequestError, NotFoundError } from "../../helper/errors";
 import { CustomJwtPayload } from "../../interface";
 import { queueEmail } from "../../workers/globalEmailQueueHandler";
 import { JOB_KEY } from "../../workers/jobKeys";
+import { surfaceUrlFor } from "../../utils/surfaceUrl";
 import { AuthOtpService } from "./auth.otp.service";
 
-const { EMAIL_VERIFICATION_TOKEN, CLIENT_URL } = process.env;
+const { EMAIL_VERIFICATION_TOKEN } = process.env;
 
 export class AuthPasswordService {
   private userRepo = new UserRepository();
@@ -23,7 +24,7 @@ export class AuthPasswordService {
     await queueEmail(JOB_KEY.FORGOT_PASSWORD, {
       email: user.email,
       first_name: user.first_name ?? "there",
-      baseUrl: CLIENT_URL as string,
+      baseUrl: surfaceUrlFor(user.role),
       resetToken: generatePasswordResetToken(user.id),
     });
   }
@@ -51,7 +52,7 @@ export class AuthPasswordService {
   async resetPassword(token: string, password: string) {
     const { id } = jwt.verify(token, EMAIL_VERIFICATION_TOKEN as Secret) as CustomJwtPayload;
 
-    const user = await this.userRepo.findUniqueUser({ id }, { id: true, email: true, first_name: true });
+    const user = await this.userRepo.findUniqueUser({ id }, { id: true, email: true, first_name: true, role: true });
 
     if (!user) throw new NotFoundError("Account not found");
 
@@ -67,7 +68,7 @@ export class AuthPasswordService {
     await queueEmail(JOB_KEY.RESET_PASSWORD, {
       email: user.email as string,
       first_name: user.first_name ?? "there",
-      baseUrl: CLIENT_URL as string,
+      baseUrl: surfaceUrlFor(user.role),
     });
   }
 

@@ -1,5 +1,6 @@
 import { UserRepository } from "../../repositories/user/user.repository";
 import { DriverProfileRepository } from "../../repositories/driver/driverProfile.repository";
+import { ClientProfileRepository } from "../../repositories/user/clientProfile.repository";
 import { WalletRepository } from "../../repositories/earnings/wallet.repository";
 import { hashPassword } from "../../helper/hashPassword";
 import { generateEmailVerificationToken } from "../../helper/generateToken";
@@ -13,6 +14,7 @@ import { AuthOtpService } from "./auth.otp.service";
 export class AuthRegistrationService {
   private userRepo = new UserRepository();
   private driverProfileRepo = new DriverProfileRepository();
+  private clientProfileRepo = new ClientProfileRepository();
   private walletRepo = new WalletRepository();
   private activityService = new ActivityService();
   private otpService = new AuthOtpService();
@@ -22,7 +24,7 @@ export class AuthRegistrationService {
 
     if (existingUser) throw new BadRequestError("An account with this email already exists");
 
-    const { confirm_password: _, client, accepted_terms, full_name, ...rest } = data;
+    const { confirm_password: _, client, accepted_terms, full_name, client_type, organisation_name, ...rest } = data;
 
     const [first_name, ...remaining] = full_name.trim().split(/\s+/);
 
@@ -38,6 +40,15 @@ export class AuthRegistrationService {
     // code has to guess whether they exist yet.
     if (user.role === "DRIVER") {
       await Promise.all([this.driverProfileRepo.create({ userId: user.id }), this.walletRepo.ensureForUser(user.id)]);
+    }
+
+    // A client gets the same guarantee — the profile carries what they hire as.
+    if (user.role === "CLIENT") {
+      await this.clientProfileRepo.create({
+        userId: user.id,
+        client_type: client_type ?? "INDIVIDUAL",
+        organisation_name: client_type === "ORGANISATION" ? (organisation_name ?? full_name) : null,
+      });
     }
 
     await this.activityService.record(user.id, "ACCOUNT_CREATED", "Account created");
