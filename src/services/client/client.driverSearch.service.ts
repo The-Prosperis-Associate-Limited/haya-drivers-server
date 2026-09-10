@@ -20,12 +20,15 @@ export class ClientDriverSearchService {
 
     const { drivers, total } = await this.driverProfileRepo.search({ ...pagination, ...filters });
 
-    const summaries = await this.reviewRepo.summariesForSubjects(drivers.map(driver => driver.userId));
+    const userIds = drivers.map(driver => driver.userId);
+
+    const [summaries, certifications] = await Promise.all([this.reviewRepo.summariesForSubjects(userIds), this.certificationRepo.titlesForUsers(userIds)]);
 
     const withRatings = drivers.map(driver => ({
       ...driver,
       rating: summaries.get(driver.userId)?.average ?? 0,
       review_count: summaries.get(driver.userId)?.total ?? 0,
+      certification_titles: certifications.get(driver.userId) ?? [],
     }));
 
     return paginate(withRatings, total, pagination);

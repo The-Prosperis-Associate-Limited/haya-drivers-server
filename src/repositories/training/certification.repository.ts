@@ -14,6 +14,26 @@ export class CertificationRepository {
     });
   }
 
+  // One query for a page of search results — the marketplace cards each carry
+  // certification chips.
+  async titlesForUsers(userIds: string[]) {
+    if (!userIds.length) return new Map<string, string[]>();
+
+    const rows = await prisma.certification.findMany({
+      where: { userId: { in: userIds } },
+      orderBy: { issued_at: "desc" },
+      select: { userId: true, course: { select: { title: true } } },
+    });
+
+    const map = new Map<string, string[]>();
+
+    for (const row of rows) {
+      map.set(row.userId, [...(map.get(row.userId) ?? []), row.course.title]);
+    }
+
+    return map;
+  }
+
   async findForUserAndCourse(userId: string, courseId: string) {
     return prisma.certification.findUnique({ where: { userId_courseId: { userId, courseId } } });
   }

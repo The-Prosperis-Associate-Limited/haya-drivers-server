@@ -42,6 +42,7 @@ export class WalletTransactionRepository {
             select: {
               reference: true,
               title: true,
+              driver_type: true,
               client: { select: { first_name: true, last_name: true } },
               driver: { select: { first_name: true, last_name: true } },
             },
