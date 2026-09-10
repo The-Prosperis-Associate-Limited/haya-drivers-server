@@ -116,19 +116,28 @@ export class ClientBookingService {
   async review(clientId: string, reference: string, data: ReviewBookingInput) {
     const booking = await this.get(clientId, reference);
 
-    if (booking.status !== "COMPLETED") throw new BadRequestError("You can review a job once it is complete");
+    // A monthly hire runs for months — the client reviews the driver while the
+    // engagement is live, not only after it ends. Unanswered requests stay
+    // unreviewable: nobody reviews a driver who never worked for them.
+    const reviewable = booking.accepted_at && ["ACCEPTED", "IN_PROGRESS", "COMPLETED"].includes(booking.status);
+
+    if (!reviewable) throw new BadRequestError("You can review a driver once they have taken the job");
     if (!booking.driverId) throw new BadRequestError("This booking has no driver to review");
 
     const existing = await this.reviewRepo.findByBooking(booking.id);
 
     if (existing) throw new BadRequestError("You have already reviewed this job");
 
+    const scores = Object.values(data.criteria ?? {});
+    const rating = data.rating ?? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+
     const review = await this.reviewRepo.create({
       bookingId: booking.id,
       authorId: clientId,
       subjectId: booking.driverId,
-      rating: data.rating,
+      rating,
       comment: data.comment,
+      criteria: data.criteria,
     });
 
     // A review moves the trust score, which is what the client search sorts by.

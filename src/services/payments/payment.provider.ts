@@ -27,6 +27,25 @@ export interface TransferResult {
   failure_reason?: string;
 }
 
+export interface DedicatedAccountParams {
+  email: string;
+  first_name: string;
+  last_name?: string | null;
+  phone?: string | null;
+}
+
+export interface DedicatedAccount {
+  account_number: string;
+  account_name: string;
+  bank_name: string;
+  customer_code: string;
+}
+
+export interface FundingRecord {
+  reference: string;
+  amount_minor: number;
+}
+
 /*
   Every payment provider is reached through this interface, so adding a region
   is a new implementation plus an entry in the registry — never a change to the
@@ -41,5 +60,7 @@ export interface PaymentProvider {
   resolveAccount(accountNumber: string, bankCode: string): Promise<ResolvedAccount>;
   createTransferRecipient(input: { account_number: string; bank_code: string; account_name: string; currency: string }): Promise<TransferRecipient>;
   transfer(request: TransferRequest): Promise<TransferResult>;
+  createDedicatedAccount(params: DedicatedAccountParams): Promise<DedicatedAccount>;
+  listFundingEvents(customerCode: string): Promise<FundingRecord[]>;
   verifyWebhookSignature(rawBody: string, signature: string): boolean;
 }

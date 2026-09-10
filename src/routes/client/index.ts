@@ -3,7 +3,9 @@ import { validateAccessToken, validateClientSession } from "../../middleware/val
 import { clientBookingRouter } from "./booking";
 import { clientDashboardRouter } from "./dashboard";
 import { driversRouter } from "./drivers";
+import { clientHiresRouter } from "./hires";
 import { clientOnboardingRouter } from "./onboarding";
+import { clientWalletRouter } from "./wallet";
 
 const clientRouter = Router();
 
@@ -13,5 +15,7 @@ clientRouter.use("/drivers", driversRouter);
 clientRouter.use("/bookings", clientBookingRouter);
 clientRouter.use("/onboarding", clientOnboardingRouter);
 clientRouter.use("/dashboard", clientDashboardRouter);
+clientRouter.use("/wallet", clientWalletRouter);
+clientRouter.use("/hires", clientHiresRouter);
 
 export { clientRouter };

@@ -15,4 +15,14 @@ export class ClientDashboardController {
       handleErrors({ res, error });
     }
   };
+
+  overview = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.dashboardService.overview(req.userId as string);
+
+      res.status(200).json({ message: "Overview fetched successfully", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
 }

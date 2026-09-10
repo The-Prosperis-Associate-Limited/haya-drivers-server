@@ -50,10 +50,7 @@ export class BookingRepository {
 
     const where: Prisma.BookingWhereInput = { driverId, ...(bucket && bucketFilters[bucket]) };
 
-    const [bookings, total] = await Promise.all([
-      prisma.booking.findMany({ where, skip, take: limit, orderBy: { starts_at: "desc" }, include: bookingParties }),
-      prisma.booking.count({ where }),
-    ]);
+    const [bookings, total] = await Promise.all([prisma.booking.findMany({ where, skip, take: limit, orderBy: { starts_at: "desc" }, include: bookingParties }), prisma.booking.count({ where })]);
 
     return { bookings, total };
   }
@@ -64,10 +61,7 @@ export class BookingRepository {
 
     const where: Prisma.BookingWhereInput = { clientId, ...(status && { status }) };
 
-    const [bookings, total] = await Promise.all([
-      prisma.booking.findMany({ where, skip, take: limit, orderBy: { createdAt: "desc" }, include: bookingParties }),
-      prisma.booking.count({ where }),
-    ]);
+    const [bookings, total] = await Promise.all([prisma.booking.findMany({ where, skip, take: limit, orderBy: { createdAt: "desc" }, include: bookingParties }), prisma.booking.count({ where })]);
 
     return { bookings, total };
   }
@@ -130,5 +124,50 @@ export class BookingRepository {
 
   async countByStatus(status: $Enums.BookingStatus) {
     return prisma.booking.count({ where: { status } });
+  }
+
+  // What the client owes per month across active monthly hires — drives the
+  // "monthly commitment" figure, never a charge.
+  async sumActiveMonthlyCommitment(clientId: string) {
+    const result = await prisma.booking.aggregate({
+      where: { clientId, engagement_type: "MONTHLY", status: { in: ["ACCEPTED", "IN_PROGRESS"] } },
+      _sum: { amount: true },
+    });
+
+    return result._sum.amount ?? 0;
+  }
+
+  // "Hired staff" is not a table — it is the client's active monthly
+  // engagements, with the driver's profile alongside for the roster rows.
+  async findActiveHires(clientId: string, params: { page: number; limit: number }) {
+    const { page, limit } = params;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.BookingWhereInput = {
+      clientId,
+      engagement_type: "MONTHLY",
+      status: { in: ["ACCEPTED", "IN_PROGRESS"] },
+    };
+
+    const include = {
+      driver: {
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          profile_pic: true,
+          gender: true,
+          city: true,
+          state_of_residence: true,
+          driver_profile: {
+            select: { driver_type: true, expected_monthly_rate: true, rate_currency: true, trust_score: true },
+          },
+        },
+      },
+    } satisfies Prisma.BookingInclude;
+
+    const [bookings, total] = await Promise.all([prisma.booking.findMany({ where, skip, take: limit, orderBy: { starts_at: "desc" }, include }), prisma.booking.count({ where })]);
+
+    return { bookings, total };
   }
 }

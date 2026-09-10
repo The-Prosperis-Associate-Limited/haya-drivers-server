@@ -4,6 +4,8 @@ enum WalletTransactionType {
   PAYOUT
   PAYOUT_REVERSAL
   ADJUSTMENT
+  FUNDING
+  BOOKING_CHARGE
 }
 
 enum WalletTransactionStatus {
@@ -39,6 +41,13 @@ model Wallet {
   available_minor Int    @default(0)
   pending_minor   Int    @default(0)
   lifetime_minor  Int    @default(0)
+
+  // Paystack dedicated virtual account — how a client funds the wallet by bank
+  // transfer. Provisioned lazily on first wallet read, never at signup.
+  dva_account_number String?
+  dva_account_name   String?
+  dva_bank_name      String?
+  dva_customer_code  String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

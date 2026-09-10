@@ -9,6 +9,7 @@ import { NotificationService } from "../shared/notification.service";
 import { ActivityService } from "../shared/activity.service";
 import { TrustScoreService } from "../shared/trustScore.service";
 import { WalletService } from "../earnings/wallet.service";
+import { WalletTransactionRepository } from "../../repositories/earnings/walletTransaction.repository";
 
 const { CLIENT_URL, PLATFORM_FEE_PERCENT } = process.env;
 
@@ -37,6 +38,7 @@ export class BookingTransitionService {
   private activityService = new ActivityService();
   private trustScoreService = new TrustScoreService();
   private walletService = new WalletService();
+  private walletTransactionRepo = new WalletTransactionRepository();
 
   async transition(bookingId: string, to: $Enums.BookingStatus, actorId: string, options: { note?: string; reason?: string } = {}) {
     const booking = await this.bookingRepo.findById(bookingId);
@@ -83,6 +85,15 @@ export class BookingTransitionService {
   // the driver sees.
   private async settleEarnings(booking: Awaited<ReturnType<BookingRepository["findById"]>>) {
     if (!booking?.driverId) return;
+
+    // An engagement the client already paid through their wallet settles there
+    // — crediting it again here would pay the driver twice.
+    const alreadyPaid = await this.walletTransactionRepo.existsForBooking(booking.id, "BOOKING_PAYMENT");
+
+    if (alreadyPaid) {
+      await this.trustScoreService.recompute(booking.driverId);
+      return;
+    }
 
     const fee = Math.round((booking.amount * platformFeePercent) / 100);
 

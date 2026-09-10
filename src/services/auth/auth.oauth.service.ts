@@ -76,7 +76,7 @@ export class AuthOAuthService {
     // Google tells us nothing about what they hire as — INDIVIDUAL until the
     // onboarding wizard says otherwise.
     if (user.role === "CLIENT") {
-      await this.clientProfileRepo.ensureForUser(user.id);
+      await Promise.all([this.clientProfileRepo.ensureForUser(user.id), this.walletRepo.ensureForUser(user.id)]);
     }
 
     await this.activityService.record(user.id, "ACCOUNT_CREATED", "Account created with Google");

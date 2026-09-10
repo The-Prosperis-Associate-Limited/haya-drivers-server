@@ -42,13 +42,17 @@ export class AuthRegistrationService {
       await Promise.all([this.driverProfileRepo.create({ userId: user.id }), this.walletRepo.ensureForUser(user.id)]);
     }
 
-    // A client gets the same guarantee — the profile carries what they hire as.
+    // A client gets the same guarantee — the profile carries what they hire as,
+    // and the wallet is where deposits land.
     if (user.role === "CLIENT") {
-      await this.clientProfileRepo.create({
-        userId: user.id,
-        client_type: client_type ?? "INDIVIDUAL",
-        organisation_name: client_type === "ORGANISATION" ? (organisation_name ?? full_name) : null,
-      });
+      await Promise.all([
+        this.clientProfileRepo.create({
+          userId: user.id,
+          client_type: client_type ?? "INDIVIDUAL",
+          organisation_name: client_type === "ORGANISATION" ? (organisation_name ?? full_name) : null,
+        }),
+        this.walletRepo.ensureForUser(user.id),
+      ]);
     }
 
     await this.activityService.record(user.id, "ACCOUNT_CREATED", "Account created");

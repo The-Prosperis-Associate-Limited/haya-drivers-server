@@ -12,3 +12,19 @@ export const clientPreferencesSchema = z.object({
 });
 
 export type ClientPreferencesInput = z.infer<typeof clientPreferencesSchema>;
+
+export const payDriverSchema = z.object({
+  reference: z.string().trim().min(1, "Which engagement is this payment for?"),
+  amount_minor: z.number().int().positive("Enter an amount to pay"),
+  note: z.string().trim().max(140).optional(),
+});
+
+export const paymentQuoteSchema = z.object({
+  amount_minor: z.coerce.number().int().positive(),
+});
+
+export const walletTransactionFilterSchema = z.object({
+  type: z.enum(["FUNDING", "BOOKING_CHARGE", "PLATFORM_FEE"]).optional(),
+});
+
+export type PayDriverInput = z.infer<typeof payDriverSchema>;

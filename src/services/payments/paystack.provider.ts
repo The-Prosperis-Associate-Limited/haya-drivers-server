@@ -1,8 +1,8 @@
 import crypto from "crypto";
 import { BadRequestError } from "../../helper/errors";
-import type { BankOption, PaymentProvider, ResolvedAccount, TransferRecipient, TransferRequest, TransferResult } from "./payment.provider";
+import type { BankOption, DedicatedAccount, DedicatedAccountParams, FundingRecord, PaymentProvider, ResolvedAccount, TransferRecipient, TransferRequest, TransferResult } from "./payment.provider";
 
-const { PAYSTACK_SECRET_KEY } = process.env;
+const { PAYSTACK_SECRET_KEY, PAYSTACK_DVA_BANK } = process.env;
 
 const BASE_URL = "https://api.paystack.co";
 
@@ -79,8 +79,50 @@ export class PaystackProvider implements PaymentProvider {
     };
   }
 
+  // A Paystack customer first, then the account against it. "test-bank" in
+  // test mode; Wema is Paystack's production DVA partner.
+  async createDedicatedAccount(params: DedicatedAccountParams): Promise<DedicatedAccount> {
+    const customer = await this.request<{ customer_code: string }>("/customer", {
+      method: "POST",
+      body: JSON.stringify({
+        email: params.email,
+        first_name: params.first_name,
+        last_name: params.last_name ?? undefined,
+        phone: params.phone ?? undefined,
+      }),
+    });
+
+    const account = await this.request<{ account_number: string; account_name: string; bank: { name: string } }>("/dedicated_account", {
+      method: "POST",
+      body: JSON.stringify({
+        customer: customer.customer_code,
+        preferred_bank: PAYSTACK_DVA_BANK ?? "wema-bank",
+      }),
+    });
+
+    return {
+      account_number: account.account_number,
+      account_name: account.account_name,
+      bank_name: account.bank.name,
+      customer_code: customer.customer_code,
+    };
+  }
+
+  // Poll fallback for webhooks that never arrived — the transactions list keys
+  // on Paystack's numeric customer id, not the customer code.
+  async listFundingEvents(customerCode: string): Promise<FundingRecord[]> {
+    const customer = await this.request<{ id: number }>(`/customer/${customerCode}`);
+
+    const transactions = await this.request<{ reference: string; amount: number; status: string }[]>(`/transaction?customer=${customer.id}&status=success&perPage=20`);
+
+    return transactions.filter(entry => entry.status === "success").map(entry => ({ reference: entry.reference, amount_minor: entry.amount }));
+  }
+
   verifyWebhookSignature(rawBody: string, signature: string): boolean {
-    const expected = crypto.createHmac("sha512", PAYSTACK_SECRET_KEY as string).update(rawBody).digest("hex");
+    const expected = crypto
+      .createHmac("sha512", PAYSTACK_SECRET_KEY as string)
+      .update(rawBody)
+      .digest("hex");
 
     return signature.length === expected.length && crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
   }

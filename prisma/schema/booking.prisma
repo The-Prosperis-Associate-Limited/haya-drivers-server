@@ -95,6 +95,9 @@ model Review {
   // What the client picked out: "Punctual", "Safe driving". Drives the driver's
   // "What clients mention" panel; free text stays in `comment`.
   tags    String[] @default([])
+  // Per-aspect star scores from the hire review form — { Reliability: 5, ... }.
+  // `rating` stays the single number everything sorts and averages on.
+  criteria Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

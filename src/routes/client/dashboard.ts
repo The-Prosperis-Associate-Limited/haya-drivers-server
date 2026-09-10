@@ -5,5 +5,6 @@ const clientDashboardRouter = Router();
 const dashboard = new ClientDashboardController();
 
 clientDashboardRouter.get("/stats", dashboard.stats);
+clientDashboardRouter.get("/overview", dashboard.overview);
 
 export { clientDashboardRouter };

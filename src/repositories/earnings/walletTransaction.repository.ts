@@ -10,6 +10,21 @@ export class WalletTransactionRepository {
     return prisma.walletTransaction.findUnique({ where: { reference } });
   }
 
+  async existsForBooking(bookingId: string, type: $Enums.WalletTransactionType) {
+    const row = await prisma.walletTransaction.findFirst({ where: { bookingId, type }, select: { id: true } });
+    return !!row;
+  }
+
+  // Debits are stored negative; the caller wants a positive figure.
+  async sumDebitsByType(walletId: string, type: $Enums.WalletTransactionType, since?: Date) {
+    const result = await prisma.walletTransaction.aggregate({
+      where: { walletId, type, amount_minor: { lt: 0 }, ...(since && { createdAt: { gte: since } }) },
+      _sum: { amount_minor: true },
+    });
+
+    return Math.abs(result._sum.amount_minor ?? 0);
+  }
+
   async findForWallet(walletId: string, params: { page: number; limit: number; status?: $Enums.WalletTransactionStatus; type?: $Enums.WalletTransactionType }) {
     const { page, limit, status, type } = params;
     const skip = (page - 1) * limit;
@@ -22,7 +37,16 @@ export class WalletTransactionRepository {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: { booking: { select: { reference: true, title: true, client: { select: { first_name: true, last_name: true } } } } },
+        include: {
+          booking: {
+            select: {
+              reference: true,
+              title: true,
+              client: { select: { first_name: true, last_name: true } },
+              driver: { select: { first_name: true, last_name: true } },
+            },
+          },
+        },
       }),
       prisma.walletTransaction.count({ where }),
     ]);
