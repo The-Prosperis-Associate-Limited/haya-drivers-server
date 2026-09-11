@@ -5,6 +5,7 @@ import { clientDashboardRouter } from "./dashboard";
 import { driversRouter } from "./drivers";
 import { clientHiresRouter } from "./hires";
 import { clientOnboardingRouter } from "./onboarding";
+import { clientRequestsRouter } from "./requests";
 import { clientWalletRouter } from "./wallet";
 
 const clientRouter = Router();
@@ -17,5 +18,6 @@ clientRouter.use("/onboarding", clientOnboardingRouter);
 clientRouter.use("/dashboard", clientDashboardRouter);
 clientRouter.use("/wallet", clientWalletRouter);
 clientRouter.use("/hires", clientHiresRouter);
+clientRouter.use("/requests", clientRequestsRouter);
 
 export { clientRouter };

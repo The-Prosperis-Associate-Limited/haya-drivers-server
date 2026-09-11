@@ -8,22 +8,25 @@ export class ClientDashboardService {
   private walletRepo = new WalletRepository();
   private transactionRepo = new WalletTransactionRepository();
 
-  // "In request list" counts a marketplace request list that does not exist yet;
-  // it stays 0 until that feature lands so the card is never a lie.
+  // "In request list" is the applicants waiting across the client's open
+  // staffing requests — 0 until driver apply ships, but counted, never assumed.
   async stats(clientId: string) {
-    const [activeDrivers, openRequests] = await Promise.all([
+    const [activeDrivers, openRequests, requestList] = await Promise.all([
       prisma.booking.findMany({
         where: { clientId, status: { in: ["ACCEPTED", "IN_PROGRESS"] }, driverId: { not: null } },
         select: { driverId: true },
         distinct: ["driverId"],
       }),
       prisma.booking.count({ where: { clientId, status: "REQUESTED" } }),
+      prisma.requestApplication.count({
+        where: { status: { in: ["APPLIED", "SHORTLISTED"] }, request: { clientId, status: "OPEN" } },
+      }),
     ]);
 
     return {
       active_drivers: activeDrivers.length,
       open_requests: openRequests,
-      request_list: 0,
+      request_list: requestList,
     };
   }
 

@@ -1,0 +1,62 @@
+enum StaffingRequestStatus {
+  OPEN
+  CLOSED
+}
+
+enum RequestApplicationStatus {
+  APPLIED
+  SHORTLISTED
+  REJECTED
+  WITHDRAWN
+}
+
+model StaffingRequest {
+  id        String @id @default(cuid())
+  reference String @unique
+
+  clientId String
+  client   User   @relation("ClientStaffingRequests", fields: [clientId], references: [id])
+
+  title       String
+  description String?
+
+  driver_type     DriverType
+  engagement_type EngagementType @default(MONTHLY)
+
+  country String
+  state   String
+  city    String?
+
+  budget   Int // Minor units (kobo), per month
+  currency String @default("NGN")
+
+  status    StaffingRequestStatus @default(OPEN)
+  closed_at DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  applications RequestApplication[]
+
+  @@index([clientId, status, createdAt])
+  @@index([status, state, driver_type])
+}
+
+model RequestApplication {
+  id String @id @default(cuid())
+
+  requestId String
+  request   StaffingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  driverId String
+  driver   User   @relation("DriverRequestApplications", fields: [driverId], references: [id])
+
+  status  RequestApplicationStatus @default(APPLIED)
+  message String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([requestId, driverId])
+  @@index([requestId, status])
+}
