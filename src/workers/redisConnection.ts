@@ -1,29 +1,27 @@
 import IORedis from "ioredis";
 
-const { REDIS_HOST, REDIS_PASS, REDIS_USERNAME, REDIS_PORT, NODE_ENV } = process.env;
+const { REDIS_URL, REDIS_HOST, REDIS_PASS, REDIS_USERNAME, REDIS_PORT, NODE_ENV } = process.env;
+
+const options = {
+  maxRetriesPerRequest: null,
+  connectTimeout: 10000,
+  lazyConnect: false,
+  retryStrategy: (times: number) => Math.min(times * 50, 2000),
+};
 
 const config =
   NODE_ENV === "development"
-    ? {
-        host: "localhost",
-        port: 6379,
-        maxRetriesPerRequest: null,
-        connectTimeout: 10000,
-        lazyConnect: false,
-        retryStrategy: (times: number) => Math.min(times * 50, 2000),
-      }
+    ? { host: "localhost", port: Number(REDIS_PORT ?? 6379), ...options }
     : {
         host: REDIS_HOST,
         username: REDIS_USERNAME,
         password: REDIS_PASS,
         port: REDIS_PORT as unknown as number,
-        maxRetriesPerRequest: null,
-        connectTimeout: 10000,
-        lazyConnect: false,
-        retryStrategy: (times: number) => Math.min(times * 50, 2000),
+        ...options,
       };
 
-export const connection = new IORedis(config);
+// A pasted REDIS_URL wins in any environment; the host/port pieces are the fallback.
+export const connection = REDIS_URL ? new IORedis(REDIS_URL, options) : new IORedis(config);
 
 let lastErrorLogTime = 0;
 const ERROR_LOG_INTERVAL = 30000;
