@@ -53,6 +53,6 @@
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/pg": "^8.20.0",
-    "prisma": "^8.0.0-rc.13"
+    "prisma": "^7.10.0"
   }
 }
