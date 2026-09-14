@@ -38,6 +38,39 @@ export class EnrollmentRepository {
     return { enrollments, total };
   }
 
+  async findAllForAdmin(params: { page: number; limit: number; status?: $Enums.EnrollmentStatus; search?: string }) {
+    const { page, limit, status, search } = params;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.CourseEnrollmentWhereInput = {
+      ...(status && { status }),
+      ...(search && {
+        OR: [
+          { user: { first_name: { contains: search, mode: "insensitive" as const } } },
+          { user: { last_name: { contains: search, mode: "insensitive" as const } } },
+          { user: { email: { contains: search, mode: "insensitive" as const } } },
+          { course: { title: { contains: search, mode: "insensitive" as const } } },
+        ],
+      }),
+    };
+
+    const [enrollments, total] = await Promise.all([
+      prisma.courseEnrollment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { started_at: "desc" },
+        include: {
+          user: { select: { id: true, first_name: true, last_name: true, email: true, profile_pic: true } },
+          course: { select: { id: true, slug: true, title: true, is_required: true, estimated_minutes: true } },
+        },
+      }),
+      prisma.courseEnrollment.count({ where }),
+    ]);
+
+    return { enrollments, total };
+  }
+
   async update(id: string, data: Prisma.CourseEnrollmentUncheckedUpdateInput) {
     return prisma.courseEnrollment.update({ where: { id }, data });
   }

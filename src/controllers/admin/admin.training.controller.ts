@@ -7,6 +7,26 @@ import { createCourseSchema, createModuleSchema, updateCourseSchema, updateModul
 export class AdminTrainingController {
   private trainingService = new AdminTrainingService();
 
+  stats = async (_req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.trainingService.stats();
+
+      res.status(200).json({ message: "Training stats fetched successfully", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  progress = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.trainingService.progress(req.query);
+
+      res.status(200).json({ message: "Driver progress fetched successfully", ...result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
   listCourses = async (req: IUserRequest, res: Response) => {
     try {
       const result = await this.trainingService.listCourses(req.query);
@@ -56,6 +76,16 @@ export class AdminTrainingController {
       const result = await this.trainingService.publishCourse(req.params.id);
 
       res.status(200).json({ message: "Course published", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  unpublishCourse = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.trainingService.unpublishCourse(req.params.id);
+
+      res.status(200).json({ message: "Course unpublished", data: result });
     } catch (error) {
       handleErrors({ res, error });
     }

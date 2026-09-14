@@ -1,4 +1,5 @@
 import { BookingRequestEmailData } from "../utils/services/emails/bookingRequestEmailService";
+import { AdminInviteEmailData } from "../utils/services/emails/adminInviteEmailService";
 import { BookingStatusEmailData } from "../utils/services/emails/bookingStatusEmailService";
 import { CertificationIssuedEmailData } from "../utils/services/emails/certificationIssuedEmailService";
 import { EmailOtpData } from "../utils/services/emails/emailOtpService";
@@ -33,4 +34,6 @@ export type EmailPayloadMap = {
 
   [JOB_KEY.CREATE_TICKET]: TicketCreatedEmailData;
   [JOB_KEY.UPDATE_TICKET]: TicketUpdateEmailData;
+
+  [JOB_KEY.ADMIN_INVITE]: AdminInviteEmailData;
 };

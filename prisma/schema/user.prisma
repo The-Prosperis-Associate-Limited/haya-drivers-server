@@ -67,6 +67,7 @@ model User {
   driver_verification DriverVerification? @relation("DriverVerificationOwner")
   documents           DriverDocument[]    @relation("DriverDocumentOwner")
   client_profile   ClientProfile?
+  admin_profile    AdminProfile?
   emailOtps        EmailOtp[]
   deviceTokens     DeviceToken[]
   pushSubscription PushSubscription?
@@ -119,6 +120,30 @@ model ClientProfile {
   hiring_timeline         HiringTimeline?
   budget_range            BudgetRange?
   onboarding_completed_at DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  FLEET_MANAGER
+  FINANCE_OFFICER
+  SUPPORT_AGENT
+  READ_ONLY
+}
+
+model AdminProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  admin_role AdminRole @default(READ_ONLY)
+  // Set on invite. Every /api/admin route is refused while true, so the
+  // temporary password cannot be used as a permanent one.
+  must_change_password Boolean @default(false)
+  invited_by     String?
+  last_active_at DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

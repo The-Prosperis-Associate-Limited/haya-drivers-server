@@ -1,5 +1,6 @@
 import jwt, { Secret } from "jsonwebtoken";
 import { UserRepository } from "../../repositories/user/user.repository";
+import { AdminProfileRepository } from "../../repositories/user/adminProfile.repository";
 import { comparePassword } from "../../helper/hashPassword";
 import { generateTokenPair, generateAccessToken } from "../../helper/generateToken";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../../helper/errors";
@@ -13,6 +14,7 @@ const { EMAIL_VERIFICATION_TOKEN } = process.env;
 
 export class AuthSessionService {
   private userRepo = new UserRepository();
+  private adminProfileRepo = new AdminProfileRepository();
   private otpService = new AuthOtpService();
 
   async login(email: string, password: string) {
@@ -38,7 +40,11 @@ export class AuthSessionService {
 
     const { password: _, ...safeUser } = user;
 
-    return { user: safeUser, tokens: generateTokenPair({ id: user.id, role: user.role }) };
+    // The admin console needs must_change_password at sign-in to route the
+    // invitee straight to the password screen.
+    const admin_profile = user.role === "ADMIN" ? await this.adminProfileRepo.findByUserId(user.id) : undefined;
+
+    return { user: admin_profile !== undefined ? { ...safeUser, admin_profile } : safeUser, tokens: generateTokenPair({ id: user.id, role: user.role }) };
   }
 
   async refresh(userId: string, role: string) {

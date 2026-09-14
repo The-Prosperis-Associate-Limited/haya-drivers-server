@@ -24,6 +24,10 @@ export class StaffingRequestRepository {
     return prisma.staffingRequest.findUnique({ where: { reference } });
   }
 
+  async countByStatus(status: "OPEN" | "CLOSED") {
+    return prisma.staffingRequest.count({ where: { status } });
+  }
+
   async update(id: string, data: Prisma.StaffingRequestUncheckedUpdateInput) {
     return prisma.staffingRequest.update({ where: { id }, data });
   }

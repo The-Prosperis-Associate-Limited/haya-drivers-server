@@ -1,6 +1,7 @@
 import type { $Enums } from "../../generated/prisma/client";
 import { CourseModuleRepository } from "../../repositories/training/courseModule.repository";
 import { CourseRepository } from "../../repositories/training/course.repository";
+import { EnrollmentRepository } from "../../repositories/training/enrollment.repository";
 import { BadRequestError, NotFoundError } from "../../helper/errors";
 import { paginate, parsePagination } from "../../utils/pagination";
 import type { CreateCourseInput, CreateModuleInput } from "../../utils/types/trainingValidatorSchema";
@@ -8,6 +9,23 @@ import type { CreateCourseInput, CreateModuleInput } from "../../utils/types/tra
 export class AdminTrainingService {
   private courseRepo = new CourseRepository();
   private moduleRepo = new CourseModuleRepository();
+  private enrollmentRepo = new EnrollmentRepository();
+
+  async stats() {
+    return this.courseRepo.adminStats();
+  }
+
+  async progress(query: Record<string, unknown>) {
+    const pagination = parsePagination(query);
+
+    const { enrollments, total } = await this.enrollmentRepo.findAllForAdmin({
+      ...pagination,
+      status: query.status as $Enums.EnrollmentStatus | undefined,
+      search: query.search as string | undefined,
+    });
+
+    return paginate(enrollments, total, pagination);
+  }
 
   async listCourses(query: Record<string, unknown>) {
     const pagination = parsePagination(query);
@@ -43,6 +61,13 @@ export class AdminTrainingService {
     if (!modules) throw new BadRequestError("Add at least one module before publishing this course");
 
     return this.courseRepo.update(id, { status: "PUBLISHED" });
+  }
+
+  // Back to DRAFT rather than ARCHIVED — an unpublished course is expected to return.
+  async unpublishCourse(id: string) {
+    await this.getCourse(id);
+
+    return this.courseRepo.update(id, { status: "DRAFT" });
   }
 
   async deleteCourse(id: string) {

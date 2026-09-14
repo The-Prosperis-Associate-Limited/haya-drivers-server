@@ -1,4 +1,5 @@
 import { BookingRequestEmailData, sendBookingRequestEmail } from "../utils/services/emails/bookingRequestEmailService";
+import { AdminInviteEmailData, sendAdminInviteEmail } from "../utils/services/emails/adminInviteEmailService";
 import { BookingStatusEmailData, sendBookingStatusEmail } from "../utils/services/emails/bookingStatusEmailService";
 import { CertificationIssuedEmailData, sendCertificationIssuedEmail } from "../utils/services/emails/certificationIssuedEmailService";
 import { EmailOtpData, sendEmailOtpEmail } from "../utils/services/emails/emailOtpService";
@@ -42,4 +43,6 @@ export const initializeEmailHandlers = function () {
   registerEmailHandler(JOB_KEY.CREATE_TICKET, async (data: TicketCreatedEmailData) => await sendTicketCreatedEmail(data));
 
   registerEmailHandler(JOB_KEY.UPDATE_TICKET, async (data: TicketUpdateEmailData) => await sendTicketUpdateEmail(data));
+
+  registerEmailHandler(JOB_KEY.ADMIN_INVITE, async (data: AdminInviteEmailData) => await sendAdminInviteEmail(data));
 };

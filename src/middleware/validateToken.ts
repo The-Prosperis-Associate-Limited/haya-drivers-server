@@ -4,8 +4,10 @@ import jwt, { Secret } from "jsonwebtoken";
 import { CustomJwtPayload, IUserRequest } from "../interface";
 import { handleErrors } from "../helper/handleErrors";
 import { UserRepository } from "../repositories/user/user.repository";
+import { AdminProfileRepository } from "../repositories/user/adminProfile.repository";
 
 const userRepository = new UserRepository();
+const adminProfileRepository = new AdminProfileRepository();
 
 const validateAccessToken = async function (req: IUserRequest, res: Response, next: NextFunction) {
   let token = req.headers["authorization"]?.split(" ")[1];
@@ -82,9 +84,25 @@ const validateClientSession = function (req: IUserRequest, res: Response, next: 
   next();
 };
 
-const validateAdminSession = function (req: IUserRequest, res: Response, next: NextFunction) {
+const validateAdminSession = async function (req: IUserRequest, res: Response, next: NextFunction) {
   if (req.role !== "ADMIN") return res.status(403).json({ message: "Unauthorized!, only an admin is authorized to do this" });
-  next();
+
+  try {
+    const profile = await adminProfileRepository.findByUserId(req.userId as string);
+
+    // Admins that predate roles have no profile row and stay unrestricted.
+    req.adminRole = profile?.admin_role ?? "SUPER_ADMIN";
+
+    if (profile?.must_change_password) {
+      return res.status(403).json({ message: "Change your temporary password before continuing", code: "PASSWORD_CHANGE_REQUIRED" });
+    }
+
+    if (profile) void adminProfileRepository.touchLastActive(req.userId as string).catch(() => {});
+
+    next();
+  } catch (error) {
+    handleErrors({ res, error });
+  }
 };
 
 export { validateAccessToken, validateRefreshToken, validateGoogleVerificationToken, validateDriverSession, validateClientSession, validateAdminSession };

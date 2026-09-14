@@ -1,5 +1,6 @@
 import jwt, { Secret } from "jsonwebtoken";
 import { UserRepository } from "../../repositories/user/user.repository";
+import { AdminProfileRepository } from "../../repositories/user/adminProfile.repository";
 import { comparePassword, hashPassword } from "../../helper/hashPassword";
 import { generatePasswordResetToken } from "../../helper/generateToken";
 import { BadRequestError, NotFoundError } from "../../helper/errors";
@@ -13,6 +14,7 @@ const { EMAIL_VERIFICATION_TOKEN } = process.env;
 
 export class AuthPasswordService {
   private userRepo = new UserRepository();
+  private adminProfileRepo = new AdminProfileRepository();
   private otpService = new AuthOtpService();
 
   // Deliberately silent about whether the address has an account.
@@ -65,6 +67,8 @@ export class AuthPasswordService {
       sessions_valid_from: new Date(),
     });
 
+    await this.adminProfileRepo.clearMustChangePassword(id);
+
     await queueEmail(JOB_KEY.RESET_PASSWORD, {
       email: user.email as string,
       first_name: user.first_name ?? "there",
@@ -83,5 +87,7 @@ export class AuthPasswordService {
     if (!isMatch) throw new BadRequestError("Your current password is incorrect");
 
     await this.userRepo.updateUser(userId, { password: await hashPassword(newPassword) });
+
+    await this.adminProfileRepo.clearMustChangePassword(userId);
   }
 }

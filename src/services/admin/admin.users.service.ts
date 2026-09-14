@@ -1,6 +1,8 @@
 import type { $Enums } from "../../generated/prisma/client";
 import { DriverProfileRepository } from "../../repositories/driver/driverProfile.repository";
 import { UserRepository } from "../../repositories/user/user.repository";
+import { WalletRepository } from "../../repositories/earnings/wallet.repository";
+import { WalletTransactionRepository } from "../../repositories/earnings/walletTransaction.repository";
 import { NotFoundError } from "../../helper/errors";
 import { paginate, parsePagination } from "../../utils/pagination";
 import { ActivityService } from "../shared/activity.service";
@@ -9,6 +11,8 @@ import { NotificationService } from "../shared/notification.service";
 export class AdminUsersService {
   private userRepo = new UserRepository();
   private driverProfileRepo = new DriverProfileRepository();
+  private walletRepo = new WalletRepository();
+  private walletTransactionRepo = new WalletTransactionRepository();
   private notificationService = new NotificationService();
   private activityService = new ActivityService();
 
@@ -20,9 +24,46 @@ export class AdminUsersService {
       search: query.search as string | undefined,
       role: query.role as $Enums.UserRole | undefined,
       status: query.status as $Enums.AccountStatus | undefined,
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        phone_no: true,
+        profile_pic: true,
+        role: true,
+        account_status: true,
+        has_validated_email: true,
+        lastLogin: true,
+        createdAt: true,
+        driver_profile: { select: { driver_type: true, trust_score: true, verification_status: true } },
+        client_profile: { select: { client_type: true, organisation_name: true } },
+      },
     });
 
     return paginate(users, total, pagination);
+  }
+
+  async stats(role?: $Enums.UserRole) {
+    if (role === "CLIENT") {
+      const [total, active, suspended, organisations] = await Promise.all([
+        this.userRepo.count({ role: "CLIENT" }),
+        this.userRepo.count({ role: "CLIENT", account_status: "ACTIVE" }),
+        this.userRepo.count({ role: "CLIENT", account_status: "SUSPENDED" }),
+        this.userRepo.count({ role: "CLIENT", client_profile: { client_type: "ORGANISATION" } }),
+      ]);
+
+      return { total, active, suspended, organisations };
+    }
+
+    const [total, approved, pending, suspended] = await Promise.all([
+      this.userRepo.count({ role: "DRIVER" }),
+      this.driverProfileRepo.countByStatus("APPROVED"),
+      this.driverProfileRepo.countByStatus("PENDING"),
+      this.userRepo.count({ role: "DRIVER", account_status: "SUSPENDED" }),
+    ]);
+
+    return { total, active: approved, pending_approval: pending, suspended };
   }
 
   async get(id: string) {
@@ -32,21 +73,60 @@ export class AdminUsersService {
       last_name: true,
       email: true,
       phone_no: true,
+      whatsapp_number: true,
       profile_pic: true,
+      bio: true,
       role: true,
+      gender: true,
+      date_of_birth: true,
+      marital_status: true,
       account_status: true,
       has_validated_email: true,
       country: true,
       state_of_residence: true,
+      city: true,
+      address: true,
       createdAt: true,
       lastLogin: true,
-      driver_profile: true,
+      driver_profile: { include: { work_experiences: { orderBy: { started_at: "desc" } }, guarantors: true } },
+      driver_verification: true,
       client_profile: true,
     });
 
     if (!user) throw new NotFoundError("Account not found");
 
     return user;
+  }
+
+  async wallet(id: string, query: Record<string, unknown>) {
+    const user = await this.userRepo.findById(id, { id: true, role: true });
+
+    if (!user) throw new NotFoundError("Account not found");
+
+    const wallet = await this.walletRepo.findByUserId(id);
+
+    if (!wallet) {
+      return { wallet: null, transactions: paginate([], 0, parsePagination(query)) };
+    }
+
+    const pagination = parsePagination(query);
+    const { transactions, total } = await this.walletTransactionRepo.findForWallet(wallet.id, {
+      ...pagination,
+      status: query.status as $Enums.WalletTransactionStatus | undefined,
+      type: query.type as $Enums.WalletTransactionType | undefined,
+    });
+
+    const { dva_customer_code: _, ...safeWallet } = wallet;
+
+    return { wallet: safeWallet, transactions: paginate(transactions, total, pagination) };
+  }
+
+  async activities(id: string, query: Record<string, unknown>) {
+    const user = await this.userRepo.findById(id, { id: true });
+
+    if (!user) throw new NotFoundError("Account not found");
+
+    return this.activityService.listForUser(id, query);
   }
 
   /*

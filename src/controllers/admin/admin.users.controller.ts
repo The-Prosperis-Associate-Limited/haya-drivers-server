@@ -1,4 +1,5 @@
 import { Response } from "express";
+import type { $Enums } from "../../generated/prisma/client";
 import { handleErrors } from "../../helper/handleErrors";
 import { IUserRequest } from "../../interface";
 import { AdminUsersService } from "../../services/admin/admin.users.service";
@@ -11,6 +12,36 @@ export class AdminUsersController {
       const result = await this.usersService.list(req.query);
 
       res.status(200).json({ message: "Users fetched successfully", ...result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  stats = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.usersService.stats(req.query.role as $Enums.UserRole | undefined);
+
+      res.status(200).json({ message: "User stats fetched successfully", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  wallet = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.usersService.wallet(req.params.id, req.query);
+
+      res.status(200).json({ message: "Wallet fetched successfully", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  activities = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.usersService.activities(req.params.id, req.query);
+
+      res.status(200).json({ message: "Activities fetched successfully", ...result });
     } catch (error) {
       handleErrors({ res, error });
     }

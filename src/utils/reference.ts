@@ -13,3 +13,14 @@ export const generateNumericCode = (digits = 6) => {
   const max = 10 ** digits;
   return crypto.randomInt(0, max).toString().padStart(digits, "0");
 };
+
+// Guaranteed to pass the password policy (length, letter, number, symbol).
+export const generateTemporaryPassword = () => {
+  const lower = "abcdefghjkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "!@#$%&*";
+  const pick = (set: string) => set[crypto.randomInt(0, set.length)];
+  const body = Array.from({ length: 8 }, () => pick(ALPHABET + lower)).join("");
+
+  return `${pick(ALPHABET)}${body}${pick(digits)}${pick(symbols)}`;
+};

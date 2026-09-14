@@ -18,6 +18,8 @@ export const JOB_KEY = {
 
   CREATE_TICKET: "create_ticket",
   UPDATE_TICKET: "update_ticket",
+
+  ADMIN_INVITE: "admin_invite",
 } as const;
 
 // Must stay in step with the repeatable definitions in utils/cron-jobs.ts

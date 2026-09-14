@@ -22,6 +22,17 @@ export class CourseRepository {
     return prisma.course.delete({ where: { id }, select: { id: true } });
   }
 
+  async adminStats() {
+    const [published, drafts, archived, required] = await Promise.all([
+      prisma.course.count({ where: { status: "PUBLISHED" } }),
+      prisma.course.count({ where: { status: "DRAFT" } }),
+      prisma.course.count({ where: { status: "ARCHIVED" } }),
+      prisma.course.count({ where: { status: "PUBLISHED", is_required: true } }),
+    ]);
+
+    return { published, drafts, archived, required };
+  }
+
   /*
     The caller's own enrollment is included so the course grid can show progress
     without a second round trip per card. Ordering is `position` first because

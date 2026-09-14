@@ -36,6 +36,7 @@ export class ProfileService {
       createdAt: true,
       driver_profile: true,
       client_profile: true,
+      admin_profile: true,
     });
 
     if (!user) throw new NotFoundError("Account not found");

@@ -104,6 +104,17 @@ export class UserRepository {
     return prisma.user.count({ where });
   }
 
+  // Grouped in Postgres so the growth chart costs one query however long the range.
+  async registrationSeries(since: Date) {
+    return prisma.$queryRaw<{ day: Date; role: string; count: bigint }[]>`
+      SELECT date_trunc('day', "createdAt") AS day, "role"::text AS role, COUNT(*) AS count
+      FROM "User"
+      WHERE "createdAt" >= ${since} AND "role" IN ('DRIVER', 'CLIENT')
+      GROUP BY 1, 2
+      ORDER BY 1 ASC
+    `;
+  }
+
   async deleteUser(id: string) {
     return prisma.user.delete({ where: { id }, select: { id: true } });
   }
