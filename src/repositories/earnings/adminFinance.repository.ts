@@ -15,10 +15,7 @@ export class AdminFinanceRepository {
   }
 
   async payoutTotals() {
-    const [paid, failed] = await Promise.all([
-      prisma.payout.aggregate({ where: { status: "PAID" }, _sum: { amount_minor: true }, _count: true }),
-      prisma.payout.count({ where: { status: "FAILED" } }),
-    ]);
+    const [paid, failed] = await Promise.all([prisma.payout.aggregate({ where: { status: "PAID" }, _sum: { amount_minor: true }, _count: true }), prisma.payout.count({ where: { status: "FAILED" } })]);
 
     return { paid_minor: paid._sum.amount_minor ?? 0, paid_count: paid._count, failed_count: failed };
   }
@@ -85,10 +82,7 @@ export class AdminFinanceRepository {
     const where: Prisma.WalletTransactionWhereInput = {
       type: "PLATFORM_FEE",
       ...(search && {
-        OR: [
-          { reference: { contains: search, mode: "insensitive" as const } },
-          { booking: { reference: { contains: search, mode: "insensitive" as const } } },
-        ],
+        OR: [{ reference: { contains: search, mode: "insensitive" as const } }, { booking: { reference: { contains: search, mode: "insensitive" as const } } }],
       }),
     };
 

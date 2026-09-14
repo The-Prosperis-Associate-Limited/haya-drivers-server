@@ -30,11 +30,7 @@ export class AdminProfileRepository {
     const where: Prisma.UserWhereInput = {
       role: "ADMIN",
       ...(search && {
-        OR: [
-          { email: { contains: search, mode: "insensitive" as const } },
-          { first_name: { contains: search, mode: "insensitive" as const } },
-          { last_name: { contains: search, mode: "insensitive" as const } },
-        ],
+        OR: [{ email: { contains: search, mode: "insensitive" as const } }, { first_name: { contains: search, mode: "insensitive" as const } }, { last_name: { contains: search, mode: "insensitive" as const } }],
       }),
     };
 

@@ -64,12 +64,7 @@ export class UserRepository {
     const where: Prisma.UserWhereInput = { role: role ?? { not: "ADMIN" } };
 
     if (search) {
-      where.OR = [
-        { email: { contains: search, mode: "insensitive" } },
-        { first_name: { contains: search, mode: "insensitive" } },
-        { last_name: { contains: search, mode: "insensitive" } },
-        { phone_no: { contains: search, mode: "insensitive" } },
-      ];
+      where.OR = [{ email: { contains: search, mode: "insensitive" } }, { first_name: { contains: search, mode: "insensitive" } }, { last_name: { contains: search, mode: "insensitive" } }, { phone_no: { contains: search, mode: "insensitive" } }];
     }
 
     if (status) where.account_status = status;

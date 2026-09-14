@@ -2,8 +2,7 @@ import crypto from "crypto";
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-const randomBlock = (length: number) =>
-  Array.from({ length }, () => ALPHABET[crypto.randomInt(0, ALPHABET.length)]).join("");
+const randomBlock = (length: number) => Array.from({ length }, () => ALPHABET[crypto.randomInt(0, ALPHABET.length)]).join("");
 
 // Human-readable and safe to read down a phone line — no characters that look
 // like each other (0/O, 1/I).

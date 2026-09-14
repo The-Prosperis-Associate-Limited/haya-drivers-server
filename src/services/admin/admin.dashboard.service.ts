@@ -40,9 +40,9 @@ export class AdminDashboardService {
 
   async growth(period: GrowthPeriod) {
     const days = PERIOD_DAYS[period];
-    const since = new Date();
-    since.setHours(0, 0, 0, 0);
-    since.setDate(since.getDate() - (days - 1));
+    // UTC throughout — Postgres buckets by UTC day, so local midnight would shift every key.
+    const now = new Date();
+    const since = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (days - 1)));
 
     const rows = await this.userRepo.registrationSeries(since);
 
@@ -50,7 +50,7 @@ export class AdminDashboardService {
 
     for (let i = 0; i < days; i++) {
       const day = new Date(since);
-      day.setDate(since.getDate() + i);
+      day.setUTCDate(since.getUTCDate() + i);
       const key = day.toISOString().slice(0, 10);
       buckets.set(key, { date: key, drivers: 0, clients: 0 });
     }

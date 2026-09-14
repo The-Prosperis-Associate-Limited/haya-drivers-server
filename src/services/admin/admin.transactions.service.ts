@@ -5,12 +5,7 @@ export class AdminTransactionsService {
   private financeRepo = new AdminFinanceRepository();
 
   async stats() {
-    const [clientWallets, payouts, pendingEarnings, serviceFees] = await Promise.all([
-      this.financeRepo.clientWalletTotals(),
-      this.financeRepo.payoutTotals(),
-      this.financeRepo.pendingDriverEarnings(),
-      this.financeRepo.serviceFeeTotals(),
-    ]);
+    const [clientWallets, payouts, pendingEarnings, serviceFees] = await Promise.all([this.financeRepo.clientWalletTotals(), this.financeRepo.payoutTotals(), this.financeRepo.pendingDriverEarnings(), this.financeRepo.serviceFeeTotals()]);
 
     return {
       held_in_client_wallets_minor: clientWallets.available_minor + clientWallets.pending_minor,
