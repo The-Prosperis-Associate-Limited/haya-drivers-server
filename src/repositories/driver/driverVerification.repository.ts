@@ -44,11 +44,7 @@ export class DriverVerificationRepository {
 
     if (search) {
       where.user = {
-        OR: [
-          { first_name: { contains: search, mode: "insensitive" } },
-          { last_name: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
-        ],
+        OR: [{ first_name: { contains: search, mode: "insensitive" } }, { last_name: { contains: search, mode: "insensitive" } }, { email: { contains: search, mode: "insensitive" } }],
       };
     }
 
@@ -71,6 +67,8 @@ export class DriverVerificationRepository {
               country: true,
               state_of_residence: true,
               driver_profile: { select: { driver_type: true, years_of_experience: true, license_number: true, trust_score: true } },
+              // Statuses only — the queue's "n/m verified" column counts them.
+              documents: { select: { status: true } },
             },
           },
         },
