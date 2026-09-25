@@ -16,17 +16,7 @@ export interface transportMailType {
   attachments?: Attachment[];
 }
 
-const {
-  SENDER_EMAIL,
-  REPLYTO_EMAIL,
-  RESEND_API_KEY,
-  SMTP_HOST,
-  SMTP_PORT,
-  SMTP_USER,
-  SMTP_PASS,
-} = process.env;
-
-const isDevelopment = process.env.NODE_ENV === "development";
+const { SENDER_EMAIL, REPLYTO_EMAIL, RESEND_API_KEY, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
 
 /*
   Both clients are built on first use, not at import. A provider constructed
@@ -59,7 +49,9 @@ const getResend = () => {
 };
 
 export async function transportMail(formData: transportMailType) {
-  if (isDevelopment) {
+  // Provider is chosen by available credentials, not NODE_ENV — a prod dyno
+  // mislabelled "development" must never try SMTP, which Render can't route.
+  if (!RESEND_API_KEY) {
     return await getSmtp().sendMail({
       from: SENDER_EMAIL!,
       to: formData.email,
