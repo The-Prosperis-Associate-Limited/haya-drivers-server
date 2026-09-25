@@ -1,7 +1,7 @@
 import "dotenv/config";
 
+import { promises as dns } from "dns";
 import nodemailer, { type Transporter } from "nodemailer";
-import { Resend } from "resend";
 
 export interface Attachment {
   filename: string;
@@ -16,57 +16,39 @@ export interface transportMailType {
   attachments?: Attachment[];
 }
 
-const { SENDER_EMAIL, REPLYTO_EMAIL, RESEND_API_KEY, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+const { SENDER_EMAIL, REPLYTO_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
 
-/*
-  Both clients are built on first use, not at import. A provider constructed
-  eagerly took the whole server down on any environment missing that provider's
-  credentials — including every local one, where Resend is never the transport
-  anyway. Building lazily keeps the failure inside the send, where the email
-  queue already retries and logs it.
-*/
+// Built on first use, not at import — an eager transport took the server down
+// on any environment missing SMTP credentials.
 let smtp: Transporter | null = null;
-let resend: Resend | null = null;
 
-const getSmtp = () => {
+const getSmtp = async () => {
   if (!SMTP_HOST) throw new Error("SMTP_HOST is not set");
+
+  if (smtp) return smtp;
 
   const port = Number(SMTP_PORT ?? 587);
 
-  return (smtp ??= nodemailer.createTransport({
-    host: SMTP_HOST,
+  // Node prefers the AAAA record and Render has no IPv6 egress (ENETUNREACH),
+  // so connect to a resolved IPv4 address; TLS still validates the hostname.
+  const [address] = await dns.resolve4(SMTP_HOST);
+
+  return (smtp = nodemailer.createTransport({
+    host: address,
     port,
     // 465 is implicit TLS; every other port negotiates STARTTLS instead.
     secure: port === 465,
     auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+    tls: { servername: SMTP_HOST },
   }));
 };
 
-const getResend = () => {
-  if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY is not set");
-
-  return (resend ??= new Resend(RESEND_API_KEY));
-};
-
+// Everything goes through SMTP for now — Resend returns once its key and
+// gating are sorted out.
 export async function transportMail(formData: transportMailType) {
-  // Provider is chosen by available credentials, not NODE_ENV — a prod dyno
-  // mislabelled "development" must never try SMTP, which Render can't route.
-  if (!RESEND_API_KEY) {
-    return await getSmtp().sendMail({
-      from: SENDER_EMAIL!,
-      to: formData.email,
-      subject: formData.subject,
-      html: formData.message,
-      replyTo: REPLYTO_EMAIL,
-      attachments: formData.attachments?.map(a => ({
-        filename: a.filename,
-        content: a.content,
-        contentType: a.contentType,
-      })),
-    });
-  }
+  const transporter = await getSmtp();
 
-  await getResend().emails.send({
+  return await transporter.sendMail({
     from: SENDER_EMAIL!,
     to: formData.email,
     subject: formData.subject,

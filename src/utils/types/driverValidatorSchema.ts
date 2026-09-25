@@ -51,7 +51,8 @@ export const workExperienceSchema = z.object({
           employer: z.string().trim().min(1, "Enter the employer"),
           job_title: z.string().trim().min(1, "Enter the job title"),
           started_at: z.coerce.date(),
-          ended_at: z.coerce.date().optional().nullable(),
+          // "" arrives when the role is current — it means "no end date", not a date.
+          ended_at: z.preprocess(value => (value === "" ? undefined : value), z.coerce.date().optional().nullable()),
           is_current: z.boolean().optional().default(false),
         })
         .superRefine((entry, ctx) => {
