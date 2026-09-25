@@ -4,6 +4,7 @@ import express from "express";
 import { configureApp } from "./config";
 import { initializeSocket } from "./helper/socket";
 import { registerRoutes } from "./routes/index";
+import { seedProdAdmin } from "./scripts/seed-prod-admin";
 import { initializeCronJobs } from "./utils/cron-jobs";
 import { initializeEmailSystem } from "./utils/emailSystem";
 
@@ -25,6 +26,12 @@ const server = app.listen(PORT, async () => {
 
     // Neither of these is fatal. A server that refuses to boot without Redis
     // takes every non-email endpoint down with it.
+    try {
+      await seedProdAdmin();
+    } catch (seedError) {
+      console.error("❌ Prod admin seed error:", seedError);
+    }
+
     try {
       await initializeEmailSystem();
     } catch (emailError) {
