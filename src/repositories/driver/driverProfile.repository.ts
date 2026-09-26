@@ -23,6 +23,7 @@ export class DriverProfileRepository {
       include: {
         work_experiences: { orderBy: { started_at: "desc" } },
         guarantors: { orderBy: { createdAt: "asc" } },
+        reference: true,
         user: {
           select: {
             id: true,
@@ -79,7 +80,7 @@ export class DriverProfileRepository {
     page: number;
     limit: number;
     driver_type?: $Enums.DriverType;
-    vehicle_class?: $Enums.VehicleClass;
+    licence_class?: $Enums.LicenceClass;
     country?: string;
     state?: string;
     city?: string;
@@ -88,7 +89,7 @@ export class DriverProfileRepository {
     min_trust_score?: number;
     search?: string;
   }) {
-    const { page, limit, driver_type, vehicle_class, country, state, city, budget_min, budget_max, min_trust_score, search } = params;
+    const { page, limit, driver_type, licence_class, country, state, city, budget_min, budget_max, min_trust_score, search } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.DriverProfileWhereInput = {
@@ -98,7 +99,7 @@ export class DriverProfileRepository {
     };
 
     if (driver_type) where.driver_type = driver_type;
-    if (vehicle_class) where.vehicle_classes = { has: vehicle_class };
+    if (licence_class) where.licence_classes = { has: licence_class };
     if (min_trust_score) where.trust_score = { gte: min_trust_score };
     if (country) where.user = { ...(where.user as object), country };
     if (state) where.user = { ...(where.user as object), state_of_residence: state };

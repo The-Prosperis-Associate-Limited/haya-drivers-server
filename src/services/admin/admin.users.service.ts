@@ -88,7 +88,7 @@ export class AdminUsersService {
       address: true,
       createdAt: true,
       lastLogin: true,
-      driver_profile: { include: { work_experiences: { orderBy: { started_at: "desc" } }, guarantors: true } },
+      driver_profile: { include: { work_experiences: { orderBy: { started_at: "desc" } }, guarantors: true, reference: true } },
       driver_verification: true,
       client_profile: true,
     });

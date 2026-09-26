@@ -14,17 +14,21 @@ export class DriverGuarantorService {
   async list(userId: string) {
     const profile = await this.requireProfile(userId);
 
-    return this.guarantorRepo.findByDriver(profile.id);
+    const [guarantors, reference] = await Promise.all([this.guarantorRepo.findByDriver(profile.id), this.guarantorRepo.findReferenceByDriver(profile.id)]);
+
+    return { guarantors, reference };
   }
 
   async save(userId: string, data: GuarantorInput) {
     const profile = await this.requireProfile(userId);
 
-    await this.guarantorRepo.replaceForDriver(profile.id, data.guarantors);
+    await Promise.all([this.guarantorRepo.replaceForDriver(profile.id, data.guarantors), this.guarantorRepo.upsertReferenceForDriver(profile.id, data.reference)]);
 
     await this.driverProfileRepo.update(userId, { onboarding_step: advanceStep(profile.onboarding_step, "GUARANTORS") });
 
-    return this.guarantorRepo.findByDriver(profile.id);
+    const [guarantors, reference] = await Promise.all([this.guarantorRepo.findByDriver(profile.id), this.guarantorRepo.findReferenceByDriver(profile.id)]);
+
+    return { guarantors, reference };
   }
 
   // The guarantor files are uploaded per guarantor rather than through the

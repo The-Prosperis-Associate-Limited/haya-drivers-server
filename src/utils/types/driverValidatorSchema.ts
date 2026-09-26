@@ -30,9 +30,16 @@ export const personalInformationSchema = z.object({
 export const experienceSchema = z.object({
   years_of_experience: z.coerce.number().int().min(0, "Years of experience cannot be negative").max(60),
   driver_type: z.enum(["CORPORATE_DRIVER", "PRIVATE_DRIVER", "LOGISTICS_DRIVER", "RIDE_HAILING_DRIVER", "HEAVY_DUTY_DRIVER"]),
-  vehicle_classes: z.array(z.enum(["SALOON", "SUV", "BUS", "TRUCK", "TRAILER", "MOTORCYCLE"])).min(1, "Select at least one vehicle you can drive"),
+  transmission: z.enum(["AUTOMATIC", "MANUAL", "BOTH"], { message: "Select what transmission you can drive" }),
+  licence_classes: z.array(z.enum(["A", "B", "C", "D", "E", "F", "G", "H", "J"])).min(1, "Select at least one licence class"),
   license_number: z.string().trim().min(4, "Enter your driver licence number"),
-  license_expires_at: z.coerce.date().refine(value => value > new Date(), "Your licence has already expired"),
+  // The team agreed a licence must have at least a year left to run.
+  license_expires_at: z.coerce.date().refine(value => {
+    const oneYearOut = new Date();
+    oneYearOut.setFullYear(oneYearOut.getFullYear() + 1);
+
+    return value >= oneYearOut;
+  }, "Your licence must be valid for at least one more year"),
 });
 
 // Optional by design — the screen says so, and a driver without a degree is
@@ -64,12 +71,21 @@ export const workExperienceSchema = z.object({
     .default([]),
 });
 
+// One reference (a previous employer) and exactly one guarantor, who must be
+// a working professional — family and friends are not acceptable guarantors.
 export const guarantorSchema = z.object({
+  reference: z.object({
+    full_name: z.string().trim().min(2, "Enter your reference's name"),
+    company_name: z.string().trim().optional(),
+    phone_no: phoneField,
+  }),
   guarantors: z
     .array(
       z.object({
         full_name: z.string().trim().min(2, "Enter your guarantor name"),
-        relationship: z.enum(["FAMILY", "FRIEND", "FORMER_EMPLOYER", "COLLEAGUE", "RELIGIOUS_LEADER", "COMMUNITY_LEADER", "OTHER"]),
+        relationship: z.enum(["FORMER_EMPLOYER", "COLLEAGUE", "RELIGIOUS_LEADER", "COMMUNITY_LEADER", "OTHER"], {
+          message: "Your guarantor must be a working professional, not a family member or friend",
+        }),
         phone_no: phoneField,
         address: z.string().trim().min(5, "Enter your guarantor address"),
         nin: ninField,
@@ -77,7 +93,7 @@ export const guarantorSchema = z.object({
         nin_slip_url: z.string().url().optional(),
       }),
     )
-    .min(1, "Add at least one guarantor"),
+    .length(1, "Provide exactly one guarantor"),
 });
 
 export const additionalInformationSchema = z.object({

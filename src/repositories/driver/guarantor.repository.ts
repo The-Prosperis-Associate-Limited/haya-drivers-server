@@ -23,13 +23,22 @@ export class GuarantorRepository {
   }
 
   async replaceForDriver(driverId: string, entries: Omit<Prisma.GuarantorUncheckedCreateInput, "driverId">[]) {
-    return prisma.$transaction([
-      prisma.guarantor.deleteMany({ where: { driverId } }),
-      prisma.guarantor.createMany({ data: entries.map(entry => ({ ...entry, driverId })) }),
-    ]);
+    return prisma.$transaction([prisma.guarantor.deleteMany({ where: { driverId } }), prisma.guarantor.createMany({ data: entries.map(entry => ({ ...entry, driverId })) })]);
   }
 
   async countForDriver(driverId: string) {
     return prisma.guarantor.count({ where: { driverId } });
+  }
+
+  async findReferenceByDriver(driverId: string) {
+    return prisma.reference.findUnique({ where: { driverId } });
+  }
+
+  async upsertReferenceForDriver(driverId: string, data: Omit<Prisma.ReferenceUncheckedCreateInput, "driverId" | "id">) {
+    return prisma.reference.upsert({
+      where: { driverId },
+      create: { ...data, driverId },
+      update: data,
+    });
   }
 }

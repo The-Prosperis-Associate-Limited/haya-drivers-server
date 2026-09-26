@@ -6,13 +6,23 @@ enum DriverType {
   HEAVY_DUTY_DRIVER
 }
 
-enum VehicleClass {
-  SALOON
-  SUV
-  BUS
-  TRUCK
-  TRAILER
-  MOTORCYCLE
+// FRSC licence classes — Nigeria's National Road Traffic Regulations (no class I).
+enum LicenceClass {
+  A
+  B
+  C
+  D
+  E
+  F
+  G
+  H
+  J
+}
+
+enum Transmission {
+  AUTOMATIC
+  MANUAL
+  BOTH
 }
 
 enum AcademicLevel {
@@ -55,7 +65,8 @@ model DriverProfile {
   state_of_origin String?
   years_of_experience Int?
   driver_type         DriverType?
-  vehicle_classes     VehicleClass[]
+  transmission        Transmission?
+  licence_classes     LicenceClass[]
   license_number      String?
   license_expires_at  DateTime?
 
@@ -93,6 +104,7 @@ model DriverProfile {
 
   work_experiences WorkExperience[]
   guarantors       Guarantor[]
+  reference        Reference?
 
   @@index([verification_status, is_discoverable])
   @@index([driver_type])
@@ -132,4 +144,19 @@ model Guarantor {
   updatedAt DateTime @updatedAt
 
   @@index([driverId])
+}
+
+// The previous-employer reference — exactly one per driver, distinct from the
+// guarantor (who must be an unrelated working professional).
+model Reference {
+  id       String        @id @default(cuid())
+  driverId String        @unique
+  driver   DriverProfile @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  full_name    String
+  company_name String?
+  phone_no     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -65,7 +65,7 @@ export const reviewBookingSchema = z
 export const driverSearchSchema = z.object({
   search: z.string().trim().optional(),
   driver_type: z.enum(["CORPORATE_DRIVER", "PRIVATE_DRIVER", "LOGISTICS_DRIVER", "RIDE_HAILING_DRIVER", "HEAVY_DUTY_DRIVER"]).optional(),
-  vehicle_class: z.enum(["SALOON", "SUV", "BUS", "TRUCK", "TRAILER", "MOTORCYCLE"]).optional(),
+  licence_class: z.enum(["A", "B", "C", "D", "E", "F", "G", "H", "J"]).optional(),
   country: z.string().trim().optional(),
   state: z.string().trim().optional(),
   city: z.string().trim().optional(),
