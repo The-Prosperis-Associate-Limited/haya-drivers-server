@@ -12,12 +12,12 @@ export interface EmailOtpData {
 const COPY = {
   EMAIL_VERIFICATION: {
     title: "Your verification code",
-    subject: (code: string) => `${code} is your TEGAT verification code`,
+    subject: (code: string) => `${code} is your Drivers Vault verification code`,
     lead: "Enter this code to confirm it's you:",
   },
   PASSWORD_RESET: {
     title: "Your password reset code",
-    subject: (code: string) => `${code} is your TEGAT password reset code`,
+    subject: (code: string) => `${code} is your Drivers Vault password reset code`,
     lead: "Enter this code to choose a new password:",
   },
 } as const;

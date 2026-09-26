@@ -19,7 +19,7 @@ const generateResetPasswordData = (data: ResetPasswordData) => ({
 export const createResetPasswordEmail = (data: ResetPasswordData) => {
   const react = generateProfessionalEmail(generateResetPasswordData(data));
 
-  return { react, subject: "Your TEGAT password was changed" };
+  return { react, subject: "Your Drivers Vault password was changed" };
 };
 
 export const sendResetPasswordEmail = async (data: ResetPasswordData): Promise<void> => {

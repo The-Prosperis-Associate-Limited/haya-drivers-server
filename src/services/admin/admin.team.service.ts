@@ -60,7 +60,7 @@ export class AdminTeamService {
     await queueEmail(JOB_KEY.ADMIN_INVITE, {
       email: user.email,
       first_name: user.first_name ?? "there",
-      inviter_name: [inviter?.first_name, inviter?.last_name].filter(Boolean).join(" ") || (inviter?.email as string) || "A TEGAT admin",
+      inviter_name: [inviter?.first_name, inviter?.last_name].filter(Boolean).join(" ") || (inviter?.email as string) || "A Drivers Vault admin",
       role_label: this.roleLabel(data.admin_role),
       baseUrl: surfaceUrlFor("ADMIN"),
     });

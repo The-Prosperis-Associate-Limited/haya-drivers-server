@@ -41,7 +41,7 @@ export class NotificationRepository {
     // user can already see it — a slow Expo call must not hold up the request
     // that produced it.
     void expoPush.sendToUser(data.recipientId, {
-      title: data.title ?? "TEGAT",
+      title: data.title ?? "Drivers Vault",
       body: data.message,
       data: { notificationId: notification.id, type: data.type },
     });

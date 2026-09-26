@@ -8,7 +8,7 @@ import { prisma } from "../helper/prisma";
   Two kinds of module. Ones with `video_url` point at publicly listed third-party
   YouTube videos — every id below was checked against YouTube's oembed endpoint
   before it was written here, so none of them is invented. They are development
-  scaffolding, not licensed course content: TEGAT's own videos will be uploaded
+  scaffolding, not licensed course content: Drivers Vault's own videos will be uploaded
   and served from Cloudinary like every other asset, and the player already plays
   whatever `video_url` holds. Ones with `content` are platform-specific material
   no third-party video can teach — how payouts clear, how the trust score is

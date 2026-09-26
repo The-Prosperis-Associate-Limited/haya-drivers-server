@@ -97,7 +97,7 @@ export const generateProfessionalEmail = ({ type = "general" as EmailTypes, titl
 
           <tr>
             <td align="center" style="padding-bottom:28px;">
-              <a href="${CLIENT_URL ?? "#"}" style="font-size:20px;font-weight:700;letter-spacing:0.14em;color:#0f172a;text-decoration:none;">TEGAT</a>
+              <a href="${CLIENT_URL ?? "#"}" style="font-size:20px;font-weight:700;letter-spacing:0.14em;color:#0f172a;text-decoration:none;">Drivers Vault</a>
             </td>
           </tr>
 
@@ -130,7 +130,7 @@ export const generateProfessionalEmail = ({ type = "general" as EmailTypes, titl
           <tr>
             <td align="center" style="padding:16px 0 0;">
               <p style="font-size:12px;color:#cbd5e1;margin:0;">
-                &copy; ${year} TEGAT &middot; <a href="${CLIENT_URL ?? "#"}/privacy-policy" style="color:#94a3b8;text-decoration:underline;">Privacy Policy</a>
+                &copy; ${year} Drivers Vault &middot; <a href="${CLIENT_URL ?? "#"}/privacy-policy" style="color:#94a3b8;text-decoration:underline;">Privacy Policy</a>
               </p>
             </td>
           </tr>
