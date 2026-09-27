@@ -2,6 +2,7 @@ import { Router } from "express";
 import { validateAccessToken, validateAdminSession } from "../../middleware/validateToken";
 import { guardAdminWrites, requireSuperAdmin } from "../../middleware/adminAccess";
 import { adminDashboardRouter } from "./dashboard";
+import { adminChatRouter } from "./chat";
 import { adminTicketRouter } from "./tickets";
 import { adminTrainingRouter } from "./training";
 import { payoutsRouter } from "./payouts";
@@ -21,6 +22,7 @@ adminRouter.use("/payouts", guardAdminWrites("transactions"), payoutsRouter);
 adminRouter.use("/transactions", guardAdminWrites("transactions"), transactionsRouter);
 adminRouter.use("/training", guardAdminWrites("training"), adminTrainingRouter);
 adminRouter.use("/tickets", guardAdminWrites("tickets"), adminTicketRouter);
+adminRouter.use("/chat", guardAdminWrites("tickets"), adminChatRouter);
 adminRouter.use("/team", requireSuperAdmin, teamRouter);
 
 export { adminRouter };

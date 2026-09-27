@@ -1,0 +1,60 @@
+// Support live chat — one open conversation per user, admins join from the
+// support pool. No AI: a WAITING conversation is simply one no admin has
+// joined yet.
+
+enum ConversationStatus {
+  WAITING
+  ACTIVE
+  RESOLVED
+}
+
+model Conversation {
+  id            String @id @default(cuid())
+  initiatedById String
+  initiatedBy   User   @relation("ConversationInitiator", fields: [initiatedById], references: [id], onDelete: Cascade)
+
+  status       ConversationStatus @default(WAITING)
+  // Denormalised preview so the inbox never joins messages.
+  last_message String?
+  last_updated DateTime           @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     ChatMessage[]
+
+  @@index([status, last_updated])
+  @@index([initiatedById])
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Unread count = messages sent after this, by someone else.
+  last_read_at DateTime @default(now())
+
+  @@unique([conversationId, userId])
+}
+
+model ChatMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // Null sender = system notice ("X joined the chat", "marked resolved").
+  senderId  String?
+  sender    User?   @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  is_system Boolean @default(false)
+
+  message String
+  sent_at DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, sent_at])
+}

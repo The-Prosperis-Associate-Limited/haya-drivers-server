@@ -95,6 +95,10 @@ model User {
   assigned_tickets Ticket[]        @relation("TicketAssignee")
   ticket_comments  TicketComment[]
 
+  initiated_conversations Conversation[]            @relation("ConversationInitiator")
+  chat_participations     ConversationParticipant[]
+  chat_messages           ChatMessage[]
+
   reviewed_documents     DriverDocument[]     @relation("DocumentReviewer")
   reviewed_verifications DriverVerification[] @relation("VerificationReviewer")
 

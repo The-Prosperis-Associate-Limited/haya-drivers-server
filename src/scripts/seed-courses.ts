@@ -48,8 +48,8 @@ const watch = (id: string) => `https://www.youtube.com/watch?v=${id}`;
 
 const COURSES: SeedCourse[] = [
   {
-    slug: "getting-started-as-a-tegat-driver",
-    title: "Getting started as a Tegat driver",
+    slug: "getting-started-as-a-drivers-vault-driver",
+    title: "Getting started as a Drivers Vault driver",
     summary: "How the platform works, what clients expect, and how to get your first booking.",
     category: "ONBOARDING",
     is_required: true,
@@ -58,11 +58,11 @@ const COURSES: SeedCourse[] = [
     certificate_validity_months: null,
     modules: [
       {
-        title: "What Tegat is and how bookings reach you",
+        title: "What Drivers Vault is and how bookings reach you",
         description: "Where job requests come from and what happens after you accept one.",
         duration_minutes: 5,
         content: [
-          "Clients search verified drivers near them, filtered by driver type, vehicle class and trust score. When one books you, the request lands in Job Requests with the pickup, the date and the amount already agreed.",
+          "Clients search verified drivers near them, filtered by driver type, licence class and trust score. When one books you, the request lands in Job Requests with the pickup, the date and the amount already agreed.",
           "You accept or decline. Accepting moves the booking to Confirmed and locks the slot in your calendar. Declining is free — it does not count against you — but leaving a request to expire does, because the client waited on an answer that never came.",
           "On the day, you start the trip from the booking screen and complete it when the client is dropped off. Completing is what releases payment into your wallet, so a trip you forget to complete is a trip you are not paid for.",
         ].join("\n\n"),
@@ -84,7 +84,7 @@ const COURSES: SeedCourse[] = [
         description: "Why your profile stays private until every check clears, and what clients see once it does.",
         duration_minutes: 4,
         content: [
-          "Your profile is private and unsearchable until identity, licence and criminal-record checks are complete. That is deliberate: a client booking through Tegat is trusting the vetting, not the profile photo.",
+          "Your profile is private and unsearchable until identity, licence and criminal-record checks are complete. That is deliberate: a client booking through Drivers Vault is trusting the vetting, not the profile photo.",
           "Once you are approved you become visible to clients across your state. They see your name, your driver type, your vehicle classes, your trust score and your client reviews. They do not see your address, your documents or your guarantors.",
           "If a document is rejected, the reviewer's reason appears on your dashboard word for word. Fix only what is named and resubmit — the rest of your application stands.",
         ].join("\n\n"),
@@ -131,7 +131,7 @@ const COURSES: SeedCourse[] = [
         duration_minutes: 6,
         content: [
           "Report anything that puts you, the vehicle or the client at risk — immediately, from the support sheet. Use Report an issue and mark it Urgent if it is blocking you now. A safety concern is never an inconvenience to us.",
-          "Keep evidence before you keep tidy. Photograph damage before moving the vehicle, note the time, and keep the booking reference to hand — support cannot look up a trip you describe only as \"yesterday's airport run\".",
+          'Keep evidence before you keep tidy. Photograph damage before moving the vehicle, note the time, and keep the booking reference to hand — support cannot look up a trip you describe only as "yesterday\'s airport run".',
           "Do not negotiate money, cancellations or disputes with a client directly. Put it through support so there is a record, and so the outcome is not your word against theirs.",
         ].join("\n\n"),
       },
@@ -224,7 +224,7 @@ const COURSES: SeedCourse[] = [
         content: [
           "A fault the client can see is a fault you should have named first. Tell them what it is, what it means for the trip, and what you are doing about it — in that order, in one sentence each.",
           "If the vehicle is unsafe, the booking ends there. Do not finish a trip on a tyre you do not trust because the drop-off is close. Report it as Urgent and support will arrange the client's onward journey.",
-          "In the report, give the booking reference, what you observed, when it started, and whether the vehicle is still drivable. \"Something is wrong with the brakes\" starts a conversation; \"pedal goes soft after three stops, started this morning, still drivable below 40\" starts a repair.",
+          'In the report, give the booking reference, what you observed, when it started, and whether the vehicle is still drivable. "Something is wrong with the brakes" starts a conversation; "pedal goes soft after three stops, started this morning, still drivable below 40" starts a repair.',
         ].join("\n\n"),
       },
     ],
@@ -269,7 +269,7 @@ const COURSES: SeedCourse[] = [
         duration_minutes: 5,
         content: [
           "112 is the national emergency line and works from any network. In Lagos, 767 and 112 both reach the state emergency service. FRSC is 122 for road traffic incidents.",
-          "They will ask where you are before anything else. Learn to give a location the way a dispatcher needs it: road name, direction of travel, and the last landmark you passed. \"Third Mainland Bridge, heading to Lagos Island, just past the Adeniji ramp\" is findable. \"On the bridge\" is not.",
+          'They will ask where you are before anything else. Learn to give a location the way a dispatcher needs it: road name, direction of travel, and the last landmark you passed. "Third Mainland Bridge, heading to Lagos Island, just past the Adeniji ramp" is findable. "On the bridge" is not.',
           "Then tell support, with the booking reference. We contact the client so you do not have to manage a passenger's family while you are managing a scene.",
         ].join("\n\n"),
       },
