@@ -99,6 +99,10 @@ model User {
   chat_participations     ConversationParticipant[]
   chat_messages           ChatMessage[]
 
+  client_hire_requests HireRequest[] @relation("ClientHireRequests")
+  driver_hire_requests HireRequest[] @relation("DriverHireRequests")
+  issued_invoices      HireInvoice[] @relation("InvoiceIssuer")
+
   reviewed_documents     DriverDocument[]     @relation("DocumentReviewer")
   reviewed_verifications DriverVerification[] @relation("VerificationReviewer")
 

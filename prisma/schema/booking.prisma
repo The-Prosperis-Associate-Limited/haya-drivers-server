@@ -59,6 +59,7 @@ model Booking {
   status_events BookingStatusEvent[]
   review        Review?
   transactions  WalletTransaction[]
+  hire_request  HireRequest?
 
   @@index([driverId, status, starts_at])
   @@index([clientId, status, createdAt])

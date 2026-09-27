@@ -1,0 +1,76 @@
+// The admin-brokered hire flow: a client asks for a specific driver, an admin
+// reviews and issues a VAT invoice, the client pays from the wallet, and the
+// paid request materialises as an ACCEPTED booking plus the driver's contact
+// details ("combo pack").
+
+enum HireRequestStatus {
+  PENDING_REVIEW
+  INVOICED
+  PAID
+  DECLINED
+  CANCELLED
+}
+
+enum HireInvoiceStatus {
+  UNPAID
+  PAID
+  VOID
+}
+
+model HireRequest {
+  id        String @id @default(cuid())
+  reference String @unique
+
+  clientId String
+  client   User   @relation("ClientHireRequests", fields: [clientId], references: [id], onDelete: Cascade)
+  driverId String
+  driver   User   @relation("DriverHireRequests", fields: [driverId], references: [id], onDelete: Cascade)
+
+  engagement_type EngagementType @default(MONTHLY)
+  starts_at       DateTime
+  note            String?
+
+  status          HireRequestStatus @default(PENDING_REVIEW)
+  declined_reason String?
+  declined_at     DateTime?
+  cancelled_at    DateTime?
+  paid_at         DateTime?
+
+  // Set when payment succeeds — the engagement the client sees in My Hire.
+  bookingId String?  @unique
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+
+  invoice HireInvoice?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([clientId, createdAt])
+  @@index([driverId, createdAt])
+}
+
+model HireInvoice {
+  id            String      @id @default(cuid())
+  reference     String      @unique
+  hireRequestId String      @unique
+  hire_request  HireRequest @relation(fields: [hireRequestId], references: [id], onDelete: Cascade)
+
+  issuedById String
+  issuedBy   User   @relation("InvoiceIssuer", fields: [issuedById], references: [id])
+
+  // All minor units. total = amount + vat + fee; the driver receives amount.
+  amount_minor Int
+  vat_percent  Float
+  vat_minor    Int
+  fee_minor    Int
+  total_minor  Int
+  currency     String @default("NGN")
+
+  status  HireInvoiceStatus @default(UNPAID)
+  note    String?
+  paid_at DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
