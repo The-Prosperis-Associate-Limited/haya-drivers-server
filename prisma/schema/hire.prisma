@@ -1,11 +1,15 @@
-// The admin-brokered hire flow: a client asks for a specific driver, an admin
-// reviews and issues a VAT invoice, the client pays from the wallet, and the
-// paid request materialises as an ACCEPTED booking plus the driver's contact
-// details ("combo pack").
+// The admin-brokered hire flow, DriversNG-style money rail: a client either
+// asks for a specific driver (self-serve) or submits a concierge request with
+// no driver attached — an admin assigns one at review. The admin issues a VAT
+// invoice, the client pays by bank transfer into the ORGANISATION account and
+// uploads proof, an admin confirms it, and the paid request materialises as an
+// ACCEPTED booking plus the driver's contact details ("combo pack"). The org
+// settles drivers itself — no client wallet involved.
 
 enum HireRequestStatus {
   PENDING_REVIEW
   INVOICED
+  PAYMENT_REVIEW
   PAID
   DECLINED
   CANCELLED
@@ -13,8 +17,21 @@ enum HireRequestStatus {
 
 enum HireInvoiceStatus {
   UNPAID
+  PAYMENT_REVIEW
   PAID
   VOID
+}
+
+enum HirePackage {
+  PRIVATE
+  SUBSCRIPTION
+}
+
+enum WorkSchedule {
+  WEEKDAYS
+  WEEKDAYS_AND_SATURDAY
+  FULL_WEEK
+  CUSTOM
 }
 
 model HireRequest {
@@ -23,12 +40,28 @@ model HireRequest {
 
   clientId String
   client   User   @relation("ClientHireRequests", fields: [clientId], references: [id], onDelete: Cascade)
-  driverId String
-  driver   User   @relation("DriverHireRequests", fields: [driverId], references: [id], onDelete: Cascade)
+
+  // Null = concierge request; an admin assigns the driver during review.
+  driverId String?
+  driver   User?   @relation("DriverHireRequests", fields: [driverId], references: [id], onDelete: Cascade)
 
   engagement_type EngagementType @default(MONTHLY)
   starts_at       DateTime
   note            String?
+
+  // The questionnaire — what the client actually needs.
+  package                HirePackage   @default(PRIVATE)
+  duration_months        Int?
+  drivers_needed         Int           @default(1)
+  driver_type            DriverType?
+  schedule               WorkSchedule  @default(WEEKDAYS)
+  resumption_time        String?
+  closing_time           String?
+  transmission           Transmission?
+  insurance_cover        String?
+  provides_accommodation Boolean       @default(false)
+  state                  String?
+  nearest_area           String?
 
   status          HireRequestStatus @default(PENDING_REVIEW)
   declined_reason String?
@@ -70,6 +103,14 @@ model HireInvoice {
   status  HireInvoiceStatus @default(UNPAID)
   note    String?
   paid_at DateTime?
+
+  // Proof of the bank transfer into the organisation account.
+  proof_url             String?
+  proof_note            String?
+  proof_submitted_at    DateTime?
+  proof_rejected_reason String?
+  confirmedById         String?
+  confirmedBy           User?   @relation("InvoiceConfirmer", fields: [confirmedById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

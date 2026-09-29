@@ -39,7 +39,7 @@ export class HireRequestRepository {
 
   async findOpenForClientAndDriver(clientId: string, driverId: string) {
     return prisma.hireRequest.findFirst({
-      where: { clientId, driverId, status: { in: ["PENDING_REVIEW", "INVOICED"] } },
+      where: { clientId, driverId, status: { in: ["PENDING_REVIEW", "INVOICED", "PAYMENT_REVIEW"] } },
       select: { id: true, reference: true },
     });
   }

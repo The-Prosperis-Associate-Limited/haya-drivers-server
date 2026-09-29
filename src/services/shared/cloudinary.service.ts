@@ -2,7 +2,7 @@ import { Readable } from "stream";
 import cloudinary from "../../utils/cloudinaryConfig";
 import { UploadApiResponse } from "cloudinary";
 
-type UploadFolder = "avatar" | "documents" | "guarantors" | "certificates";
+type UploadFolder = "avatar" | "documents" | "guarantors" | "certificates" | "payments";
 
 export class CloudinaryService {
   async uploadFile(userId: string, role: string, file: Express.Multer.File, folder: UploadFolder) {
