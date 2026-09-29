@@ -56,7 +56,7 @@ export class DriverVerificationService {
     await this.documentService.assertRequiredDocumentsPresent(userId);
 
     // A resubmission puts every document back in the queue, including ones
-    // approved last time — a reviewer looks at the whole application, and a
+    // approved last time - a reviewer looks at the whole application, and a
     // stale approval beside a fresh upload is how bad documents slip through.
     await this.documentRepo.markAllPendingForUser(userId);
 

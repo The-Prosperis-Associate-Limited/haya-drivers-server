@@ -6,7 +6,7 @@ enum DriverType {
   HEAVY_DUTY_DRIVER
 }
 
-// FRSC licence classes — Nigeria's National Road Traffic Regulations (no class I).
+// FRSC licence classes - Nigeria's National Road Traffic Regulations (no class I).
 enum LicenceClass {
   A
   B
@@ -83,7 +83,7 @@ model DriverProfile {
   expected_monthly_rate Int?
   rate_currency         String @default("NGN")
 
-  // Weekly working hours as { day_range, start, end }[] — collected by the
+  // Weekly working hours as { day_range, start, end }[] - collected by the
   // driver app when its availability screen ships; the profile hides the panel
   // while this is null.
   availability Json?
@@ -146,7 +146,7 @@ model Guarantor {
   @@index([driverId])
 }
 
-// The previous-employer reference — exactly one per driver, distinct from the
+// The previous-employer reference - exactly one per driver, distinct from the
 // guarantor (who must be an unrelated working professional).
 model Reference {
   id       String        @id @default(cuid())

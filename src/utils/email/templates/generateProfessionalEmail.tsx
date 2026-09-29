@@ -23,7 +23,7 @@ export const generateProfessionalEmail = ({ type = "general" as EmailTypes, titl
   const year = new Date().getFullYear();
   const hasButton = !!(buttonText && buttonAction);
   const hasDetails = Object.values(additionalDetails).some(Boolean);
-  const supportEmail = SUPPORT_EMAIL ?? "support@tegat.com";
+  const supportEmail = SUPPORT_EMAIL ?? "support@hayadrivers.com";
 
   const accents: Record<EmailTypes, string> = {
     verification: "#2f6bf6",

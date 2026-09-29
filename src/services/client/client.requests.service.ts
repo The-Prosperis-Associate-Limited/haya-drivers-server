@@ -46,7 +46,7 @@ export class ClientRequestsService {
   }
 
   // Applicants come first; beneath them, verified drivers matching the
-  // request's criteria — the budget cap never excludes a driver whose rate is
+  // request's criteria - the budget cap never excludes a driver whose rate is
   // unset, the search repo already treats an unknown rate as affordable.
   async matches(clientId: string, reference: string, query: Record<string, unknown>) {
     const request = await this.ownedRequest(clientId, reference);

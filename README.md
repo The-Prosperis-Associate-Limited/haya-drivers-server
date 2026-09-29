@@ -2,9 +2,9 @@
 
 Central API for the TEGAT platform. One server, three surfaces:
 
-- **Drivers Vault** — the driver app (`../drivers-vault`)
-- **Client** — the app people hire drivers from
-- **Admin** — verification queue, moderation, payouts, training content
+- **Drivers Vault** - the driver app (`../drivers-vault`)
+- **Client** - the app people hire drivers from
+- **Admin** - verification queue, moderation, payouts, training content
 
 ## Running locally
 

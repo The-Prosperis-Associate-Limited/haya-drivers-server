@@ -15,7 +15,7 @@ export class DriverWorkExperienceService {
     return this.workExperienceRepo.findByDriver(profile.id);
   }
 
-  // The step submits the whole list, so it replaces rather than merges — a role
+  // The step submits the whole list, so it replaces rather than merges - a role
   // the driver removed on screen has to disappear here too.
   async save(userId: string, data: WorkExperienceInput) {
     const profile = await this.requireProfile(userId);

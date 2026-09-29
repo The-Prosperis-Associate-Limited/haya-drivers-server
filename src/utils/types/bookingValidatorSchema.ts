@@ -30,7 +30,7 @@ export const createBookingSchema = z
     }
   });
 
-// The bucket names, not raw statuses — booking.repository owns which statuses
+// The bucket names, not raw statuses - booking.repository owns which statuses
 // each one covers, so the list and the summary cannot drift apart.
 export const jobRequestFilterSchema = z.object({
   bucket: z.enum(["open", "accepted", "declined"]).optional(),
@@ -49,7 +49,7 @@ export const REVIEW_CRITERIA = ["Reliability", "Professionalism", "Driving skill
 const starScore = z.coerce.number().int().min(1, "Give a rating between 1 and 5").max(5, "Give a rating between 1 and 5");
 
 // Either a single overall rating, or the per-aspect breakdown the hire review
-// form collects — the service averages the breakdown into `rating`.
+// form collects - the service averages the breakdown into `rating`.
 export const reviewBookingSchema = z
   .object({
     rating: starScore.optional(),
@@ -69,7 +69,7 @@ export const driverSearchSchema = z.object({
   country: z.string().trim().optional(),
   state: z.string().trim().optional(),
   city: z.string().trim().optional(),
-  // Minor units. A driver with no expected rate is never filtered out — an
+  // Minor units. A driver with no expected rate is never filtered out - an
   // unknown rate is not the same as an unaffordable one.
   budget_min: z.coerce.number().int().min(0).optional(),
   budget_max: z.coerce.number().int().min(0).optional(),

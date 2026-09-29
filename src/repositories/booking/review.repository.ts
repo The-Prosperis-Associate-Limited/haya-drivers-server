@@ -36,7 +36,7 @@ export class ReviewRepository {
     return { average: aggregate._avg.rating ?? 0, total };
   }
 
-  // One query for a whole page of search results — a summary per card would be
+  // One query for a whole page of search results - a summary per card would be
   // an N+1 on the marketplace's hottest path.
   async summariesForSubjects(subjectIds: string[]) {
     if (!subjectIds.length) return new Map<string, { average: number; total: number }>();

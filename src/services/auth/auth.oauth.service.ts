@@ -28,7 +28,7 @@ interface GoogleIdentity {
 }
 
 /*
-  One resolver for both Google paths — the browser redirect and the native
+  One resolver for both Google paths - the browser redirect and the native
   sheet. A second copy would eventually lose one of the guards below, and the
   guards are the whole point.
 */
@@ -73,7 +73,7 @@ export class AuthOAuthService {
       await Promise.all([this.driverProfileRepo.create({ userId: user.id }), this.walletRepo.ensureForUser(user.id)]);
     }
 
-    // Google tells us nothing about what they hire as — INDIVIDUAL until the
+    // Google tells us nothing about what they hire as - INDIVIDUAL until the
     // onboarding wizard says otherwise.
     if (user.role === "CLIENT") {
       await Promise.all([this.clientProfileRepo.ensureForUser(user.id), this.walletRepo.ensureForUser(user.id)]);

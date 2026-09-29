@@ -19,7 +19,7 @@ export const orgPaymentAccount = () => ({
 
 /*
   The client's half of the admin-brokered hire flow. A request may name a
-  driver (self-serve) or none (concierge — an admin assigns one at review).
+  driver (self-serve) or none (concierge - an admin assigns one at review).
   Payment is a bank transfer into the organisation account: the client uploads
   proof, an admin confirms it. Contact details are the product being bought:
   they appear on the detail payload only once payment is confirmed.
@@ -78,7 +78,7 @@ export class ClientHireRequestsService {
   /*
     The client has transferred the invoice total into the organisation account
     and uploads the receipt. The request parks in PAYMENT_REVIEW until an
-    admin confirms the money actually arrived — bare NIP transfers have no
+    admin confirms the money actually arrived - bare NIP transfers have no
     verification API, so a human is the oracle.
   */
   async submitProof(clientId: string, reference: string, file: Express.Multer.File | undefined, data: SubmitProofInput) {
@@ -105,7 +105,7 @@ export class ClientHireRequestsService {
   }
 
   /*
-    The combo pack — the verified contact details the client paid for — is
+    The combo pack - the verified contact details the client paid for - is
     attached only when PAID; the organisation account only while an invoice
     is awaiting payment or review.
   */

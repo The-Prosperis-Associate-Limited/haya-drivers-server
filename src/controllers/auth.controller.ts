@@ -85,7 +85,7 @@ export class AuthController {
 
       await this.sessionService.sendEmailVerificationOtp(email);
 
-      // Always the same response, whether or not that address has an account —
+      // Always the same response, whether or not that address has an account -
       // the service deliberately does not distinguish the two.
       res.status(200).json({ message: "If that email needs verifying, a code is on its way." });
     } catch (error) {

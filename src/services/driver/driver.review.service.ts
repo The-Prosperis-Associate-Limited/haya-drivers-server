@@ -14,7 +14,7 @@ export class DriverReviewService {
 
   /*
     Everything the reviews screen puts above the feed. `top_strength` is the tag
-    clients picked most often, so it is null until someone has actually said it —
+    clients picked most often, so it is null until someone has actually said it -
     an unrated driver gets no strength rather than a flattering default.
   */
   async summary(userId: string) {

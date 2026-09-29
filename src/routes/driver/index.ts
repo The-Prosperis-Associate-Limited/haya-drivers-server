@@ -11,7 +11,7 @@ import { trainingRouter } from "./training";
 const driverRouter = Router();
 
 // Authorisation is mounted once for the whole area. Do not repeat
-// validateAccessToken on the sub-routers — that is how an area ends up
+// validateAccessToken on the sub-routers - that is how an area ends up
 // authenticated but not authorised.
 driverRouter.use(validateAccessToken, validateDriverSession);
 

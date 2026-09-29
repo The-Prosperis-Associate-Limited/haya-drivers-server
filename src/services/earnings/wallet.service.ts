@@ -40,7 +40,7 @@ export class WalletService {
       walletId: wallet.id,
       payoutId: input.payoutId,
       type: input.type,
-      // A debit is settled the moment it is written — there is nothing to wait
+      // A debit is settled the moment it is written - there is nothing to wait
       // for on the way out.
       status: "PAID_OUT",
       amount_minor: -Math.abs(input.amount_minor),
@@ -56,7 +56,7 @@ export class WalletService {
   /*
     The single writer of the cached balances. Every number is re-derived from
     the ledger rather than incremented, so a concurrent write cannot invent
-    money — the worst case is a stale cache that the next call corrects.
+    money - the worst case is a stale cache that the next call corrects.
   */
   async rebuildBalances(walletId: string) {
     const [available, pending, lifetime] = await Promise.all([

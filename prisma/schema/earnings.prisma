@@ -30,7 +30,7 @@ enum PaymentProvider {
   MANUAL
 }
 
-// Balances are derived from WalletTransaction, never incremented in place —
+// Balances are derived from WalletTransaction, never incremented in place -
 // `available_minor` and `pending_minor` are a cache the WalletService rebuilds,
 // so a lost update cannot invent money.
 model Wallet {
@@ -43,7 +43,7 @@ model Wallet {
   pending_minor   Int    @default(0)
   lifetime_minor  Int    @default(0)
 
-  // Paystack dedicated virtual account — how a client funds the wallet by bank
+  // Paystack dedicated virtual account - how a client funds the wallet by bank
   // transfer. Provisioned lazily on first wallet read, never at signup.
   dva_account_number String?
   dva_account_name   String?

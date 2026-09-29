@@ -20,7 +20,7 @@ export class AdminFinanceRepository {
     return { paid_minor: paid._sum.amount_minor ?? 0, paid_count: paid._count, failed_count: failed };
   }
 
-  // Driver earnings still inside the hold window — the "awaiting release" card.
+  // Driver earnings still inside the hold window - the "awaiting release" card.
   async pendingDriverEarnings() {
     const result = await prisma.walletTransaction.aggregate({
       where: { status: "PENDING", amount_minor: { gt: 0 }, wallet: { user: { role: "DRIVER" } } },

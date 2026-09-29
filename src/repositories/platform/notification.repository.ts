@@ -17,7 +17,7 @@ export class NotificationRepository {
   }
 
   /*
-    Every notification in the platform goes through here — several services call
+    Every notification in the platform goes through here - several services call
     the repository directly rather than via NotificationService, so the socket
     emit and the push both hang off this one method. Adding a notification
     anywhere gets both for free.
@@ -38,7 +38,7 @@ export class NotificationRepository {
     notifyUser(data.recipientId, notification);
 
     // Deliberately not awaited. The row exists and the socket has fired, so the
-    // user can already see it — a slow Expo call must not hold up the request
+    // user can already see it - a slow Expo call must not hold up the request
     // that produced it.
     void expoPush.sendToUser(data.recipientId, {
       title: data.title ?? "Drivers Vault",

@@ -120,7 +120,7 @@ export class PayoutService {
       status: "REQUESTED",
     });
 
-    // Debited on request, not on settlement — the money has to leave the
+    // Debited on request, not on settlement - the money has to leave the
     // available balance immediately or it can be spent twice while in flight.
     await this.walletService.debit(userId, {
       amount_minor,

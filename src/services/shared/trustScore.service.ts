@@ -9,7 +9,7 @@ import { ActivityRepository } from "../../repositories/user/activity.repository"
 
 /*
   Trust score is the number the driver dashboard shows and the number the client
-  search sorts by, so it is derived and recomputed — never written by hand from
+  search sorts by, so it is derived and recomputed - never written by hand from
   a service that happens to be nearby. Four inputs, capped at 100:
 
     verification  40   cleared documents are the floor of being trusted at all
@@ -60,7 +60,7 @@ export class TrustScoreService {
     const verification = profile.verification_status === "APPROVED" ? WEIGHTS.VERIFICATION : 0;
     const training = Math.min(certifications * WEIGHTS.PER_CERTIFICATION, WEIGHTS.MAX_TRAINING);
     const completed = Math.min(completions * WEIGHTS.PER_COMPLETION, WEIGHTS.MAX_COMPLETIONS);
-    // No reviews yet is 0, not an assumed average — an unrated driver has not
+    // No reviews yet is 0, not an assumed average - an unrated driver has not
     // earned the points, and defaulting them would flatter new accounts.
     const rating = reviews.total ? Math.round((reviews.average / 5) * WEIGHTS.MAX_REVIEWS) : 0;
 
@@ -87,7 +87,7 @@ export class TrustScoreService {
 
   /*
     The breakdown screen shows each component as a bar plus the fact behind it,
-    so the raw counts travel with the points. The client composes the wording —
+    so the raw counts travel with the points. The client composes the wording -
     the weights and the numbers are the server's, the sentences are not.
   */
   async breakdown(userId: string) {

@@ -8,7 +8,7 @@ import type { $Enums } from "../../generated/prisma/client";
 /*
   Support chat: one open conversation per user. WAITING means no admin has
   joined yet; joining flips it to ACTIVE. Everything is delivered over REST
-  writes + socket echoes — the socket is never a write path.
+  writes + socket echoes - the socket is never a write path.
 */
 export class ChatService {
   private conversationRepo = new ConversationRepository();

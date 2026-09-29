@@ -15,7 +15,7 @@ export const passportSetup = function () {
   // whole server down on any environment where Google sign-in is not set up
   // yet. Skipping registration leaves only the /auth/google/* routes broken.
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    console.warn("⚠️  Google OAuth is not configured — /auth/google/* is unavailable.");
+    console.warn("⚠️  Google OAuth is not configured - /auth/google/* is unavailable.");
     return;
   }
 

@@ -10,7 +10,7 @@ import { SCHEDULED_JOB_KEY } from "../workers/jobKeys";
 type ScheduledJobKey = (typeof SCHEDULED_JOB_KEY)[keyof typeof SCHEDULED_JOB_KEY];
 
 // One sweep per file, one line each here. The worker dispatches through this
-// map, so adding a sweep is a new import and a new entry — never a new branch
+// map, so adding a sweep is a new import and a new entry - never a new branch
 // in the worker.
 const SCHEDULED_JOBS: Record<ScheduledJobKey, () => Promise<string>> = {
   [SCHEDULED_JOB_KEY.EXPIRE_STALE_BOOKING_REQUESTS]: expireStaleBookingRequests,

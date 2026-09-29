@@ -7,7 +7,7 @@ import { paginate, parsePagination } from "../../utils/pagination";
 import type { DriverSearchInput } from "../../utils/types/bookingValidatorSchema";
 
 // A start stamped within this window of the scheduled time still counts as on
-// time — nobody should be marked late over a parking search.
+// time - nobody should be marked late over a parking search.
 const ON_TIME_GRACE_MS = 15 * 60 * 1000;
 
 export class ClientDriverSearchService {
@@ -35,7 +35,7 @@ export class ClientDriverSearchService {
   }
 
   /*
-    A client only ever sees an approved, discoverable driver — the repository
+    A client only ever sees an approved, discoverable driver - the repository
     filter is not a nicety, it is what keeps an unverified profile off the
     platform. Contact details stay out of the response until there is a booking.
   */
@@ -65,7 +65,7 @@ export class ClientDriverSearchService {
   }
 
   // On-time means the driver's own "start job" stamp landed within the grace
-  // window of the scheduled start. Both rates are null until measured — a
+  // window of the scheduled start. Both rates are null until measured - a
   // driver nobody has booked has no record, not a bad one.
   private async quickStats(userId: string) {
     const [completedJobs, answered, started] = await Promise.all([

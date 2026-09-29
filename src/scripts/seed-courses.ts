@@ -6,16 +6,16 @@ import { prisma } from "../helper/prisma";
   exists this script is how courses get into the database.
 
   Two kinds of module. Ones with `video_url` point at publicly listed third-party
-  YouTube videos — every id below was checked against YouTube's oembed endpoint
+  YouTube videos - every id below was checked against YouTube's oembed endpoint
   before it was written here, so none of them is invented. They are development
   scaffolding, not licensed course content: Drivers Vault's own videos will be uploaded
   and served from Cloudinary like every other asset, and the player already plays
   whatever `video_url` holds. Ones with `content` are platform-specific material
-  no third-party video can teach — how payouts clear, how the trust score is
-  weighted — so they are written here as text rather than pointed at something
+  no third-party video can teach - how payouts clear, how the trust score is
+  weighted - so they are written here as text rather than pointed at something
   that does not cover it.
 
-  Idempotent — every course is upserted by slug and its modules are replaced, so
+  Idempotent - every course is upserted by slug and its modules are replaced, so
   re-running after an edit updates in place instead of duplicating. Enrollments
   and module progress reference module ids, so a re-run resets progress on the
   courses it touches. That is fine in development and is why this is not wired
@@ -63,7 +63,7 @@ const COURSES: SeedCourse[] = [
         duration_minutes: 5,
         content: [
           "Clients search verified drivers near them, filtered by driver type, licence class and trust score. When one books you, the request lands in Job Requests with the pickup, the date and the amount already agreed.",
-          "You accept or decline. Accepting moves the booking to Confirmed and locks the slot in your calendar. Declining is free — it does not count against you — but leaving a request to expire does, because the client waited on an answer that never came.",
+          "You accept or decline. Accepting moves the booking to Confirmed and locks the slot in your calendar. Declining is free - it does not count against you - but leaving a request to expire does, because the client waited on an answer that never came.",
           "On the day, you start the trip from the booking screen and complete it when the client is dropped off. Completing is what releases payment into your wallet, so a trip you forget to complete is a trip you are not paid for.",
         ].join("\n\n"),
       },
@@ -86,7 +86,7 @@ const COURSES: SeedCourse[] = [
         content: [
           "Your profile is private and unsearchable until identity, licence and criminal-record checks are complete. That is deliberate: a client booking through Drivers Vault is trusting the vetting, not the profile photo.",
           "Once you are approved you become visible to clients across your state. They see your name, your driver type, your vehicle classes, your trust score and your client reviews. They do not see your address, your documents or your guarantors.",
-          "If a document is rejected, the reviewer's reason appears on your dashboard word for word. Fix only what is named and resubmit — the rest of your application stands.",
+          "If a document is rejected, the reviewer's reason appears on your dashboard word for word. Fix only what is named and resubmit - the rest of your application stands.",
         ].join("\n\n"),
       },
     ],
@@ -130,8 +130,8 @@ const COURSES: SeedCourse[] = [
         description: "What to report, how fast, and what evidence to keep.",
         duration_minutes: 6,
         content: [
-          "Report anything that puts you, the vehicle or the client at risk — immediately, from the support sheet. Use Report an issue and mark it Urgent if it is blocking you now. A safety concern is never an inconvenience to us.",
-          'Keep evidence before you keep tidy. Photograph damage before moving the vehicle, note the time, and keep the booking reference to hand — support cannot look up a trip you describe only as "yesterday\'s airport run".',
+          "Report anything that puts you, the vehicle or the client at risk - immediately, from the support sheet. Use Report an issue and mark it Urgent if it is blocking you now. A safety concern is never an inconvenience to us.",
+          'Keep evidence before you keep tidy. Photograph damage before moving the vehicle, note the time, and keep the booking reference to hand - support cannot look up a trip you describe only as "yesterday\'s airport run".',
           "Do not negotiate money, cancellations or disputes with a client directly. Put it through support so there is a record, and so the outcome is not your word against theirs.",
         ].join("\n\n"),
       },
@@ -222,7 +222,7 @@ const COURSES: SeedCourse[] = [
         description: "What the client needs to know, and what goes to support.",
         duration_minutes: 5,
         content: [
-          "A fault the client can see is a fault you should have named first. Tell them what it is, what it means for the trip, and what you are doing about it — in that order, in one sentence each.",
+          "A fault the client can see is a fault you should have named first. Tell them what it is, what it means for the trip, and what you are doing about it - in that order, in one sentence each.",
           "If the vehicle is unsafe, the booking ends there. Do not finish a trip on a tyre you do not trust because the drop-off is close. Report it as Urgent and support will arrange the client's onward journey.",
           'In the report, give the booking reference, what you observed, when it started, and whether the vehicle is still drivable. "Something is wrong with the brakes" starts a conversation; "pedal goes soft after three stops, started this morning, still drivable below 40" starts a repair.',
         ].join("\n\n"),
@@ -259,7 +259,7 @@ const COURSES: SeedCourse[] = [
       },
       {
         title: "The PASS method",
-        description: "Pull, aim, squeeze, sweep — and the fires you do not fight.",
+        description: "Pull, aim, squeeze, sweep - and the fires you do not fight.",
         duration_minutes: 4,
         video_url: watch("PQV71INDaqY"),
       },
@@ -346,7 +346,7 @@ const COURSES: SeedCourse[] = [
         content: [
           "Marking a booking complete is what creates the payment. The client's charge is settled against the agreed amount, the platform fee comes off, and the balance lands in your wallet.",
           "Amounts are held in kobo and shown in naira. A booking at 45,000 is stored as 4,500,000 minor units, which is why the figure on your wallet and the figure on the booking always agree to the last kobo.",
-          "Every movement — payment, fee, withdrawal, reversal — is a line in your earnings history with its own reference. If a number looks wrong, the reference is what support needs to trace it.",
+          "Every movement - payment, fee, withdrawal, reversal - is a line in your earnings history with its own reference. If a number looks wrong, the reference is what support needs to trace it.",
         ].join("\n\n"),
       },
       {
@@ -354,7 +354,7 @@ const COURSES: SeedCourse[] = [
         description: "Why a payment sits before you can withdraw it.",
         duration_minutes: 4,
         content: [
-          "New payments arrive as pending. Pending money is yours but not yet withdrawable — it is the window in which a client can raise a dispute over a trip that has just happened.",
+          "New payments arrive as pending. Pending money is yours but not yet withdrawable - it is the window in which a client can raise a dispute over a trip that has just happened.",
           "Once the window passes, the amount moves to available and the Withdraw button unlocks for it. Your dashboard shows both figures separately for exactly this reason.",
           "A disputed booking holds its payment in pending until support closes the dispute. You are told when that happens; the money does not quietly disappear.",
         ].join("\n\n"),
@@ -364,7 +364,7 @@ const COURSES: SeedCourse[] = [
         description: "Why we resolve the account name with your bank instead of asking you to type it.",
         duration_minutes: 4,
         content: [
-          "Add a payout account under Settings, then Earnings. You give the bank and the account number — never the account name.",
+          "Add a payout account under Settings, then Earnings. You give the bank and the account number - never the account name.",
           "The name comes back from your bank through a name enquiry, and that is the name we pay. It is why a mistyped digit fails instead of quietly paying a stranger who happens to hold that account.",
           "You can hold more than one account and mark one as default. Withdrawals go to the default unless you pick another at the time.",
         ].join("\n\n"),
@@ -375,7 +375,7 @@ const COURSES: SeedCourse[] = [
         duration_minutes: 5,
         content: [
           "Withdraw any amount up to your available balance. The request leaves your wallet immediately and shows as a withdrawal line in your history straight away.",
-          "Payouts settle on banking days. One requested on a Saturday night is processed on Monday — the delay is the bank's, not a problem with your account.",
+          "Payouts settle on banking days. One requested on a Saturday night is processed on Monday - the delay is the bank's, not a problem with your account.",
           "If a payout fails, the amount is reversed back to available and the reason is on the transaction. The usual cause is a closed or frozen account, which means fixing the payout account rather than retrying the withdrawal.",
         ].join("\n\n"),
       },
@@ -397,7 +397,7 @@ const COURSES: SeedCourse[] = [
         duration_minutes: 5,
         content: [
           "Your trust score is one number out of 100, built from four inputs: clearing verification, completing required training, completing bookings, and your average client rating.",
-          "Verification is the largest single component and the only all-or-nothing one — it pays nothing until every check clears, then pays in full.",
+          "Verification is the largest single component and the only all-or-nothing one - it pays nothing until every check clears, then pays in full.",
           "Open Trust score from your dashboard to see what each component is worth for you right now, and the fact behind each bar. The weights live on the server and are the same for every driver.",
         ].join("\n\n"),
       },
@@ -406,9 +406,9 @@ const COURSES: SeedCourse[] = [
         description: "Cancellations, late arrivals and how quickly they are forgotten.",
         duration_minutes: 6,
         content: [
-          "Reliability is completed bookings against bookings you took on. Declining a request never counts — you were never committed. Cancelling one you accepted does.",
+          "Reliability is completed bookings against bookings you took on. Declining a request never counts - you were never committed. Cancelling one you accepted does.",
           "The measure is a ratio, not a tally, so it recovers by completing work rather than by waiting. Two clean months genuinely outweigh one bad week.",
-          "If something outside your control ends a booking — the client cancels, the vehicle fails its check — report it. Support can mark the booking so it does not count against you, but only if it is recorded at the time.",
+          "If something outside your control ends a booking - the client cancels, the vehicle fails its check - report it. Support can mark the booking so it does not count against you, but only if it is recorded at the time.",
         ].join("\n\n"),
       },
       {
@@ -416,7 +416,7 @@ const COURSES: SeedCourse[] = [
         description: "What clients actually write about.",
         duration_minutes: 6,
         content: [
-          "Read your own reviews screen before guessing. The tags clients pick — punctual, safe driving, clean vehicle, good communication — are the same few every time, and they are almost never about driving skill.",
+          "Read your own reviews screen before guessing. The tags clients pick - punctual, safe driving, clean vehicle, good communication - are the same few every time, and they are almost never about driving skill.",
           "Arriving early is the single most mentioned thing. It is also the cheapest to fix.",
           "A rating below five is information, not an insult. One recurring complaint across several trips is a habit worth changing; one bad trip among twenty moves your score barely at all.",
         ].join("\n\n"),
@@ -454,7 +454,7 @@ const run = async () => {
 
     const videos = modules.filter(module => module.video_url).length;
 
-    console.log(`  ${course.slug} — ${modules.length} modules (${videos} video, ${modules.length - videos} reading), ${estimated_minutes} mins`);
+    console.log(`  ${course.slug} - ${modules.length} modules (${videos} video, ${modules.length - videos} reading), ${estimated_minutes} mins`);
   }
 
   const required = COURSES.filter(course => course.is_required).length;

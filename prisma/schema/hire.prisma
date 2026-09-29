@@ -1,10 +1,10 @@
 // The admin-brokered hire flow, DriversNG-style money rail: a client either
 // asks for a specific driver (self-serve) or submits a concierge request with
-// no driver attached — an admin assigns one at review. The admin issues a VAT
+// no driver attached - an admin assigns one at review. The admin issues a VAT
 // invoice, the client pays by bank transfer into the ORGANISATION account and
 // uploads proof, an admin confirms it, and the paid request materialises as an
 // ACCEPTED booking plus the driver's contact details ("combo pack"). The org
-// settles drivers itself — no client wallet involved.
+// settles drivers itself - no client wallet involved.
 
 enum HireRequestStatus {
   PENDING_REVIEW
@@ -49,7 +49,7 @@ model HireRequest {
   starts_at       DateTime
   note            String?
 
-  // The questionnaire — what the client actually needs.
+  // The questionnaire - what the client actually needs.
   package                HirePackage   @default(PRIVATE)
   duration_months        Int?
   drivers_needed         Int           @default(1)
@@ -69,7 +69,7 @@ model HireRequest {
   cancelled_at    DateTime?
   paid_at         DateTime?
 
-  // Set when payment succeeds — the engagement the client sees in My Hire.
+  // Set when payment succeeds - the engagement the client sees in My Hire.
   bookingId String?  @unique
   booking   Booking? @relation(fields: [bookingId], references: [id])
 

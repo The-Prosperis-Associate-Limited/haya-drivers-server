@@ -108,7 +108,7 @@ export class PaystackProvider implements PaymentProvider {
     };
   }
 
-  // Poll fallback for webhooks that never arrived — the transactions list keys
+  // Poll fallback for webhooks that never arrived - the transactions list keys
   // on Paystack's numeric customer id, not the customer code.
   async listFundingEvents(customerCode: string): Promise<FundingRecord[]> {
     const customer = await this.request<{ id: number }>(`/customer/${customerCode}`);

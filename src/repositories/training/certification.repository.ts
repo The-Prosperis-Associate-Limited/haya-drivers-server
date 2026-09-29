@@ -14,7 +14,7 @@ export class CertificationRepository {
     });
   }
 
-  // One query for a page of search results — the marketplace cards each carry
+  // One query for a page of search results - the marketplace cards each carry
   // certification chips.
   async titlesForUsers(userIds: string[]) {
     if (!userIds.length) return new Map<string, string[]>();

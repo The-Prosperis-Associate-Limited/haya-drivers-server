@@ -1,4 +1,4 @@
-// Money is stored in minor units everywhere — kobo for NGN, cents for USD. A
+// Money is stored in minor units everywhere - kobo for NGN, cents for USD. A
 // float never touches a balance, so these two functions are the only bridge
 // between what the client shows and what the database holds.
 export const toMinorUnits = (amount: number) => Math.round(amount * 100);

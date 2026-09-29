@@ -9,7 +9,7 @@ export class ClientOnboardingService {
     return this.clientProfileRepo.ensureForUser(userId);
   }
 
-  // Partial on purpose — each wizard step saves its own slice, so stopping
+  // Partial on purpose - each wizard step saves its own slice, so stopping
   // half-way loses nothing.
   async savePreferences(userId: string, data: ClientPreferencesInput) {
     await this.clientProfileRepo.ensureForUser(userId);
@@ -17,7 +17,7 @@ export class ClientOnboardingService {
     return this.clientProfileRepo.update(userId, cleanObject(data));
   }
 
-  // Skipping stamps completion too — the wizard is a prompt, not a gate, and it
+  // Skipping stamps completion too - the wizard is a prompt, not a gate, and it
   // must not reappear on every sign-in. Idempotent so a re-submit changes nothing.
   async complete(userId: string) {
     const profile = await this.clientProfileRepo.ensureForUser(userId);

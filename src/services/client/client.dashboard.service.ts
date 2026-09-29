@@ -9,7 +9,7 @@ export class ClientDashboardService {
   private transactionRepo = new WalletTransactionRepository();
 
   // "In request list" is the applicants waiting across the client's open
-  // staffing requests — 0 until driver apply ships, but counted, never assumed.
+  // staffing requests - 0 until driver apply ships, but counted, never assumed.
   async stats(clientId: string) {
     const [activeDrivers, openRequests, requestList] = await Promise.all([
       prisma.booking.findMany({
@@ -33,7 +33,7 @@ export class ClientDashboardService {
   /*
     One payload for the overview screen. Monthly spend is what actually left the
     wallet this month; the delta is against last month and null when there is no
-    last month to compare against — a delta against zero is theatre.
+    last month to compare against - a delta against zero is theatre.
   */
   async overview(clientId: string) {
     const now = new Date();

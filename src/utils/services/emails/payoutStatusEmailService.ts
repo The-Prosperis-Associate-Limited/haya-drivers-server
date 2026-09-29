@@ -26,7 +26,7 @@ const COPY: Record<PayoutStatusEmailData["status"], { title: string; body: (data
   FAILED: {
     title: "Withdrawal failed",
     body: data =>
-      `We could not complete your withdrawal of ${data.amount}. ${data.failureReason ?? "Your bank rejected the transfer."}\n\nThe money is back in your available balance — check your account details and try again.`,
+      `We could not complete your withdrawal of ${data.amount}. ${data.failureReason ?? "Your bank rejected the transfer."}\n\nThe money is back in your available balance - check your account details and try again.`,
   },
 };
 

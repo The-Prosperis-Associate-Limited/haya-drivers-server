@@ -49,7 +49,7 @@ export class HireRequestController {
 
       const result = await this.clientService.submitProof(req.userId as string, req.params.reference as string, req.file, data);
 
-      res.status(200).json({ message: "Proof of payment submitted — we'll confirm it shortly", data: result });
+      res.status(200).json({ message: "Proof of payment submitted - we'll confirm it shortly", data: result });
     } catch (error) {
       handleErrors({ res, error });
     }
@@ -115,7 +115,7 @@ export class HireRequestController {
     try {
       const result = await this.adminService.confirmPayment(req.params.reference as string, req.userId as string);
 
-      res.status(200).json({ message: "Payment confirmed — engagement created", data: result });
+      res.status(200).json({ message: "Payment confirmed - engagement created", data: result });
     } catch (error) {
       handleErrors({ res, error });
     }

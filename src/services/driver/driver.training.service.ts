@@ -40,7 +40,7 @@ export class DriverTrainingService {
   /*
     The required path is walked in order and each course unlocks the next, so a
     driver cannot skip ahead to the assessment they like the look of. Locking is
-    presentational — the server still refuses progress on a course they have not
+    presentational - the server still refuses progress on a course they have not
     reached, because hiding a button is not a rule.
   */
   async requiredPath(userId: string) {
@@ -107,7 +107,7 @@ export class DriverTrainingService {
     /*
       Completion never moves backwards. A driver rewatching a module they already
       finished sends position pings with `completed` undefined, and those must not
-      clear the tick — losing it would drop their course progress and, on the last
+      clear the tick - losing it would drop their course progress and, on the last
       module, un-finish a course they have already been certified for.
     */
     const completed_at = existing?.completed_at ?? (data.completed ? new Date() : null);

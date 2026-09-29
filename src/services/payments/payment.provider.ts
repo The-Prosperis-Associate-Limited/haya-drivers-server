@@ -48,7 +48,7 @@ export interface FundingRecord {
 
 /*
   Every payment provider is reached through this interface, so adding a region
-  is a new implementation plus an entry in the registry — never a change to the
+  is a new implementation plus an entry in the registry - never a change to the
   payout or wallet services. Paystack covers Nigeria today; the same shape fits
   Stripe, Flutterwave or a bank rail elsewhere.
 */

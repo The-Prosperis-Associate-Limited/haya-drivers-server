@@ -18,7 +18,7 @@ const generateBookingRequestData = (data: BookingRequestEmailData) => ({
   type: "booking" as const,
   title: "New job request",
   recipientName: data.first_name,
-  message: `${data.clientName} wants to book you for ${data.title}. Review the details and respond — requests expire if they go unanswered.`,
+  message: `${data.clientName} wants to book you for ${data.title}. Review the details and respond - requests expire if they go unanswered.`,
   buttonText: "View Request",
   buttonAction: `${data.baseUrl}/dashboard/job-request/${data.reference}`,
   additionalDetails: {

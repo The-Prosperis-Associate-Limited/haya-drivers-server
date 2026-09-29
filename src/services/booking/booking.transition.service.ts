@@ -16,7 +16,7 @@ const { CLIENT_URL, PLATFORM_FEE_PERCENT } = process.env;
 /*
   The status machine lives here and nowhere else. Both the driver and the client
   side call into it, so a transition always writes its event row, notifies the
-  other party and — on completion — moves the money. A service that flipped
+  other party and - on completion - moves the money. A service that flipped
   `status` directly would skip all three.
 */
 const ALLOWED_TRANSITIONS: Record<$Enums.BookingStatus, $Enums.BookingStatus[]> = {
@@ -87,7 +87,7 @@ export class BookingTransitionService {
     if (!booking?.driverId) return;
 
     // An engagement the client already paid through their wallet settles there
-    // — crediting it again here would pay the driver twice.
+    // - crediting it again here would pay the driver twice.
     const alreadyPaid = await this.walletTransactionRepo.existsForBooking(booking.id, "BOOKING_PAYMENT");
 
     if (alreadyPaid) {

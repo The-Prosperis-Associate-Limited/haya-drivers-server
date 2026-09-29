@@ -15,7 +15,7 @@ const feePercent = Number(PAYMENT_FEE_PERCENT ?? 1);
 const feeFloor = Number(PAYMENT_FEE_MIN_MINOR ?? 10_000);
 const feeCap = Number(PAYMENT_FEE_MAX_MINOR ?? 200_000);
 
-// The platform's cut on a wallet payment. The client pays it on top — the
+// The platform's cut on a wallet payment. The client pays it on top - the
 // driver always receives the full agreed amount.
 export const paymentFeeFor = (amountMinor: number) => Math.min(Math.max(Math.round((amountMinor * feePercent) / 100), feeFloor), feeCap);
 
@@ -27,7 +27,7 @@ export class ClientWalletService {
   private walletService = new WalletService();
   private notificationService = new NotificationService();
 
-  // Provisioned lazily on first read — a client who never opens the wallet
+  // Provisioned lazily on first read - a client who never opens the wallet
   // never becomes a Paystack customer.
   async getWallet(userId: string) {
     const wallet = await this.walletRepo.ensureForUser(userId);
@@ -39,7 +39,7 @@ export class ClientWalletService {
     if (!user) throw new NotFoundError("Account not found");
 
     // A provisioning failure (or a missing Paystack key in dev) must not take
-    // the whole wallet down — the balance still renders, deposits wait, and the
+    // the whole wallet down - the balance still renders, deposits wait, and the
     // next read retries.
     try {
       const provider = resolveProvider(wallet.currency);
@@ -71,8 +71,8 @@ export class ClientWalletService {
 
   /*
     The transactions page header. "Pending this cycle" is the month's committed
-    salaries not yet paid — commitment minus what already went out since the 1st
-    — because no payment scheduler exists; the figure is derived, not promised.
+    salaries not yet paid - commitment minus what already went out since the 1st
+    - because no payment scheduler exists; the figure is derived, not promised.
   */
   async summary(userId: string) {
     const wallet = await this.walletRepo.ensureForUser(userId);
@@ -96,7 +96,7 @@ export class ClientWalletService {
   }
 
   /*
-    Idempotent on the provider's reference — Paystack retries webhooks and the
+    Idempotent on the provider's reference - Paystack retries webhooks and the
     poll fallback replays the same list, and money must only land once. Funding
     is AVAILABLE immediately: it is the client's own money, not earnings on a
     dispute hold.
@@ -145,7 +145,7 @@ export class ClientWalletService {
     await this.credit(wallet.userId, event);
   }
 
-  // Poll fallback for funding webhooks that never arrived — local dev has no
+  // Poll fallback for funding webhooks that never arrived - local dev has no
   // reachable webhook url, and credit() makes replaying the whole list safe.
   async syncFunding(userId: string) {
     const wallet = await this.walletRepo.ensureForUser(userId);

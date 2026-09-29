@@ -53,7 +53,7 @@ export class DriverVerificationRepository {
         where,
         skip,
         take: limit,
-        // Oldest submission first — the queue is a queue, not a stack.
+        // Oldest submission first - the queue is a queue, not a stack.
         orderBy: { submitted_at: "asc" },
         include: {
           user: {
@@ -67,7 +67,7 @@ export class DriverVerificationRepository {
               country: true,
               state_of_residence: true,
               driver_profile: { select: { driver_type: true, years_of_experience: true, license_number: true, trust_score: true } },
-              // Statuses only — the queue's "n/m verified" column counts them.
+              // Statuses only - the queue's "n/m verified" column counts them.
               documents: { select: { status: true } },
             },
           },

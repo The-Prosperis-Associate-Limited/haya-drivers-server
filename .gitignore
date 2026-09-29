@@ -3,7 +3,7 @@ node_modules
 dist
 /src/generated/prisma
 
-# Agent working notes — local only, kept out of history on purpose
+# Agent working notes - local only, kept out of history on purpose
 CLAUDE.md
 AGENTS.md
 .claude/

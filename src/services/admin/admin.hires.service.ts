@@ -60,7 +60,7 @@ export class AdminHiresService {
 
   /*
     The invoice is the admin's review artifact: salary (defaulting to the
-    driver's advertised rate), VAT on the salary, and the platform fee —
+    driver's advertised rate), VAT on the salary, and the platform fee -
     quoted here so the client sees one total that will not drift at payment
     time.
   */
@@ -72,7 +72,7 @@ export class AdminHiresService {
 
     const amount = data.amount_minor ?? request.driver.driver_profile?.expected_monthly_rate ?? 0;
 
-    if (amount <= 0) throw new BadRequestError("The driver has no advertised rate — set the engagement amount");
+    if (amount <= 0) throw new BadRequestError("The driver has no advertised rate - set the engagement amount");
 
     const vatPercent = data.vat_percent ?? defaultVatPercent;
     const vat = Math.round((amount * vatPercent) / 100);
@@ -110,7 +110,7 @@ export class AdminHiresService {
   /*
     The human oracle for a bare bank transfer: the admin has seen the money in
     the organisation account and confirms it. Only then does the engagement
-    exist — booking created already-ACCEPTED (admin-brokered, no
+    exist - booking created already-ACCEPTED (admin-brokered, no
     driver-acceptance leg), driver credited in full with the standard earnings
     hold, contact details unlocked. The organisation settles the driver out of
     its own account; the wallet credit is the ledger of what is owed.
@@ -132,7 +132,7 @@ export class AdminHiresService {
       clientId: request.clientId,
       driverId: request.driverId,
       reference: generateReference("JOB"),
-      title: `${request.engagement_type === "MONTHLY" ? "Monthly engagement" : "Contract engagement"} — ${driverName}`,
+      title: `${request.engagement_type === "MONTHLY" ? "Monthly engagement" : "Contract engagement"} - ${driverName}`,
       description: request.note ?? null,
       driver_type: driverType,
       engagement_type: request.engagement_type,
@@ -164,7 +164,7 @@ export class AdminHiresService {
       recipientId: request.clientId,
       senderId: adminId,
       type: "PAYMENT",
-      title: "Payment confirmed — driver details unlocked",
+      title: "Payment confirmed - driver details unlocked",
       message: `We've confirmed your payment for ${request.reference}. ${driverName}'s contact details are now available on your request.`,
       actionUrl: `/dashboard/my-hire/requests/${request.reference}`,
       metadata: { reference: request.reference },

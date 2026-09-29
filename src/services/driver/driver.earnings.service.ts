@@ -35,7 +35,7 @@ export class DriverEarningsService {
 
   /*
     Twelve months, gaps filled with zero. The chart draws a continuous line, so
-    a month with no work has to come back as 0 rather than be missing — leaving
+    a month with no work has to come back as 0 rather than be missing - leaving
     it out would make the line skip that month entirely.
   */
   async trend(userId: string) {

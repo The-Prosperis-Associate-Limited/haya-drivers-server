@@ -126,7 +126,7 @@ export class BookingRepository {
     return prisma.booking.count({ where: { status } });
   }
 
-  // What the client owes per month across active monthly hires — drives the
+  // What the client owes per month across active monthly hires - drives the
   // "monthly commitment" figure, never a charge.
   async sumActiveMonthlyCommitment(clientId: string) {
     const result = await prisma.booking.aggregate({
@@ -137,7 +137,7 @@ export class BookingRepository {
     return result._sum.amount ?? 0;
   }
 
-  // "Hired staff" is not a table — it is the client's active monthly
+  // "Hired staff" is not a table - it is the client's active monthly
   // engagements, with the driver's profile alongside for the roster rows.
   async findActiveHires(clientId: string, params: { page: number; limit: number }) {
     const { page, limit } = params;

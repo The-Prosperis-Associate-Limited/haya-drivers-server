@@ -25,7 +25,7 @@ export class ActivityRepository {
     });
   }
 
-  // Platform-wide, not scoped to the calling admin — admins generate almost no
+  // Platform-wide, not scoped to the calling admin - admins generate almost no
   // activity of their own, so a per-user query renders an empty feed.
   async findRecentPlatformActivities(limit: number) {
     return prisma.activity.findMany({

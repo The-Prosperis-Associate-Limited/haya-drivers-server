@@ -120,7 +120,7 @@ model ClientProfile {
   organisation_size Int?
   industry          String?
 
-  // Hiring preferences collected by the client onboarding wizard. All optional —
+  // Hiring preferences collected by the client onboarding wizard. All optional -
   // the wizard is skippable and the marketplace works without them.
   hiring_categories       ClientDriverCategory[] @default([])
   drivers_needed          DriversNeededRange?

@@ -47,7 +47,7 @@ export class ClientWalletController {
     }
   };
 
-  // The Make Payment modal shows the fee before the client commits — quoting is
+  // The Make Payment modal shows the fee before the client commits - quoting is
   // a server answer so the preview can never drift from what gets charged.
   quote = async (req: IUserRequest, res: Response) => {
     try {

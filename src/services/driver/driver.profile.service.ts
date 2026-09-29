@@ -17,7 +17,7 @@ export class DriverProfileService {
     return profile;
   }
 
-  // Settings, not onboarding — no step advances here. Feeds the client
+  // Settings, not onboarding - no step advances here. Feeds the client
   // marketplace's budget filter and availability panel.
   async saveWorkPreferences(userId: string, data: WorkPreferencesInput) {
     await this.requireProfile(userId);

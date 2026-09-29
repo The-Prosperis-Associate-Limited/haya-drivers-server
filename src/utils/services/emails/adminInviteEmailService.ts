@@ -9,7 +9,7 @@ export interface AdminInviteEmailData {
   baseUrl: string;
 }
 
-// The temporary password is deliberately absent — it is shown to the inviter
+// The temporary password is deliberately absent - it is shown to the inviter
 // once and shared out-of-band, so this email leaking grants nothing.
 const generateAdminInviteData = (data: AdminInviteEmailData) => ({
   type: "verification" as const,

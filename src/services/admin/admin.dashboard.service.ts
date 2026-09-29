@@ -40,7 +40,7 @@ export class AdminDashboardService {
 
   async growth(period: GrowthPeriod) {
     const days = PERIOD_DAYS[period];
-    // UTC throughout — Postgres buckets by UTC day, so local midnight would shift every key.
+    // UTC throughout - Postgres buckets by UTC day, so local midnight would shift every key.
     const now = new Date();
     const since = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (days - 1)));
 
@@ -65,7 +65,7 @@ export class AdminDashboardService {
     return { period, series: [...buckets.values()] };
   }
 
-  // Platform-wide rather than scoped to the calling admin — admins generate
+  // Platform-wide rather than scoped to the calling admin - admins generate
   // almost no activity of their own, so a per-user feed renders empty.
   async recentActivity(limit = 20) {
     return this.activityService.listPlatformActivities(limit);

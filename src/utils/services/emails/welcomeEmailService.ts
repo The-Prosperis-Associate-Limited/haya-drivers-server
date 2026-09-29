@@ -22,7 +22,7 @@ const generateWelcomeEmailData = (data: WelcomeEmailData) => ({
 export const createWelcomeEmail = (data: WelcomeEmailData) => {
   const react = generateProfessionalEmail(generateWelcomeEmailData(data));
 
-  return { react, subject: "Welcome to Drivers Vault — please verify your email" };
+  return { react, subject: "Welcome to Drivers Vault - please verify your email" };
 };
 
 export const sendWelcomeEmail = async (data: WelcomeEmailData): Promise<void> => {

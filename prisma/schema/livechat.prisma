@@ -1,4 +1,4 @@
-// Support live chat — one open conversation per user, admins join from the
+// Support live chat - one open conversation per user, admins join from the
 // support pool. No AI: a WAITING conversation is simply one no admin has
 // joined yet.
 

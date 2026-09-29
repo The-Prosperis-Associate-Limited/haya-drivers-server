@@ -42,7 +42,7 @@ export class AuthRegistrationService {
       await Promise.all([this.driverProfileRepo.create({ userId: user.id }), this.walletRepo.ensureForUser(user.id)]);
     }
 
-    // A client gets the same guarantee — the profile carries what they hire as,
+    // A client gets the same guarantee - the profile carries what they hire as,
     // and the wallet is where deposits land.
     if (user.role === "CLIENT") {
       await Promise.all([

@@ -11,7 +11,7 @@ const generateOnboardingSubmittedData = (data: OnboardingSubmittedData) => ({
   type: "verification" as const,
   title: "Thank you for the submission",
   recipientName: data.first_name,
-  message: "Our team is going through your documents now and will get back to you shortly. Verification usually takes 24-48 hours.\n\nWhile you wait, you can start a training module — completed courses raise your trust score and unlock more job requests.",
+  message: "Our team is going through your documents now and will get back to you shortly. Verification usually takes 24-48 hours.\n\nWhile you wait, you can start a training module - completed courses raise your trust score and unlock more job requests.",
   buttonText: "Proceed to Dashboard",
   buttonAction: `${data.baseUrl}/dashboard`,
 });

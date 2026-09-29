@@ -56,7 +56,7 @@ const generateBookingStatusData = (data: BookingStatusEmailData) => {
 export const createBookingStatusEmail = (data: BookingStatusEmailData) => {
   const react = generateProfessionalEmail(generateBookingStatusData(data));
 
-  return { react, subject: `${COPY[data.status].title} — ${data.title}` };
+  return { react, subject: `${COPY[data.status].title} - ${data.title}` };
 };
 
 export const sendBookingStatusEmail = async (data: BookingStatusEmailData): Promise<void> => {

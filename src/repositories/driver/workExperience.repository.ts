@@ -23,7 +23,7 @@ export class WorkExperienceRepository {
   }
 
   // The onboarding step submits the whole list at once, so it replaces rather
-  // than merges — a role the driver removed on screen has to disappear here too.
+  // than merges - a role the driver removed on screen has to disappear here too.
   async replaceForDriver(driverId: string, entries: Omit<Prisma.WorkExperienceUncheckedCreateInput, "driverId">[]) {
     return prisma.$transaction([
       prisma.workExperience.deleteMany({ where: { driverId } }),

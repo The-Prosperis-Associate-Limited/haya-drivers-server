@@ -79,7 +79,7 @@ export class AuthSessionService {
     return `${baseUrl}/auth/email-verified?name=${name}`;
   }
 
-  // Same response whether or not the address has an account — anything else
+  // Same response whether or not the address has an account - anything else
   // turns this endpoint into an account-enumeration oracle.
   async sendEmailVerificationOtp(email: string) {
     const user = await this.userRepo.findByEmail(email);

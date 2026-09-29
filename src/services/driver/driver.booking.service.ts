@@ -30,7 +30,7 @@ export class DriverBookingService {
       open: counts.open,
       accepted: counts.accepted,
       declined: counts.declined,
-      // Null, not zero, until a request has actually closed — a driver who has
+      // Null, not zero, until a request has actually closed - a driver who has
       // never been asked has no record, and 0% reads as a bad one.
       response_rate: closed ? Math.round((answered / closed) * 100) : null,
     };

@@ -12,9 +12,9 @@ export interface CertificationIssuedEmailData {
 
 const generateCertificationIssuedData = (data: CertificationIssuedEmailData) => ({
   type: "training" as const,
-  title: `${data.courseTitle} — certified`,
+  title: `${data.courseTitle} - certified`,
   recipientName: data.first_name,
-  message: `You have completed ${data.courseTitle}. Your certificate is ready to download, and your trust score went up by ${data.trustScoreReward} points — a higher score puts you in front of more clients.`,
+  message: `You have completed ${data.courseTitle}. Your certificate is ready to download, and your trust score went up by ${data.trustScoreReward} points - a higher score puts you in front of more clients.`,
   buttonText: "Download Certificate",
   buttonAction: `${data.baseUrl}/dashboard/training/certifications`,
   additionalDetails: { reference: data.reference },

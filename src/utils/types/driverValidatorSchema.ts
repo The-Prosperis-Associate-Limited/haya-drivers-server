@@ -42,7 +42,7 @@ export const experienceSchema = z.object({
   }, "Your licence must be valid for at least one more year"),
 });
 
-// Optional by design — the screen says so, and a driver without a degree is
+// Optional by design - the screen says so, and a driver without a degree is
 // not a worse driver.
 export const academicQualificationSchema = z.object({
   academic_level: z.enum(["NONE", "PRIMARY", "SECONDARY", "OND", "HND", "BSC", "MSC", "PHD"]),
@@ -58,7 +58,7 @@ export const workExperienceSchema = z.object({
           employer: z.string().trim().min(1, "Enter the employer"),
           job_title: z.string().trim().min(1, "Enter the job title"),
           started_at: z.coerce.date(),
-          // "" arrives when the role is current — it means "no end date", not a date.
+          // "" arrives when the role is current - it means "no end date", not a date.
           ended_at: z.preprocess(value => (value === "" ? undefined : value), z.coerce.date().optional().nullable()),
           is_current: z.boolean().optional().default(false),
         })
@@ -72,7 +72,7 @@ export const workExperienceSchema = z.object({
 });
 
 // One reference (a previous employer) and exactly one guarantor, who must be
-// a working professional — family and friends are not acceptable guarantors.
+// a working professional - family and friends are not acceptable guarantors.
 export const guarantorSchema = z.object({
   reference: z.object({
     full_name: z.string().trim().min(2, "Enter your reference's name"),
@@ -112,7 +112,7 @@ export const reviewDocumentSchema = z
     rejection_reason: z.string().trim().optional(),
   })
   .superRefine((data, ctx) => {
-    // A rejection the driver cannot act on is worse than no rejection — the
+    // A rejection the driver cannot act on is worse than no rejection - the
     // resubmit screen renders this string verbatim.
     if (data.status === "REJECTED" && !data.rejection_reason) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Tell the driver what needs fixing", path: ["rejection_reason"] });
@@ -130,7 +130,7 @@ export const reviewVerificationSchema = z
     }
   });
 
-// Rate arrives in minor units — the app converts before sending. Null clears a
+// Rate arrives in minor units - the app converts before sending. Null clears a
 // field; undefined leaves it untouched.
 export const workPreferencesSchema = z.object({
   expected_monthly_rate: z.coerce.number().int().min(0).nullable().optional(),

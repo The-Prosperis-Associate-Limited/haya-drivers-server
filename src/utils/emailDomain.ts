@@ -18,7 +18,7 @@ const DISPOSABLE_DOMAINS = new Set([
 ]);
 
 /*
-  Rejects throwaway mailbox services only — never public providers like Gmail or
+  Rejects throwaway mailbox services only - never public providers like Gmail or
   Yahoo. A disposable mailbox is not durable, so nothing we send can be relied
   on to arrive, and a driver's verification result has to reach them. A public
   mailbox is real; almost every driver on the platform will have one.

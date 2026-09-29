@@ -25,7 +25,7 @@ export class AdminTeamService {
 
   /*
     The temporary password is returned to the inviter exactly once and never
-    emailed — the invite email carries only a sign-in link. must_change_password
+    emailed - the invite email carries only a sign-in link. must_change_password
     locks every /api/admin route until the invitee rotates it, so a leaked
     temporary credential has the shortest possible life.
   */

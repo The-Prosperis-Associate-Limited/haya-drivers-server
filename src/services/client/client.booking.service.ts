@@ -116,7 +116,7 @@ export class ClientBookingService {
   async review(clientId: string, reference: string, data: ReviewBookingInput) {
     const booking = await this.get(clientId, reference);
 
-    // A monthly hire runs for months — the client reviews the driver while the
+    // A monthly hire runs for months - the client reviews the driver while the
     // engagement is live, not only after it ends. Unanswered requests stay
     // unreviewable: nobody reviews a driver who never worked for them.
     const reviewable = booking.accepted_at && ["ACCEPTED", "IN_PROGRESS", "COMPLETED"].includes(booking.status);

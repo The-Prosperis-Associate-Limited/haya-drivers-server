@@ -63,7 +63,7 @@ export class AdminTrainingService {
     return this.courseRepo.update(id, { status: "PUBLISHED" });
   }
 
-  // Back to DRAFT rather than ARCHIVED — an unpublished course is expected to return.
+  // Back to DRAFT rather than ARCHIVED - an unpublished course is expected to return.
   async unpublishCourse(id: string) {
     await this.getCourse(id);
 

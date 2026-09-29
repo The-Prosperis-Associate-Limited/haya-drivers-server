@@ -7,7 +7,7 @@ const driverProfileRepository = new DriverProfileRepository();
 
 /*
   Withholds the surfaces that put a driver in front of paying clients until a
-  human has cleared their documents. It can only ever withhold, never grant —
+  human has cleared their documents. It can only ever withhold, never grant -
   an unverified driver keeps full access to onboarding, training and support.
 */
 export const requireVerifiedDriver = async function (req: IUserRequest, res: Response, next: NextFunction) {

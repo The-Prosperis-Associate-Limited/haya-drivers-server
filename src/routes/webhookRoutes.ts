@@ -12,7 +12,7 @@ const clientWalletService = new ClientWalletService();
 
 /*
   Paystack signs the raw body, so this route reads req.rawBody rather than the
-  parsed object — re-serialising the parsed JSON produces a different string and
+  parsed object - re-serialising the parsed JSON produces a different string and
   the signature never matches.
 */
 webhookRouter.post("/paystack", async (req: IUserRequest, res: Response) => {
@@ -43,7 +43,7 @@ webhookRouter.post("/paystack", async (req: IUserRequest, res: Response) => {
       });
     }
 
-    // Always 200 on a verified webhook, even for an event we ignore — a non-200
+    // Always 200 on a verified webhook, even for an event we ignore - a non-200
     // makes Paystack retry an event that will never be handled.
     res.status(200).json({ received: true });
   } catch (error) {
