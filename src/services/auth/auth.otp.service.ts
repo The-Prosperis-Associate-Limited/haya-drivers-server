@@ -35,12 +35,6 @@ export class AuthOtpService {
       expiresAt: new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000),
     });
 
-    // The code is stored hashed and cannot be read back, so a local environment
-    // with no email provider configured would have no way to finish a signup.
-    if (process.env.NODE_ENV === "development") {
-      console.log(`🔑 ${purpose} code for ${email}: ${code}`);
-    }
-
     await queueEmail(JOB_KEY.EMAIL_OTP, {
       email,
       first_name: firstName,

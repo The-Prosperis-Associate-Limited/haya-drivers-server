@@ -38,13 +38,16 @@ export class AdminHiresService {
   }
 
   /*
-    A concierge request arrives without a driver; the admin matches one before
-    invoicing. Also lets an admin swap the driver on a still-pending request.
+    A concierge request arrives with no drivers attached; the admin matches
+    them one at a time until drivers_needed is met. A named-driver request
+    starts with that driver as its first assignment.
   */
   async assignDriver(reference: string, adminId: string, data: AssignDriverInput) {
     const request = await this.requireRequest(reference);
 
     if (request.status !== "PENDING_REVIEW") throw new BadRequestError("Only a pending request can be assigned a driver");
+    if (request.assignments.length >= request.drivers_needed) throw new BadRequestError(`This request only needs ${request.drivers_needed} driver(s)`);
+    if (request.assignments.some(a => a.driverId === data.driverId)) throw new BadRequestError("That driver is already assigned to this request");
 
     const driverProfile = await this.driverProfileRepo.findByUserId(data.driverId, { verification_status: true });
 
@@ -55,35 +58,52 @@ export class AdminHiresService {
 
     if (open && open.id !== request.id) throw new BadRequestError(`This client already has an open request for that driver (${open.reference})`);
 
-    return this.hireRepo.update(request.id, { driverId: data.driverId });
+    await this.hireRepo.addAssignment(request.id, data.driverId);
+
+    return this.requireRequest(reference);
+  }
+
+  async unassignDriver(reference: string, adminId: string, data: AssignDriverInput) {
+    const request = await this.requireRequest(reference);
+
+    if (request.status !== "PENDING_REVIEW") throw new BadRequestError("Only a pending request can have a driver removed");
+
+    await this.hireRepo.removeAssignment(request.id, data.driverId);
+
+    return this.requireRequest(reference);
   }
 
   /*
-    The invoice is the admin's review artifact: salary (defaulting to the
-    driver's advertised rate), VAT on the salary, and the platform fee -
-    quoted here so the client sees one total that will not drift at payment
-    time.
+    The invoice is the admin's review artifact: a per-driver salary (defaulting
+    to the highest advertised rate among the assigned drivers) times the head
+    count, VAT on that, and the platform fee - quoted here so the client sees
+    one total that will not drift at payment time.
   */
   async generateInvoice(reference: string, adminId: string, data: GenerateInvoiceInput) {
     const request = await this.requireRequest(reference);
 
     if (request.status !== "PENDING_REVIEW") throw new BadRequestError("Only a pending request can be invoiced");
-    if (!request.driverId || !request.driver) throw new BadRequestError("Assign a driver before invoicing");
+    if (request.assignments.length < request.drivers_needed) {
+      throw new BadRequestError(`Assign ${request.drivers_needed} driver(s) before invoicing - ${request.assignments.length} assigned so far`);
+    }
 
-    const amount = data.amount_minor ?? request.driver.driver_profile?.expected_monthly_rate ?? 0;
+    const advertised = request.assignments.map(a => a.driver.driver_profile?.expected_monthly_rate ?? 0);
+    const perDriver = data.amount_minor ?? Math.max(...advertised);
 
-    if (amount <= 0) throw new BadRequestError("The driver has no advertised rate - set the engagement amount");
+    if (perDriver <= 0) throw new BadRequestError("No assigned driver has an advertised rate - set the per-driver amount");
 
+    const amount = perDriver * request.assignments.length;
     const vatPercent = data.vat_percent ?? defaultVatPercent;
     const vat = Math.round((amount * vatPercent) / 100);
     const fee = paymentFeeFor(amount);
-    const currency = request.driver.driver_profile?.rate_currency ?? "NGN";
+    const currency = request.assignments[0].driver.driver_profile?.rate_currency ?? "NGN";
 
     await this.hireRepo.createInvoice({
       hireRequestId: request.id,
       issuedById: adminId,
       reference: generateReference("INV"),
       amount_minor: amount,
+      per_driver_minor: perDriver,
       vat_percent: vatPercent,
       vat_minor: vat,
       fee_minor: fee,
@@ -110,10 +130,11 @@ export class AdminHiresService {
   /*
     The human oracle for a bare bank transfer: the admin has seen the money in
     the organisation account and confirms it. Only then does the engagement
-    exist - booking created already-ACCEPTED (admin-brokered, no
-    driver-acceptance leg), driver credited in full with the standard earnings
-    hold, contact details unlocked. The organisation settles the driver out of
-    its own account; the wallet credit is the ledger of what is owed.
+    exist - one already-ACCEPTED booking per assigned driver (admin-brokered,
+    no driver-acceptance leg), each driver credited their per-driver salary
+    with the standard earnings hold, contact details unlocked. The organisation
+    settles drivers out of its own account; the wallet credits are the ledger
+    of what is owed.
   */
   async confirmPayment(reference: string, adminId: string) {
     const request = await this.requireRequest(reference);
@@ -121,63 +142,74 @@ export class AdminHiresService {
     if (request.status !== "PAYMENT_REVIEW" || !request.invoice || request.invoice.status !== "PAYMENT_REVIEW") {
       throw new BadRequestError("This request has no payment awaiting confirmation");
     }
-    if (!request.driverId || !request.driver) throw new BadRequestError("Assign a driver before confirming payment");
+    if (!request.assignments.length) throw new BadRequestError("Assign the driver(s) before confirming payment");
 
     const invoice = request.invoice;
-    const driverName = [request.driver.first_name, request.driver.last_name].filter(Boolean).join(" ") || "your driver";
-    const driverType = request.driver_type ?? request.driver.driver_profile?.driver_type ?? "PRIVATE_DRIVER";
+    const perDriver = invoice.per_driver_minor ?? Math.round(invoice.amount_minor / request.assignments.length);
     const client = await this.userRepo.findById(request.clientId, { address: true, city: true, state_of_residence: true, country: true });
 
-    const booking = await this.bookingRepo.create({
-      clientId: request.clientId,
-      driverId: request.driverId,
-      reference: generateReference("JOB"),
-      title: `${request.engagement_type === "MONTHLY" ? "Monthly engagement" : "Contract engagement"} - ${driverName}`,
-      description: request.note ?? null,
-      driver_type: driverType,
-      engagement_type: request.engagement_type,
-      pickup_address: (client?.address as string) ?? "To be agreed with the driver",
-      country: (client?.country as string) ?? "Nigeria",
-      state: request.state ?? (client?.state_of_residence as string) ?? "Lagos",
-      city: (client?.city as string) ?? null,
-      starts_at: request.starts_at,
-      amount: invoice.amount_minor,
-      currency: invoice.currency,
-      status: "ACCEPTED",
-      accepted_at: new Date(),
-    });
+    let firstBookingId: string | null = null;
 
-    await this.statusEventRepo.create({ bookingId: booking.id, to_status: "ACCEPTED", changed_by: adminId });
+    for (const assignment of request.assignments) {
+      const driver = assignment.driver;
+      const driverName = [driver.first_name, driver.last_name].filter(Boolean).join(" ") || "your driver";
+      const driverType = request.driver_type ?? driver.driver_profile?.driver_type ?? "PRIVATE_DRIVER";
 
-    await this.walletService.credit(request.driverId, {
-      amount_minor: invoice.amount_minor,
-      currency: invoice.currency,
-      type: "BOOKING_PAYMENT",
-      bookingId: booking.id,
-      description: booking.title,
-    });
+      const booking = await this.bookingRepo.create({
+        clientId: request.clientId,
+        driverId: assignment.driverId,
+        reference: generateReference("JOB"),
+        title: `${request.engagement_type === "MONTHLY" ? "Monthly engagement" : "Contract engagement"} - ${driverName}`,
+        description: request.note ?? null,
+        driver_type: driverType,
+        engagement_type: request.engagement_type,
+        pickup_address: (client?.address as string) ?? "To be agreed with the driver",
+        country: (client?.country as string) ?? "Nigeria",
+        state: request.state ?? (client?.state_of_residence as string) ?? "Lagos",
+        city: (client?.city as string) ?? null,
+        starts_at: request.starts_at,
+        amount: perDriver,
+        currency: invoice.currency,
+        status: "ACCEPTED",
+        accepted_at: new Date(),
+      });
+
+      firstBookingId ??= booking.id;
+
+      await this.statusEventRepo.create({ bookingId: booking.id, to_status: "ACCEPTED", changed_by: adminId });
+
+      await this.walletService.credit(assignment.driverId, {
+        amount_minor: perDriver,
+        currency: invoice.currency,
+        type: "BOOKING_PAYMENT",
+        bookingId: booking.id,
+        description: booking.title,
+      });
+
+      await this.notificationService.notify({
+        recipientId: assignment.driverId,
+        senderId: adminId,
+        type: "BOOKING_STATUS",
+        title: "You've been hired",
+        message: `A client has hired you for ${booking.title} starting ${booking.starts_at.toDateString()}. ${formatMoney(perDriver, invoice.currency)} is on its way to your wallet.`,
+        actionUrl: `/dashboard/job-request/${booking.reference}`,
+        metadata: { bookingId: booking.id, reference: booking.reference },
+      });
+    }
 
     await this.hireRepo.updateInvoice(invoice.id, { status: "PAID", paid_at: new Date(), confirmedById: adminId });
-    const updated = await this.hireRepo.update(request.id, { status: "PAID", paid_at: new Date(), bookingId: booking.id });
+    const updated = await this.hireRepo.update(request.id, { status: "PAID", paid_at: new Date(), bookingId: firstBookingId });
+
+    const count = request.assignments.length;
 
     await this.notificationService.notify({
       recipientId: request.clientId,
       senderId: adminId,
       type: "PAYMENT",
-      title: "Payment confirmed - driver details unlocked",
-      message: `We've confirmed your payment for ${request.reference}. ${driverName}'s contact details are now available on your request.`,
+      title: count > 1 ? "Payment confirmed - your drivers' details are unlocked" : "Payment confirmed - driver details unlocked",
+      message: `We've confirmed your payment for ${request.reference}. The contact details of your ${count > 1 ? `${count} drivers` : "driver"} are now available on your request.`,
       actionUrl: `/dashboard/my-hire/requests/${request.reference}`,
       metadata: { reference: request.reference },
-    });
-
-    await this.notificationService.notify({
-      recipientId: request.driverId,
-      senderId: adminId,
-      type: "BOOKING_STATUS",
-      title: "You've been hired",
-      message: `A client has hired you for ${booking.title} starting ${booking.starts_at.toDateString()}. ${formatMoney(invoice.amount_minor, invoice.currency)} is on its way to your wallet.`,
-      actionUrl: `/dashboard/job-request/${booking.reference}`,
-      metadata: { bookingId: booking.id, reference: booking.reference },
     });
 
     return updated;

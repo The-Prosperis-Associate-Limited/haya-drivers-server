@@ -2,7 +2,9 @@ import { HireRequestRepository } from "../../repositories/booking/hireRequest.re
 import { DriverProfileRepository } from "../../repositories/driver/driverProfile.repository";
 import { UserRepository } from "../../repositories/user/user.repository";
 import { CloudinaryService } from "../shared/cloudinary.service";
+import { NotificationService } from "../shared/notification.service";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../../helper/errors";
+import { formatMoney } from "../../utils/money";
 import { paginate } from "../../utils/pagination";
 import { generateReference } from "../../utils/reference";
 import type { CreateHireRequestInput, HireRequestListQuery, SubmitProofInput } from "../../utils/types/hireValidatorSchema";
@@ -29,6 +31,7 @@ export class ClientHireRequestsService {
   private driverProfileRepo = new DriverProfileRepository();
   private userRepo = new UserRepository();
   private cloudinaryService = new CloudinaryService();
+  private notificationService = new NotificationService();
 
   async create(clientId: string, data: CreateHireRequestInput) {
     if (data.driverId) {
@@ -46,7 +49,11 @@ export class ClientHireRequestsService {
       ...data,
       clientId,
       reference: generateReference("HRQ"),
+      // A named driver is also the first assignment; concierge starts empty.
+      ...(data.driverId && { assignments: { create: { driverId: data.driverId } } }),
     });
+
+    await this.notifyAdmins(clientId, "New hire request", `${request.reference}: ${data.driverId ? "a specific driver was requested" : `concierge request for ${data.drivers_needed} driver(s)`}. Review and invoice it.`);
 
     return request;
   }
@@ -66,7 +73,9 @@ export class ClientHireRequestsService {
   async cancel(clientId: string, reference: string) {
     const request = await this.requireOwn(clientId, reference);
 
-    if (!["PENDING_REVIEW", "INVOICED", "PAYMENT_REVIEW"].includes(request.status)) throw new BadRequestError("Only an open request can be cancelled");
+    // Once proof is submitted the money is in flight - only an admin decision
+    // (confirm or reject) can move the request from there.
+    if (!["PENDING_REVIEW", "INVOICED"].includes(request.status)) throw new BadRequestError("Only a request that hasn't been paid can be cancelled");
 
     const updated = await this.hireRepo.update(request.id, { status: "CANCELLED", cancelled_at: new Date() });
 
@@ -101,6 +110,8 @@ export class ClientHireRequestsService {
 
     const updated = await this.hireRepo.update(request.id, { status: "PAYMENT_REVIEW" });
 
+    await this.notifyAdmins(clientId, "Proof of payment uploaded", `${request.reference}: the client says they've transferred ${formatMoney(request.invoice.total_minor, request.invoice.currency)}. Confirm or reject the proof.`);
+
     return this.present(updated);
   }
 
@@ -113,22 +124,46 @@ export class ClientHireRequestsService {
     if (!request) throw new NotFoundError("Hire request not found");
 
     const needsPayment = ["INVOICED", "PAYMENT_REVIEW"].includes(request.status);
+    const driverIds = request.assignments.length ? request.assignments.map(a => a.driverId) : request.driverId ? [request.driverId] : [];
 
-    if (request.status !== "PAID" || !request.driverId) {
+    if (request.status !== "PAID" || !driverIds.length) {
       return { ...request, combo_pack: null, payment_account: needsPayment ? orgPaymentAccount() : null };
     }
 
-    const contact = await this.userRepo.findById(request.driverId, {
-      first_name: true,
-      last_name: true,
-      email: true,
-      phone_no: true,
-      whatsapp_number: true,
-      city: true,
-      state_of_residence: true,
-    });
+    const contacts = await Promise.all(
+      driverIds.map(driverId =>
+        this.userRepo.findById(driverId, {
+          first_name: true,
+          last_name: true,
+          email: true,
+          phone_no: true,
+          whatsapp_number: true,
+          city: true,
+          state_of_residence: true,
+        }),
+      ),
+    );
 
-    return { ...request, combo_pack: contact, payment_account: null };
+    return { ...request, combo_pack: contacts.filter(Boolean), payment_account: null };
+  }
+
+  // Admins work from the Hires queue; the notification is what stops a
+  // money-bearing request sitting in it unnoticed.
+  private async notifyAdmins(senderId: string, title: string, message: string) {
+    const adminIds = await this.userRepo.findAdminIds();
+
+    await Promise.all(
+      adminIds.map(recipientId =>
+        this.notificationService.notify({
+          recipientId,
+          senderId,
+          type: "PAYMENT",
+          title,
+          message,
+          actionUrl: "/dashboard/hires",
+        }),
+      ),
+    );
   }
 
   private async requireOwn(clientId: string, reference: string) {

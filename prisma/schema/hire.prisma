@@ -41,9 +41,13 @@ model HireRequest {
   clientId String
   client   User   @relation("ClientHireRequests", fields: [clientId], references: [id], onDelete: Cascade)
 
-  // Null = concierge request; an admin assigns the driver during review.
+  // The specifically-requested driver (self-serve path). Null = concierge.
+  // Fulfillment truth lives in `assignments`; this only records who was asked for.
   driverId String?
   driver   User?   @relation("DriverHireRequests", fields: [driverId], references: [id], onDelete: Cascade)
+
+  // The drivers the admin has attached - up to drivers_needed of them.
+  assignments HireAssignment[]
 
   engagement_type EngagementType @default(MONTHLY)
   starts_at       DateTime
@@ -92,13 +96,15 @@ model HireInvoice {
   issuedById String
   issuedBy   User   @relation("InvoiceIssuer", fields: [issuedById], references: [id])
 
-  // All minor units. total = amount + vat + fee; the driver receives amount.
-  amount_minor Int
-  vat_percent  Float
-  vat_minor    Int
-  fee_minor    Int
-  total_minor  Int
-  currency     String @default("NGN")
+  // All minor units. amount = per_driver x drivers assigned; total = amount +
+  // vat + fee; each driver receives per_driver in full.
+  amount_minor     Int
+  per_driver_minor Int?
+  vat_percent      Float
+  vat_minor        Int
+  fee_minor        Int
+  total_minor      Int
+  currency         String @default("NGN")
 
   status  HireInvoiceStatus @default(UNPAID)
   note    String?
@@ -114,4 +120,18 @@ model HireInvoice {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model HireAssignment {
+  id            String      @id @default(cuid())
+  hireRequestId String
+  hire_request  HireRequest @relation(fields: [hireRequestId], references: [id], onDelete: Cascade)
+
+  driverId String
+  driver   User   @relation("DriverHireAssignments", fields: [driverId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([hireRequestId, driverId])
+  @@index([driverId])
 }

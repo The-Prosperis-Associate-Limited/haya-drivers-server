@@ -7,7 +7,6 @@ import { clientHireRequestsRouter } from "./hireRequests";
 import { clientHiresRouter } from "./hires";
 import { clientOnboardingRouter } from "./onboarding";
 import { clientRequestsRouter } from "./requests";
-import { clientWalletRouter } from "./wallet";
 
 const clientRouter = Router();
 
@@ -17,7 +16,6 @@ clientRouter.use("/drivers", driversRouter);
 clientRouter.use("/bookings", clientBookingRouter);
 clientRouter.use("/onboarding", clientOnboardingRouter);
 clientRouter.use("/dashboard", clientDashboardRouter);
-clientRouter.use("/wallet", clientWalletRouter);
 clientRouter.use("/hires", clientHiresRouter);
 clientRouter.use("/hire-requests", clientHireRequestsRouter);
 clientRouter.use("/requests", clientRequestsRouter);

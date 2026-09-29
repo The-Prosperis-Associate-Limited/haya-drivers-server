@@ -22,6 +22,12 @@ export class UserRepository {
     return prisma.user.findUnique({ where: { googleId } });
   }
 
+  async findAdminIds() {
+    const admins = await prisma.user.findMany({ where: { role: "ADMIN", account_status: "ACTIVE" }, select: { id: true } });
+
+    return admins.map(admin => admin.id);
+  }
+
   async updateUser(id: string, data: Prisma.UserUpdateInput) {
     return prisma.user.update({ where: { id }, data });
   }

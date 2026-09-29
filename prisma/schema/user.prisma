@@ -100,9 +100,10 @@ model User {
   chat_messages           ChatMessage[]
 
   client_hire_requests HireRequest[] @relation("ClientHireRequests")
-  driver_hire_requests HireRequest[] @relation("DriverHireRequests")
-  issued_invoices      HireInvoice[] @relation("InvoiceIssuer")
-  confirmed_invoices   HireInvoice[] @relation("InvoiceConfirmer")
+  driver_hire_requests HireRequest[]    @relation("DriverHireRequests")
+  hire_assignments     HireAssignment[] @relation("DriverHireAssignments")
+  issued_invoices      HireInvoice[]    @relation("InvoiceIssuer")
+  confirmed_invoices   HireInvoice[]    @relation("InvoiceConfirmer")
 
   reviewed_documents     DriverDocument[]     @relation("DocumentReviewer")
   reviewed_verifications DriverVerification[] @relation("VerificationReviewer")

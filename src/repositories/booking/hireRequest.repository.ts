@@ -25,30 +25,47 @@ const CLIENT_SELECT = {
   },
 };
 
+const ASSIGNMENTS_INCLUDE = {
+  include: { driver: DRIVER_SELECT },
+  orderBy: { createdAt: "asc" as const },
+};
+
 export class HireRequestRepository {
   async create(data: Prisma.HireRequestUncheckedCreateInput) {
-    return prisma.hireRequest.create({ data, include: { driver: DRIVER_SELECT, invoice: true } });
+    return prisma.hireRequest.create({ data, include: { driver: DRIVER_SELECT, assignments: ASSIGNMENTS_INCLUDE, invoice: true } });
   }
 
   async findByReference(reference: string) {
     return prisma.hireRequest.findUnique({
       where: { reference },
-      include: { driver: DRIVER_SELECT, client: CLIENT_SELECT, invoice: true, booking: { select: { id: true, reference: true, status: true } } },
+      include: { driver: DRIVER_SELECT, assignments: ASSIGNMENTS_INCLUDE, client: CLIENT_SELECT, invoice: true, booking: { select: { id: true, reference: true, status: true } } },
     });
   }
 
   async findOpenForClientAndDriver(clientId: string, driverId: string) {
     return prisma.hireRequest.findFirst({
-      where: { clientId, driverId, status: { in: ["PENDING_REVIEW", "INVOICED", "PAYMENT_REVIEW"] } },
+      where: {
+        clientId,
+        status: { in: ["PENDING_REVIEW", "INVOICED", "PAYMENT_REVIEW"] },
+        OR: [{ driverId }, { assignments: { some: { driverId } } }],
+      },
       select: { id: true, reference: true },
     });
+  }
+
+  async addAssignment(hireRequestId: string, driverId: string) {
+    return prisma.hireAssignment.create({ data: { hireRequestId, driverId } });
+  }
+
+  async removeAssignment(hireRequestId: string, driverId: string) {
+    return prisma.hireAssignment.deleteMany({ where: { hireRequestId, driverId } });
   }
 
   async update(id: string, data: Prisma.HireRequestUncheckedUpdateInput) {
     return prisma.hireRequest.update({
       where: { id },
       data,
-      include: { driver: DRIVER_SELECT, client: CLIENT_SELECT, invoice: true, booking: { select: { id: true, reference: true, status: true } } },
+      include: { driver: DRIVER_SELECT, assignments: ASSIGNMENTS_INCLUDE, client: CLIENT_SELECT, invoice: true, booking: { select: { id: true, reference: true, status: true } } },
     });
   }
 
@@ -61,7 +78,7 @@ export class HireRequestRepository {
         skip: (params.page - 1) * params.limit,
         take: params.limit,
         orderBy: { createdAt: "desc" },
-        include: { driver: DRIVER_SELECT, invoice: true },
+        include: { driver: DRIVER_SELECT, assignments: ASSIGNMENTS_INCLUDE, invoice: true },
       }),
       prisma.hireRequest.count({ where }),
     ]);
@@ -78,7 +95,7 @@ export class HireRequestRepository {
         skip: (params.page - 1) * params.limit,
         take: params.limit,
         orderBy: { createdAt: "desc" },
-        include: { driver: DRIVER_SELECT, client: CLIENT_SELECT, invoice: true },
+        include: { driver: DRIVER_SELECT, assignments: ASSIGNMENTS_INCLUDE, client: CLIENT_SELECT, invoice: true },
       }),
       prisma.hireRequest.count({ where }),
     ]);

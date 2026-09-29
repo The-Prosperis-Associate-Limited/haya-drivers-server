@@ -99,6 +99,18 @@ export class HireRequestController {
     }
   };
 
+  unassignDriver = async (req: IUserRequest, res: Response) => {
+    try {
+      const data = assignDriverSchema.parse(req.body);
+
+      const result = await this.adminService.unassignDriver(req.params.reference as string, req.userId as string, data);
+
+      res.status(200).json({ message: "Driver removed from the request", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
   generateInvoice = async (req: IUserRequest, res: Response) => {
     try {
       const data = generateInvoiceSchema.parse(req.body);
