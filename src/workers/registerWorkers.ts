@@ -5,6 +5,7 @@ import { CertificationIssuedEmailData, sendCertificationIssuedEmail } from "../u
 import { EmailOtpData, sendEmailOtpEmail } from "../utils/services/emails/emailOtpService";
 import { EmailVerifiedData, sendEmailVerifiedEmail } from "../utils/services/emails/emailVerifiedEmailService";
 import { ForgotPasswordData, sendForgotPasswordEmail } from "../utils/services/emails/forgotPasswordEmailService";
+import { HireRequestEmailData, sendHireRequestEmail } from "../utils/services/emails/hireRequestEmailService";
 import { OnboardingSubmittedData, sendOnboardingSubmittedEmail } from "../utils/services/emails/onboardingSubmittedEmailService";
 import { PayoutStatusEmailData, sendPayoutStatusEmail } from "../utils/services/emails/payoutStatusEmailService";
 import { ResetPasswordData, sendResetPasswordEmail } from "../utils/services/emails/resetPasswordEmailService";
@@ -35,6 +36,8 @@ export const initializeEmailHandlers = function () {
   registerEmailHandler(JOB_KEY.BOOKING_REQUEST, async (data: BookingRequestEmailData) => await sendBookingRequestEmail(data));
 
   registerEmailHandler(JOB_KEY.BOOKING_STATUS, async (data: BookingStatusEmailData) => await sendBookingStatusEmail(data));
+
+  registerEmailHandler(JOB_KEY.HIRE_REQUEST_EVENT, async (data: HireRequestEmailData) => await sendHireRequestEmail(data));
 
   registerEmailHandler(JOB_KEY.PAYOUT_STATUS, async (data: PayoutStatusEmailData) => await sendPayoutStatusEmail(data));
 

@@ -7,9 +7,12 @@ import { WalletService } from "../earnings/wallet.service";
 import { NotificationService } from "../shared/notification.service";
 import { paymentFeeFor } from "../client/client.wallet.service";
 import { BadRequestError, NotFoundError } from "../../helper/errors";
+import { queueEmail } from "../../workers/globalEmailQueueHandler";
+import { JOB_KEY } from "../../workers/jobKeys";
 import { formatMoney } from "../../utils/money";
 import { paginate } from "../../utils/pagination";
 import { generateReference } from "../../utils/reference";
+import { surfaceUrlFor } from "../../utils/surfaceUrl";
 import type { AssignDriverInput, DeclineHireRequestInput, GenerateInvoiceInput, HireRequestListQuery, RejectProofInput } from "../../utils/types/hireValidatorSchema";
 
 // Nigeria's standard VAT unless the invoice overrides it.
@@ -124,6 +127,15 @@ export class AdminHiresService {
       metadata: { reference: request.reference },
     });
 
+    await queueEmail(JOB_KEY.HIRE_REQUEST_EVENT, {
+      email: request.client.email,
+      first_name: request.client.first_name ?? "there",
+      event: "INVOICE_READY",
+      reference: request.reference,
+      amount: formatMoney(amount + vat + fee, currency),
+      actionUrl: `${surfaceUrlFor("CLIENT")}/dashboard/my-hire/requests/${request.reference}`,
+    });
+
     return updated;
   }
 
@@ -195,6 +207,21 @@ export class AdminHiresService {
         actionUrl: `/dashboard/job-request/${booking.reference}`,
         metadata: { bookingId: booking.id, reference: booking.reference },
       });
+
+      const driverContact = await this.userRepo.findById(assignment.driverId, { email: true, first_name: true });
+
+      if (driverContact?.email) {
+        await queueEmail(JOB_KEY.HIRE_REQUEST_EVENT, {
+          email: driverContact.email as string,
+          first_name: (driverContact.first_name as string) ?? "there",
+          event: "DRIVER_HIRED",
+          reference: booking.reference,
+          amount: formatMoney(perDriver, invoice.currency),
+          counterpart: booking.title,
+          date: booking.starts_at.toDateString(),
+          actionUrl: `${surfaceUrlFor("DRIVER")}/dashboard/job-request/${booking.reference}`,
+        });
+      }
     }
 
     await this.hireRepo.updateInvoice(invoice.id, { status: "PAID", paid_at: new Date(), confirmedById: adminId });
@@ -210,6 +237,16 @@ export class AdminHiresService {
       message: `We've confirmed your payment for ${request.reference}. The contact details of your ${count > 1 ? `${count} drivers` : "driver"} are now available on your request.`,
       actionUrl: `/dashboard/my-hire/requests/${request.reference}`,
       metadata: { reference: request.reference },
+    });
+
+    await queueEmail(JOB_KEY.HIRE_REQUEST_EVENT, {
+      email: request.client.email,
+      first_name: request.client.first_name ?? "there",
+      event: "PAYMENT_CONFIRMED",
+      reference: request.reference,
+      amount: formatMoney(invoice.total_minor, invoice.currency),
+      counterpart: count > 1 ? `Your ${count} drivers` : [request.assignments[0].driver.first_name, request.assignments[0].driver.last_name].filter(Boolean).join(" ") || "Your driver",
+      actionUrl: `${surfaceUrlFor("CLIENT")}/dashboard/my-hire/requests/${request.reference}`,
     });
 
     return updated;
@@ -233,6 +270,15 @@ export class AdminHiresService {
       message: `Your proof of payment for ${request.reference} was not accepted: ${data.reason}. Please re-upload a valid receipt.`,
       actionUrl: `/dashboard/my-hire/requests/${request.reference}`,
       metadata: { reference: request.reference },
+    });
+
+    await queueEmail(JOB_KEY.HIRE_REQUEST_EVENT, {
+      email: request.client.email,
+      first_name: request.client.first_name ?? "there",
+      event: "PROOF_REJECTED",
+      reference: request.reference,
+      reason: data.reason,
+      actionUrl: `${surfaceUrlFor("CLIENT")}/dashboard/my-hire/requests/${request.reference}`,
     });
 
     return updated;

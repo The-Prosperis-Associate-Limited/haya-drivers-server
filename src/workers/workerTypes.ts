@@ -5,6 +5,7 @@ import { CertificationIssuedEmailData } from "../utils/services/emails/certifica
 import { EmailOtpData } from "../utils/services/emails/emailOtpService";
 import { EmailVerifiedData } from "../utils/services/emails/emailVerifiedEmailService";
 import { ForgotPasswordData } from "../utils/services/emails/forgotPasswordEmailService";
+import { HireRequestEmailData } from "../utils/services/emails/hireRequestEmailService";
 import { OnboardingSubmittedData } from "../utils/services/emails/onboardingSubmittedEmailService";
 import { PayoutStatusEmailData } from "../utils/services/emails/payoutStatusEmailService";
 import { ResetPasswordData } from "../utils/services/emails/resetPasswordEmailService";
@@ -27,6 +28,8 @@ export type EmailPayloadMap = {
 
   [JOB_KEY.BOOKING_REQUEST]: BookingRequestEmailData;
   [JOB_KEY.BOOKING_STATUS]: BookingStatusEmailData;
+
+  [JOB_KEY.HIRE_REQUEST_EVENT]: HireRequestEmailData;
 
   [JOB_KEY.PAYOUT_STATUS]: PayoutStatusEmailData;
 

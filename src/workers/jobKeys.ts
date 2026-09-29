@@ -12,6 +12,8 @@ export const JOB_KEY = {
   BOOKING_REQUEST: "booking_request",
   BOOKING_STATUS: "booking_status",
 
+  HIRE_REQUEST_EVENT: "hire_request_event",
+
   PAYOUT_STATUS: "payout_status",
 
   CERTIFICATION_ISSUED: "certification_issued",
