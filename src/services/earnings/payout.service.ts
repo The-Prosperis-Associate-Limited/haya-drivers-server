@@ -39,34 +39,24 @@ export class PayoutService {
   }
 
   /*
-    The account name is never taken from the driver. It comes back from the
-    provider name-enquiry, so a typo cannot send money to someone else and the
-    name on file always matches the name at the bank.
+    Provider-less rail: the driver types their own account name and no
+    name-enquiry runs - settlement is a manual transfer from the organisation
+    account, and the admin's banking app performs its own name check at the
+    moment money is sent. recipient_code stays null, which is what keeps
+    dispatch() from ever calling a payment provider for these accounts.
   */
   async addBankAccount(userId: string, data: AddBankAccountInput) {
-    const provider = resolveProvider(data.currency);
-
-    const resolved = await provider.resolveAccount(data.account_number, data.bank_code);
-
-    const recipient = await provider.createTransferRecipient({
-      account_number: data.account_number,
-      bank_code: data.bank_code,
-      account_name: resolved.account_name,
-      currency: data.currency,
-    });
-
     const isFirst = (await this.bankAccountRepo.countForUser(userId)) === 0;
 
     return this.bankAccountRepo.create({
       userId,
-      provider: provider.name as $Enums.PaymentProvider,
+      provider: "MANUAL",
       bank_code: data.bank_code,
       bank_name: data.bank_name,
       account_number: data.account_number,
-      account_name: resolved.account_name,
+      account_name: data.account_name,
       country: data.country,
       currency: data.currency,
-      recipient_code: recipient.recipient_code,
       is_default: isFirst,
     });
   }
@@ -213,10 +203,7 @@ export class PayoutService {
       recipientId: payout.userId,
       type: "PAYOUT",
       title: status === "PAID" ? "Withdrawal paid" : "Withdrawal failed",
-      message:
-        status === "PAID"
-          ? `${formatMoney(payout.amount_minor, payout.currency)} has been sent to your bank account.`
-          : `We could not complete your withdrawal. ${failureReason ?? "The money is back in your balance."}`,
+      message: status === "PAID" ? `${formatMoney(payout.amount_minor, payout.currency)} has been sent to your bank account.` : `We could not complete your withdrawal. ${failureReason ?? "The money is back in your balance."}`,
       actionUrl: "/dashboard/earnings",
     });
 

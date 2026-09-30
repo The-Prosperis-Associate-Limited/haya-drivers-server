@@ -7,6 +7,7 @@ export const addBankAccountSchema = z.object({
     .string()
     .trim()
     .regex(/^\d{8,20}$/, "Enter a valid account number"),
+  account_name: z.string().trim().min(3, "Enter the name on the account").max(100),
   currency: z.string().trim().length(3).toUpperCase().optional().default("NGN"),
   country: z.string().trim().length(2).toUpperCase().optional().default("NG"),
 });

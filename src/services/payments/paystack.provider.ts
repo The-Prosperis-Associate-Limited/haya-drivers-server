@@ -16,11 +16,15 @@ export class PaystackProvider implements PaymentProvider {
   readonly name = "PAYSTACK" as const;
   readonly currencies = ["NGN", "GHS", "ZAR", "KES"];
 
-  private async request<T>(path: string, init?: RequestInit): Promise<T> {
+  private async request<T>(path: string, init?: RequestInit & { auth?: boolean }): Promise<T> {
+    // Without a key Paystack replies "Format is Authorization Bearer [secret
+    // key]" - confusing for the end user, so fail with our own words instead.
+    if (init?.auth !== false && !PAYSTACK_SECRET_KEY) throw new BadRequestError("Payments aren't configured yet - bank features are temporarily unavailable");
+
     const response = await fetch(`${BASE_URL}${path}`, {
       ...init,
       headers: {
-        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        ...(init?.auth === false ? {} : { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` }),
         "Content-Type": "application/json",
         ...init?.headers,
       },
@@ -34,7 +38,9 @@ export class PaystackProvider implements PaymentProvider {
   }
 
   async listBanks(country: string): Promise<BankOption[]> {
-    const banks = await this.request<{ name: string; code: string; currency: string }[]>(`/bank?country=${encodeURIComponent(country)}`);
+    // Paystack's bank directory is public - no key needed, so the dropdown
+    // keeps working on the provider-less rail.
+    const banks = await this.request<{ name: string; code: string; currency: string }[]>(`/bank?country=${encodeURIComponent(country)}`, { auth: false });
 
     return banks.map(bank => ({ name: bank.name, code: bank.code, currency: bank.currency }));
   }
