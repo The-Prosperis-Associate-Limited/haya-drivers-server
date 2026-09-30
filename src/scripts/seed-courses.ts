@@ -8,7 +8,7 @@ import { prisma } from "../helper/prisma";
   Two kinds of module. Ones with `video_url` point at publicly listed third-party
   YouTube videos - every id below was checked against YouTube's oembed endpoint
   before it was written here, so none of them is invented. They are development
-  scaffolding, not licensed course content: Drivers Vault's own videos will be uploaded
+  scaffolding, not licensed course content: Haya Drivers's own videos will be uploaded
   and served from Cloudinary like every other asset, and the player already plays
   whatever `video_url` holds. Ones with `content` are platform-specific material
   no third-party video can teach - how payouts clear, how the trust score is
@@ -49,7 +49,7 @@ const watch = (id: string) => `https://www.youtube.com/watch?v=${id}`;
 const COURSES: SeedCourse[] = [
   {
     slug: "getting-started-as-a-drivers-vault-driver",
-    title: "Getting started as a Drivers Vault driver",
+    title: "Getting started as a Haya Drivers driver",
     summary: "How the platform works, what clients expect, and how to get your first booking.",
     category: "ONBOARDING",
     is_required: true,
@@ -58,7 +58,7 @@ const COURSES: SeedCourse[] = [
     certificate_validity_months: null,
     modules: [
       {
-        title: "What Drivers Vault is and how bookings reach you",
+        title: "What Haya Drivers is and how bookings reach you",
         description: "Where job requests come from and what happens after you accept one.",
         duration_minutes: 5,
         content: [
@@ -84,7 +84,7 @@ const COURSES: SeedCourse[] = [
         description: "Why your profile stays private until every check clears, and what clients see once it does.",
         duration_minutes: 4,
         content: [
-          "Your profile is private and unsearchable until identity, licence and criminal-record checks are complete. That is deliberate: a client booking through Drivers Vault is trusting the vetting, not the profile photo.",
+          "Your profile is private and unsearchable until identity, licence and criminal-record checks are complete. That is deliberate: a client booking through Haya Drivers is trusting the vetting, not the profile photo.",
           "Once you are approved you become visible to clients across your state. They see your name, your driver type, your vehicle classes, your trust score and your client reviews. They do not see your address, your documents or your guarantors.",
           "If a document is rejected, the reviewer's reason appears on your dashboard word for word. Fix only what is named and resubmit - the rest of your application stands.",
         ].join("\n\n"),

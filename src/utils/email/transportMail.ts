@@ -29,7 +29,7 @@ const getResend = () => {
 
 export async function transportMail(formData: transportMailType) {
   const { data, error } = await getResend().emails.send({
-    from: SENDER_EMAIL ?? "Drivers Vault <noreply@hayadrivers.com>",
+    from: SENDER_EMAIL ?? "Haya Drivers <noreply@hayadrivers.com>",
     to: formData.email,
     subject: formData.subject,
     html: formData.message,

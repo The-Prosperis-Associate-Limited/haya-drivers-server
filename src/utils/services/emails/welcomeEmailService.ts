@@ -11,7 +11,7 @@ export interface WelcomeEmailData {
 
 const generateWelcomeEmailData = (data: WelcomeEmailData) => ({
   type: "verification" as const,
-  title: "Welcome to Drivers Vault",
+  title: "Welcome to Haya Drivers",
   recipientName: data.name,
   message:
     "Your account is created. One more step: confirm this email address so we can reach you about verification results and job requests.\n\nVerification takes 24-48 hours once you've uploaded your documents.",
@@ -22,7 +22,7 @@ const generateWelcomeEmailData = (data: WelcomeEmailData) => ({
 export const createWelcomeEmail = (data: WelcomeEmailData) => {
   const react = generateProfessionalEmail(generateWelcomeEmailData(data));
 
-  return { react, subject: "Welcome to Drivers Vault - please verify your email" };
+  return { react, subject: "Welcome to Haya Drivers - please verify your email" };
 };
 
 export const sendWelcomeEmail = async (data: WelcomeEmailData): Promise<void> => {

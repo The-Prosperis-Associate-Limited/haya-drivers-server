@@ -66,7 +66,7 @@ export class PaystackProvider implements PaymentProvider {
         amount: request.amount_minor,
         recipient: request.recipient_code,
         reference: request.reference,
-        reason: request.reason ?? "Drivers Vault driver payout",
+        reason: request.reason ?? "Haya Drivers driver payout",
         currency: request.currency,
       }),
     });

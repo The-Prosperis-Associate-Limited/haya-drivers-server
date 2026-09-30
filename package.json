@@ -1,7 +1,7 @@
 {
   "name": "tegat_server",
   "version": "1.0.0",
-  "description": "Central server for the TEGAT platform - drivers vault, client and admin",
+  "description": "Central server for the TEGAT platform - haya drivers, client and admin",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",

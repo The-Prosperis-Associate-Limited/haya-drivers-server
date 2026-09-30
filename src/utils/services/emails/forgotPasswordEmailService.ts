@@ -20,7 +20,7 @@ const generateForgotPasswordData = (data: ForgotPasswordData) => ({
 export const createForgotPasswordEmail = (data: ForgotPasswordData) => {
   const react = generateProfessionalEmail(generateForgotPasswordData(data));
 
-  return { react, subject: "Reset your Drivers Vault password" };
+  return { react, subject: "Reset your Haya Drivers password" };
 };
 
 export const sendForgotPasswordEmail = async (data: ForgotPasswordData): Promise<void> => {

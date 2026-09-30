@@ -19,7 +19,7 @@ const generateEmailVerifiedData = (data: EmailVerifiedData) => ({
 export const createEmailVerifiedEmail = (data: EmailVerifiedData) => {
   const react = generateProfessionalEmail(generateEmailVerifiedData(data));
 
-  return { react, subject: "Your Drivers Vault email is verified" };
+  return { react, subject: "Your Haya Drivers email is verified" };
 };
 
 export const sendEmailVerifiedEmail = async (data: EmailVerifiedData): Promise<void> => {

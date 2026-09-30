@@ -30,7 +30,7 @@ const generateVerificationRejectedData = (data: VerificationRejectedData) => {
 export const createVerificationRejectedEmail = (data: VerificationRejectedData) => {
   const react = generateProfessionalEmail(generateVerificationRejectedData(data));
 
-  return { react, subject: "Action needed on your Drivers Vault documents" };
+  return { react, subject: "Action needed on your Haya Drivers documents" };
 };
 
 export const sendVerificationRejectedEmail = async (data: VerificationRejectedData): Promise<void> => {

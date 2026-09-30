@@ -138,10 +138,10 @@ export const generateProfessionalEmail = ({ type = "general" as EmailTypes, titl
                     <table cellpadding="0" cellspacing="0" border="0">
                       <tr>
                         <td style="width:40px;height:40px;background-color:#ffffff;border-radius:10px;text-align:center;vertical-align:middle;">
-                          <span style="font-size:15px;font-weight:800;color:#2f6bf6;letter-spacing:0.02em;">DV</span>
+                          <span style="font-size:15px;font-weight:800;color:#2f6bf6;letter-spacing:0.02em;">HD</span>
                         </td>
                         <td style="padding-left:12px;">
-                          <a href="${siteUrl}" style="font-size:19px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.01em;">Drivers Vault</a>
+                          <a href="${siteUrl}" style="font-size:19px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.01em;">Haya Drivers</a>
                         </td>
                       </tr>
                     </table>
@@ -189,7 +189,7 @@ export const generateProfessionalEmail = ({ type = "general" as EmailTypes, titl
           <!-- Footer -->
           <tr>
             <td align="center" style="padding:28px 24px 0;">
-              <p style="font-size:13px;font-weight:700;color:#475569;margin:0;letter-spacing:0.02em;">Drivers Vault</p>
+              <p style="font-size:13px;font-weight:700;color:#475569;margin:0;letter-spacing:0.02em;">Haya Drivers</p>
               <p style="font-size:12px;color:#94a3b8;margin:8px 0 0;line-height:1.7;">
                 Vetted drivers, verified before they reach you.<br>
                 Lagos, Nigeria
@@ -204,8 +204,8 @@ export const generateProfessionalEmail = ({ type = "general" as EmailTypes, titl
                 <a href="mailto:${supportEmail}" style="color:#64748b;text-decoration:underline;">Support</a>
               </p>
               <p style="font-size:12px;color:#cbd5e1;margin:14px 0 0;">
-                You're receiving this because you have a Drivers Vault account.<br>
-                &copy; ${year} Drivers Vault. All rights reserved.
+                You're receiving this because you have a Haya Drivers account.<br>
+                &copy; ${year} Haya Drivers. All rights reserved.
               </p>
             </td>
           </tr>

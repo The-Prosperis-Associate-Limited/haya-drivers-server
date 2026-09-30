@@ -20,7 +20,7 @@ export class ClientHiresService {
 
   // The hire detail carries the client's own review (if any) so the form knows
   // whether to render stars or the review already left, plus the driver's
-  // public profile facts for the Drivers Vault profile card.
+  // public profile facts for the Haya Drivers profile card.
   async get(clientId: string, reference: string) {
     const booking = await this.bookingRepo.findByReference(reference);
 

@@ -18,7 +18,7 @@ export const personalInformationSchema = z.object({
     eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
 
     return value <= eighteenYearsAgo;
-  }, "You must be at least 18 to drive on Drivers Vault"),
+  }, "You must be at least 18 to drive on Haya Drivers"),
   country: z.string().trim().min(1, "Select the country you reside in"),
   state_of_residence: z.string().trim().min(1, "Select where you reside"),
   city: z.string().trim().optional(),
