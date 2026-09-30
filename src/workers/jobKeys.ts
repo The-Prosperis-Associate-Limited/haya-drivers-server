@@ -29,7 +29,6 @@ export const SCHEDULED_JOB_KEY = {
   EXPIRE_STALE_BOOKING_REQUESTS: "expire_stale_booking_requests",
   RELEASE_PENDING_EARNINGS: "release_pending_earnings",
   LICENCE_EXPIRY_SWEEP: "licence_expiry_sweep",
-  CERTIFICATION_EXPIRY_SWEEP: "certification_expiry_sweep",
   DELETE_UNVERIFIED_ACCOUNTS: "delete_unverified_accounts",
   RECOMPUTE_TRUST_SCORES: "recompute_trust_scores",
 } as const;

@@ -2,8 +2,6 @@ import { BookingRepository } from "../../repositories/booking/booking.repository
 import { ReviewRepository } from "../../repositories/booking/review.repository";
 import { DriverProfileRepository } from "../../repositories/driver/driverProfile.repository";
 import { WalletRepository } from "../../repositories/earnings/wallet.repository";
-import { CertificationRepository } from "../../repositories/training/certification.repository";
-import { EnrollmentRepository } from "../../repositories/training/enrollment.repository";
 import { NotFoundError } from "../../helper/errors";
 
 export class DriverDashboardService {
@@ -11,22 +9,18 @@ export class DriverDashboardService {
   private walletRepo = new WalletRepository();
   private driverProfileRepo = new DriverProfileRepository();
   private reviewRepo = new ReviewRepository();
-  private certificationRepo = new CertificationRepository();
-  private enrollmentRepo = new EnrollmentRepository();
 
   async stats(userId: string) {
     const profile = await this.driverProfileRepo.findByUserId(userId, { trust_score: true, verification_status: true });
 
     if (!profile) throw new NotFoundError("Driver profile not found");
 
-    const [wallet, ongoing, completed, activeClients, reviews, certifications, coursesCompleted] = await Promise.all([
+    const [wallet, ongoing, completed, activeClients, reviews] = await Promise.all([
       this.walletRepo.findByUserId(userId),
       this.bookingRepo.countForDriver(userId, "IN_PROGRESS"),
       this.bookingRepo.countForDriver(userId, "COMPLETED"),
       this.bookingRepo.countDistinctClientsForDriver(userId),
       this.reviewRepo.summaryForSubject(userId),
-      this.certificationRepo.countForUser(userId),
-      this.enrollmentRepo.countForUser(userId, "COMPLETED"),
     ]);
 
     return {
@@ -41,8 +35,6 @@ export class DriverDashboardService {
       verification_status: profile.verification_status,
       client_review_average: reviews.average,
       client_review_count: reviews.total,
-      certifications_earned: certifications,
-      training_completed: coursesCompleted,
     };
   }
 

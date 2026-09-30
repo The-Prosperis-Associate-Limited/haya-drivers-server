@@ -1,6 +1,5 @@
 import { ReviewRepository } from "../../repositories/booking/review.repository";
 import { DriverProfileRepository } from "../../repositories/driver/driverProfile.repository";
-import { CertificationRepository } from "../../repositories/training/certification.repository";
 import { NotFoundError } from "../../helper/errors";
 import { prisma } from "../../helper/prisma";
 import { paginate, parsePagination } from "../../utils/pagination";
@@ -13,7 +12,6 @@ const ON_TIME_GRACE_MS = 15 * 60 * 1000;
 export class ClientDriverSearchService {
   private driverProfileRepo = new DriverProfileRepository();
   private reviewRepo = new ReviewRepository();
-  private certificationRepo = new CertificationRepository();
 
   async search(query: Record<string, unknown>, filters: DriverSearchInput) {
     const pagination = parsePagination(query);
@@ -22,13 +20,12 @@ export class ClientDriverSearchService {
 
     const userIds = drivers.map(driver => driver.userId);
 
-    const [summaries, certifications] = await Promise.all([this.reviewRepo.summariesForSubjects(userIds), this.certificationRepo.titlesForUsers(userIds)]);
+    const summaries = await this.reviewRepo.summariesForSubjects(userIds);
 
     const withRatings = drivers.map(driver => ({
       ...driver,
       rating: summaries.get(driver.userId)?.average ?? 0,
       review_count: summaries.get(driver.userId)?.total ?? 0,
-      certification_titles: certifications.get(driver.userId) ?? [],
     }));
 
     return paginate(withRatings, total, pagination);
@@ -44,7 +41,7 @@ export class ClientDriverSearchService {
 
     if (!profile || profile.verification_status !== "APPROVED" || !profile.is_discoverable) throw new NotFoundError("Driver not found");
 
-    const [reviews, certifications, quickStats] = await Promise.all([this.reviewRepo.summaryForSubject(userId), this.certificationRepo.findForUser(userId), this.quickStats(userId)]);
+    const [reviews, quickStats] = await Promise.all([this.reviewRepo.summaryForSubject(userId), this.quickStats(userId)]);
 
     const { guarantors: _guarantors, user, ...rest } = profile;
     const { phone_no: _phone, email: _email, ...publicUser } = user as Record<string, unknown>;
@@ -55,12 +52,6 @@ export class ClientDriverSearchService {
       rating: reviews.average,
       review_count: reviews.total,
       ...quickStats,
-      certifications: certifications.map(certification => ({
-        id: certification.id,
-        title: certification.course.title,
-        issued_at: certification.issued_at,
-        expires_at: certification.expires_at,
-      })),
     };
   }
 
