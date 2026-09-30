@@ -3,7 +3,8 @@ import { DriverProfileRepository } from "../../repositories/driver/driverProfile
 import { UserRepository } from "../../repositories/user/user.repository";
 import { WalletRepository } from "../../repositories/earnings/wallet.repository";
 import { WalletTransactionRepository } from "../../repositories/earnings/walletTransaction.repository";
-import { NotFoundError } from "../../helper/errors";
+import { BadRequestError, NotFoundError } from "../../helper/errors";
+import { prisma } from "../../helper/prisma";
 import { paginate, parsePagination } from "../../utils/pagination";
 import { ActivityService } from "../shared/activity.service";
 import { NotificationService } from "../shared/notification.service";
@@ -164,11 +165,32 @@ export class AdminUsersService {
     return this.get(id);
   }
 
+  /*
+    Hard delete is for accounts with no financial history - spam signups,
+    abandoned onboarding, test accounts. Bookings and wallet transactions are
+    the money ledger for BOTH parties, so an account woven into them cannot be
+    erased without destroying the other side's records; suspension is the tool
+    for those.
+  */
   async remove(id: string) {
     const user = await this.userRepo.findById(id, { id: true });
 
     if (!user) throw new NotFoundError("Account not found");
 
-    return this.userRepo.deleteUser(id);
+    const bookings = await prisma.booking.count({ where: { OR: [{ clientId: id }, { driverId: id }] } });
+
+    if (bookings > 0) {
+      throw new BadRequestError("This account has booking history that other accounts' records depend on - suspend it instead of deleting");
+    }
+
+    try {
+      return await this.userRepo.deleteUser(id);
+    } catch (error) {
+      // Any other restricted relation surfaces the same way - never a 500.
+      if ((error as { code?: string }).code === "P2003") {
+        throw new BadRequestError("This account has records that other accounts depend on - suspend it instead of deleting");
+      }
+      throw error;
+    }
   }
 }
