@@ -1,4 +1,3 @@
-import { BookingRequestEmailData } from "../utils/services/emails/bookingRequestEmailService";
 import { AdminInviteEmailData } from "../utils/services/emails/adminInviteEmailService";
 import { BookingStatusEmailData } from "../utils/services/emails/bookingStatusEmailService";
 import { CertificationIssuedEmailData } from "../utils/services/emails/certificationIssuedEmailService";
@@ -26,7 +25,6 @@ export type EmailPayloadMap = {
   [JOB_KEY.VERIFICATION_APPROVED]: VerificationApprovedData;
   [JOB_KEY.VERIFICATION_REJECTED]: VerificationRejectedData;
 
-  [JOB_KEY.BOOKING_REQUEST]: BookingRequestEmailData;
   [JOB_KEY.BOOKING_STATUS]: BookingStatusEmailData;
 
   [JOB_KEY.HIRE_REQUEST_EVENT]: HireRequestEmailData;

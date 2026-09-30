@@ -27,6 +27,12 @@ enum HirePackage {
   SUBSCRIPTION
 }
 
+enum AvailabilityStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+}
+
 enum WorkSchedule {
   WEEKDAYS
   WEEKDAYS_AND_SATURDAY
@@ -129,6 +135,11 @@ model HireAssignment {
 
   driverId String
   driver   User   @relation("DriverHireAssignments", fields: [driverId], references: [id], onDelete: Cascade)
+
+  // The driver's own availability answer - the admin shortlists in parallel
+  // and trims to the confirmed crew before invoicing.
+  status       AvailabilityStatus @default(PENDING)
+  responded_at DateTime?
 
   createdAt DateTime @default(now())
 

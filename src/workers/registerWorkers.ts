@@ -1,4 +1,3 @@
-import { BookingRequestEmailData, sendBookingRequestEmail } from "../utils/services/emails/bookingRequestEmailService";
 import { AdminInviteEmailData, sendAdminInviteEmail } from "../utils/services/emails/adminInviteEmailService";
 import { BookingStatusEmailData, sendBookingStatusEmail } from "../utils/services/emails/bookingStatusEmailService";
 import { CertificationIssuedEmailData, sendCertificationIssuedEmail } from "../utils/services/emails/certificationIssuedEmailService";
@@ -32,8 +31,6 @@ export const initializeEmailHandlers = function () {
   registerEmailHandler(JOB_KEY.VERIFICATION_APPROVED, async (data: VerificationApprovedData) => await sendVerificationApprovedEmail(data));
 
   registerEmailHandler(JOB_KEY.VERIFICATION_REJECTED, async (data: VerificationRejectedData) => await sendVerificationRejectedEmail(data));
-
-  registerEmailHandler(JOB_KEY.BOOKING_REQUEST, async (data: BookingRequestEmailData) => await sendBookingRequestEmail(data));
 
   registerEmailHandler(JOB_KEY.BOOKING_STATUS, async (data: BookingStatusEmailData) => await sendBookingStatusEmail(data));
 

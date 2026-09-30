@@ -4,7 +4,7 @@ import { transportMail } from "../../email/transportMail";
 export interface HireRequestEmailData {
   email: string;
   first_name: string;
-  event: "INVOICE_READY" | "PAYMENT_CONFIRMED" | "PROOF_REJECTED" | "DRIVER_HIRED";
+  event: "INVOICE_READY" | "PAYMENT_CONFIRMED" | "PROOF_REJECTED" | "DRIVER_HIRED" | "SHORTLISTED";
   reference: string;
   amount?: string;
   reason?: string;
@@ -39,6 +39,13 @@ const COPY: Record<HireRequestEmailData["event"], { subject: (data: HireRequestE
     body: data =>
       `Congratulations - a client has hired you for ${data.counterpart ?? "a new engagement"}${data.date ? ` starting ${data.date}` : ""}. ${data.amount ? `${data.amount} is on its way to your earnings balance. ` : ""}Check the engagement details and be ready for day one.`,
     buttonText: "View engagement",
+  },
+  SHORTLISTED: {
+    subject: () => "You've been shortlisted - confirm your availability",
+    title: "You've been shortlisted",
+    body: data =>
+      `A client is hiring and you're one of the candidates for an engagement${data.date ? ` starting ${data.date}` : ""}${data.counterpart ? ` in ${data.counterpart}` : ""}. Confirm whether you're available from your dashboard - quick replies keep you at the top of the list.`,
+    buttonText: "Confirm availability",
   },
 };
 

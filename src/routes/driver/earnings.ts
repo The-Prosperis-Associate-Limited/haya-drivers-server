@@ -9,7 +9,6 @@ earningsRouter.get("/history", earnings.history);
 earningsRouter.get("/trend", earnings.trend);
 
 earningsRouter.get("/banks", earnings.listBanks);
-earningsRouter.post("/banks/resolve", earnings.resolveAccount);
 
 earningsRouter.get("/bank-accounts", earnings.listBankAccounts);
 earningsRouter.post("/bank-accounts", earnings.addBankAccount);

@@ -14,12 +14,9 @@ const bookingParties = {
   acceptance.
 */
 const bucketFilters = {
-  open: { status: "REQUESTED" },
-  accepted: {
-    OR: [{ status: { in: ["ACCEPTED", "IN_PROGRESS", "COMPLETED", "DISPUTED"] } }, { status: "CANCELLED", accepted_at: { not: null } }],
-  },
-  declined: {
-    OR: [{ status: "DECLINED" }, { status: "CANCELLED", accepted_at: null }],
+  active: { status: { in: ["ACCEPTED", "IN_PROGRESS", "DISPUTED"] } },
+  completed: {
+    OR: [{ status: "COMPLETED" }, { status: "CANCELLED", accepted_at: { not: null } }],
   },
 } satisfies Record<string, Prisma.BookingWhereInput>;
 

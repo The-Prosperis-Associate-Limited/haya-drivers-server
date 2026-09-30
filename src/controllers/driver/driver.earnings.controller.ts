@@ -3,7 +3,7 @@ import { handleErrors } from "../../helper/handleErrors";
 import { IUserRequest } from "../../interface";
 import { DriverEarningsService } from "../../services/driver/driver.earnings.service";
 import { PayoutService } from "../../services/earnings/payout.service";
-import { addBankAccountSchema, requestPayoutSchema, resolveAccountSchema } from "../../utils/types/earningsValidatorSchema";
+import { addBankAccountSchema, requestPayoutSchema } from "../../utils/types/earningsValidatorSchema";
 
 export class DriverEarningsController {
   private earningsService = new DriverEarningsService();
@@ -44,18 +44,6 @@ export class DriverEarningsController {
       const result = await this.payoutService.listBanks((req.query.country as string) ?? "nigeria", (req.query.currency as string) ?? "NGN");
 
       res.status(200).json({ message: "Banks fetched successfully", data: result });
-    } catch (error) {
-      handleErrors({ res, error });
-    }
-  };
-
-  resolveAccount = async (req: IUserRequest, res: Response) => {
-    try {
-      const { account_number, bank_code } = resolveAccountSchema.parse(req.body);
-
-      const result = await this.payoutService.resolveAccount(account_number, bank_code, (req.body.currency as string) ?? "NGN");
-
-      res.status(200).json({ message: "Account resolved", data: result });
     } catch (error) {
       handleErrors({ res, error });
     }

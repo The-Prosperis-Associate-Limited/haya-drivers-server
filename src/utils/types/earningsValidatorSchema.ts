@@ -12,14 +12,6 @@ export const addBankAccountSchema = z.object({
   country: z.string().trim().length(2).toUpperCase().optional().default("NG"),
 });
 
-export const resolveAccountSchema = z.object({
-  bank_code: z.string().trim().min(1, "Select your bank"),
-  account_number: z
-    .string()
-    .trim()
-    .regex(/^\d{8,20}$/, "Enter a valid account number"),
-});
-
 export const requestPayoutSchema = z.object({
   amount: z.coerce.number().positive("Enter an amount to withdraw"),
   bankAccountId: z.string().optional(),

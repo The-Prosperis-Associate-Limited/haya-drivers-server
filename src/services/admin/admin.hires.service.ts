@@ -41,16 +41,15 @@ export class AdminHiresService {
   }
 
   /*
-    A concierge request arrives with no drivers attached; the admin matches
-    them one at a time until drivers_needed is met. A named-driver request
-    starts with that driver as its first assignment.
+    Shortlisting is parallel outreach: the admin adds as many candidates as
+    they like, every one gets an availability ping, and the crew is trimmed to
+    drivers_needed before invoicing. Nothing waits on a single driver's reply.
   */
   async assignDriver(reference: string, adminId: string, data: AssignDriverInput) {
     const request = await this.requireRequest(reference);
 
     if (request.status !== "PENDING_REVIEW") throw new BadRequestError("Only a pending request can be assigned a driver");
-    if (request.assignments.length >= request.drivers_needed) throw new BadRequestError(`This request only needs ${request.drivers_needed} driver(s)`);
-    if (request.assignments.some(a => a.driverId === data.driverId)) throw new BadRequestError("That driver is already assigned to this request");
+    if (request.assignments.some(a => a.driverId === data.driverId)) throw new BadRequestError("That driver is already on this request's shortlist");
 
     const driverProfile = await this.driverProfileRepo.findByUserId(data.driverId, { verification_status: true });
 
@@ -62,6 +61,30 @@ export class AdminHiresService {
     if (open && open.id !== request.id) throw new BadRequestError(`This client already has an open request for that driver (${open.reference})`);
 
     await this.hireRepo.addAssignment(request.id, data.driverId);
+
+    await this.notificationService.notify({
+      recipientId: data.driverId,
+      senderId: adminId,
+      type: "BOOKING_REQUEST",
+      title: "You've been shortlisted for an engagement",
+      message: `You're a candidate for a ${request.engagement_type === "MONTHLY" ? "full-time" : "contract"} engagement starting ${request.starts_at.toDateString()}${request.state ? ` in ${request.state}` : ""}. Confirm your availability from your dashboard.`,
+      actionUrl: "/dashboard",
+      metadata: { reference: request.reference },
+    });
+
+    const driverContact = await this.userRepo.findById(data.driverId, { email: true, first_name: true });
+
+    if (driverContact?.email) {
+      await queueEmail(JOB_KEY.HIRE_REQUEST_EVENT, {
+        email: driverContact.email as string,
+        first_name: (driverContact.first_name as string) ?? "there",
+        event: "SHORTLISTED",
+        reference: request.reference,
+        date: request.starts_at.toDateString(),
+        counterpart: request.state ?? undefined,
+        actionUrl: `${surfaceUrlFor("DRIVER")}/dashboard`,
+      });
+    }
 
     return this.requireRequest(reference);
   }
@@ -86,8 +109,8 @@ export class AdminHiresService {
     const request = await this.requireRequest(reference);
 
     if (request.status !== "PENDING_REVIEW") throw new BadRequestError("Only a pending request can be invoiced");
-    if (request.assignments.length < request.drivers_needed) {
-      throw new BadRequestError(`Assign ${request.drivers_needed} driver(s) before invoicing - ${request.assignments.length} assigned so far`);
+    if (request.assignments.length !== request.drivers_needed) {
+      throw new BadRequestError(`Trim the shortlist to exactly ${request.drivers_needed} driver(s) before invoicing - ${request.assignments.length} on it now`);
     }
 
     const advertised = request.assignments.map(a => a.driver.driver_profile?.expected_monthly_rate ?? 0);

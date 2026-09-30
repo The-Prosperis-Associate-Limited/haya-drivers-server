@@ -2,7 +2,7 @@ import { Response } from "express";
 import { handleErrors } from "../../helper/handleErrors";
 import { IUserRequest } from "../../interface";
 import { DriverBookingService } from "../../services/driver/driver.booking.service";
-import { declineBookingSchema, jobRequestFilterSchema } from "../../utils/types/bookingValidatorSchema";
+import { jobRequestFilterSchema } from "../../utils/types/bookingValidatorSchema";
 
 export class DriverBookingController {
   private bookingService = new DriverBookingService();
@@ -34,28 +34,6 @@ export class DriverBookingController {
       const result = await this.bookingService.get(req.userId as string, req.params.reference);
 
       res.status(200).json({ message: "Job request fetched successfully", data: result });
-    } catch (error) {
-      handleErrors({ res, error });
-    }
-  };
-
-  accept = async (req: IUserRequest, res: Response) => {
-    try {
-      const result = await this.bookingService.accept(req.userId as string, req.params.reference);
-
-      res.status(200).json({ message: "Job request accepted", data: result });
-    } catch (error) {
-      handleErrors({ res, error });
-    }
-  };
-
-  decline = async (req: IUserRequest, res: Response) => {
-    try {
-      const { reason } = declineBookingSchema.parse(req.body);
-
-      const result = await this.bookingService.decline(req.userId as string, req.params.reference, reason);
-
-      res.status(200).json({ message: "Job request declined", data: result });
     } catch (error) {
       handleErrors({ res, error });
     }

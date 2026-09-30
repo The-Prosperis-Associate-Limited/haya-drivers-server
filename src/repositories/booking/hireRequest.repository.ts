@@ -61,6 +61,43 @@ export class HireRequestRepository {
     return prisma.hireAssignment.deleteMany({ where: { hireRequestId, driverId } });
   }
 
+  async findAssignmentById(id: string) {
+    return prisma.hireAssignment.findUnique({
+      where: { id },
+      include: { hire_request: { select: { id: true, reference: true, status: true, clientId: true } } },
+    });
+  }
+
+  async respondToAssignment(id: string, status: "CONFIRMED" | "DECLINED") {
+    return prisma.hireAssignment.update({ where: { id }, data: { status, responded_at: new Date() } });
+  }
+
+  // The driver-facing shortlist: engagement facts only, never the client.
+  async findPendingAssignmentsForDriver(driverId: string) {
+    return prisma.hireAssignment.findMany({
+      where: { driverId, status: "PENDING", hire_request: { status: "PENDING_REVIEW" } },
+      orderBy: { createdAt: "desc" },
+      include: {
+        hire_request: {
+          select: {
+            reference: true,
+            engagement_type: true,
+            starts_at: true,
+            schedule: true,
+            resumption_time: true,
+            closing_time: true,
+            transmission: true,
+            driver_type: true,
+            duration_months: true,
+            provides_accommodation: true,
+            state: true,
+            nearest_area: true,
+          },
+        },
+      },
+    });
+  }
+
   async update(id: string, data: Prisma.HireRequestUncheckedUpdateInput) {
     return prisma.hireRequest.update({
       where: { id },

@@ -2,22 +2,10 @@ import { Response } from "express";
 import { handleErrors } from "../../helper/handleErrors";
 import { IUserRequest } from "../../interface";
 import { ClientBookingService } from "../../services/client/client.booking.service";
-import { cancelBookingSchema, createBookingSchema, reviewBookingSchema } from "../../utils/types/bookingValidatorSchema";
+import { cancelBookingSchema, reviewBookingSchema } from "../../utils/types/bookingValidatorSchema";
 
 export class ClientBookingController {
   private bookingService = new ClientBookingService();
-
-  create = async (req: IUserRequest, res: Response) => {
-    try {
-      const data = createBookingSchema.parse(req.body);
-
-      const result = await this.bookingService.create(req.userId as string, data);
-
-      res.status(201).json({ message: "Job request sent", data: result });
-    } catch (error) {
-      handleErrors({ res, error });
-    }
-  };
 
   list = async (req: IUserRequest, res: Response) => {
     try {

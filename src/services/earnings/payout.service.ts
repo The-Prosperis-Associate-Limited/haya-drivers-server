@@ -30,10 +30,6 @@ export class PayoutService {
     return resolveProvider(currency).listBanks(country);
   }
 
-  async resolveAccount(accountNumber: string, bankCode: string, currency: string) {
-    return resolveProvider(currency).resolveAccount(accountNumber, bankCode);
-  }
-
   async listBankAccounts(userId: string) {
     return this.bankAccountRepo.findForUser(userId);
   }

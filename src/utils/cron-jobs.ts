@@ -1,5 +1,4 @@
 import { deleteUnverifiedAccounts } from "../services/scheduled/deleteUnverifiedAccounts.service";
-import { expireStaleBookingRequests } from "../services/scheduled/expireStaleBookingRequests.service";
 import { notifyExpiringLicences } from "../services/scheduled/licenceExpiry.service";
 import { recomputeTrustScores } from "../services/scheduled/recomputeTrustScores.service";
 import { releasePendingEarnings } from "../services/scheduled/releasePendingEarnings.service";
@@ -12,7 +11,6 @@ type ScheduledJobKey = (typeof SCHEDULED_JOB_KEY)[keyof typeof SCHEDULED_JOB_KEY
 // map, so adding a sweep is a new import and a new entry - never a new branch
 // in the worker.
 const SCHEDULED_JOBS: Record<ScheduledJobKey, () => Promise<string>> = {
-  [SCHEDULED_JOB_KEY.EXPIRE_STALE_BOOKING_REQUESTS]: expireStaleBookingRequests,
   [SCHEDULED_JOB_KEY.RELEASE_PENDING_EARNINGS]: releasePendingEarnings,
   [SCHEDULED_JOB_KEY.LICENCE_EXPIRY_SWEEP]: notifyExpiringLicences,
   [SCHEDULED_JOB_KEY.DELETE_UNVERIFIED_ACCOUNTS]: deleteUnverifiedAccounts,
@@ -20,7 +18,6 @@ const SCHEDULED_JOBS: Record<ScheduledJobKey, () => Promise<string>> = {
 };
 
 const SCHEDULE: { key: ScheduledJobKey; pattern: string }[] = [
-  { key: SCHEDULED_JOB_KEY.EXPIRE_STALE_BOOKING_REQUESTS, pattern: "*/15 * * * *" },
   { key: SCHEDULED_JOB_KEY.RELEASE_PENDING_EARNINGS, pattern: "0 * * * *" },
   { key: SCHEDULED_JOB_KEY.LICENCE_EXPIRY_SWEEP, pattern: "0 8 * * *" },
   { key: SCHEDULED_JOB_KEY.DELETE_UNVERIFIED_ACCOUNTS, pattern: "0 3 * * *" },

@@ -6,6 +6,7 @@ import { earningsRouter } from "./earnings";
 import { onboardingRouter } from "./onboarding";
 import { profileRouter } from "./profile";
 import { reviewRouter } from "./reviews";
+import { shortlistRouter } from "./shortlists";
 
 const driverRouter = Router();
 
@@ -19,6 +20,7 @@ driverRouter.use("/profile", profileRouter);
 driverRouter.use("/dashboard", dashboardRouter);
 driverRouter.use("/job-requests", bookingRouter);
 driverRouter.use("/earnings", earningsRouter);
+driverRouter.use("/shortlists", shortlistRouter);
 driverRouter.use("/reviews", reviewRouter);
 
 export { driverRouter };

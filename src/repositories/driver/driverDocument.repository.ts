@@ -49,4 +49,11 @@ export class DriverDocumentRepository {
       data: { status: "PENDING", rejection_reason: null, reviewerId: null, reviewed_at: null },
     });
   }
+
+  async approveAllForUser(userId: string, reviewerId: string) {
+    return prisma.driverDocument.updateMany({
+      where: { userId, status: { not: "APPROVED" } },
+      data: { status: "APPROVED", rejection_reason: null, reviewerId, reviewed_at: new Date() },
+    });
+  }
 }

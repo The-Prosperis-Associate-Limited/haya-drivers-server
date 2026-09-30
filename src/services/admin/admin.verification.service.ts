@@ -37,11 +37,7 @@ export class AdminVerificationService {
   }
 
   async getSubmission(userId: string) {
-    const [verification, profile, documents] = await Promise.all([
-      this.verificationRepo.findByUserId(userId),
-      this.driverProfileRepo.findByUserIdWithRelations(userId),
-      this.documentRepo.findByUser(userId),
-    ]);
+    const [verification, profile, documents] = await Promise.all([this.verificationRepo.findByUserId(userId), this.driverProfileRepo.findByUserIdWithRelations(userId), this.documentRepo.findByUser(userId)]);
 
     if (!profile) throw new NotFoundError("Driver profile not found");
 
@@ -89,6 +85,9 @@ export class AdminVerificationService {
     await Promise.all([
       this.verificationRepo.review(userId, { status: "APPROVED", reviewerId, rejection_reason: null }),
       this.driverProfileRepo.setVerificationStatus(userId, "APPROVED"),
+      // Approving the account approves every outstanding document with it -
+      // the admin UI says so explicitly before they confirm.
+      this.documentRepo.approveAllForUser(userId, reviewerId),
     ]);
 
     // Verification is 40 of the 100 trust-score points, so the score has to be
@@ -118,18 +117,13 @@ export class AdminVerificationService {
   }
 
   private async reject(userId: string, reviewerId: string, user: { email?: unknown; first_name?: unknown }, reason: string) {
-    await Promise.all([
-      this.verificationRepo.review(userId, { status: "REJECTED", reviewerId, rejection_reason: reason }),
-      this.driverProfileRepo.setVerificationStatus(userId, "REJECTED"),
-    ]);
+    await Promise.all([this.verificationRepo.review(userId, { status: "REJECTED", reviewerId, rejection_reason: reason }), this.driverProfileRepo.setVerificationStatus(userId, "REJECTED")]);
 
     const rejectedDocuments = await this.documentRepo.findRejectedForUser(userId);
 
     // The email lists the specific documents when the reviewer marked them, and
     // falls back to the overall reason when the refusal was not per-document.
-    const documents = rejectedDocuments.length
-      ? rejectedDocuments.map(document => ({ label: DOCUMENT_LABELS[document.type], reason: document.rejection_reason ?? reason }))
-      : [{ label: "Your application", reason }];
+    const documents = rejectedDocuments.length ? rejectedDocuments.map(document => ({ label: DOCUMENT_LABELS[document.type], reason: document.rejection_reason ?? reason })) : [{ label: "Your application", reason }];
 
     await this.notificationService.notify({
       recipientId: userId,

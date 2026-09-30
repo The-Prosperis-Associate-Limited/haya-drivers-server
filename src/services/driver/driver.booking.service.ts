@@ -18,21 +18,13 @@ export class DriverBookingService {
   }
 
   async summary(userId: string) {
-    const [entries, answered, closed] = await Promise.all([
-      Promise.all(JOB_REQUEST_BUCKETS.map(async (bucket) => [bucket, await this.bookingRepo.countBucketForDriver(userId, bucket)] as const)),
-      this.bookingRepo.countAnsweredForDriver(userId),
-      this.bookingRepo.countClosedForDriver(userId),
-    ]);
+    const entries = await Promise.all(JOB_REQUEST_BUCKETS.map(async bucket => [bucket, await this.bookingRepo.countBucketForDriver(userId, bucket)] as const));
 
     const counts = Object.fromEntries(entries) as Record<JobRequestBucket, number>;
 
     return {
-      open: counts.open,
-      accepted: counts.accepted,
-      declined: counts.declined,
-      // Null, not zero, until a request has actually closed - a driver who has
-      // never been asked has no record, and 0% reads as a bad one.
-      response_rate: closed ? Math.round((answered / closed) * 100) : null,
+      active: counts.active,
+      completed: counts.completed,
     };
   }
 
@@ -45,18 +37,6 @@ export class DriverBookingService {
     const events = await this.statusEventRepo.findForBooking(booking.id);
 
     return { ...booking, status_events: events };
-  }
-
-  async accept(userId: string, reference: string) {
-    const booking = await this.get(userId, reference);
-
-    return this.transitionService.transition(booking.id, "ACCEPTED", userId);
-  }
-
-  async decline(userId: string, reference: string, reason: string) {
-    const booking = await this.get(userId, reference);
-
-    return this.transitionService.transition(booking.id, "DECLINED", userId, { reason });
   }
 
   async start(userId: string, reference: string) {
