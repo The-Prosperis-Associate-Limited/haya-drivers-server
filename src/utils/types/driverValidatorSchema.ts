@@ -100,6 +100,7 @@ export const additionalInformationSchema = z.object({
   language_count: z.coerce.number().int().min(0).max(20).optional(),
   languages: z.array(z.string().trim().min(1)).optional().default([]),
   religion: z.string().trim().optional(),
+  ethnicity: z.string().trim().max(40).optional(),
 });
 
 export const uploadDocumentSchema = z.object({

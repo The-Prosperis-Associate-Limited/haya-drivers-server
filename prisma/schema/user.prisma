@@ -56,6 +56,9 @@ model User {
   isLocked            Boolean       @default(false)
   lastLogin           DateTime      @default(now())
   account_status      AccountStatus @default(ACTIVE)
+  // True only when the inactivity sweep deactivated the account - signing in
+  // again offers reactivation. Admin-made DEACTIVATED stays a hard block.
+  deactivated_for_inactivity Boolean @default(false)
   // Sessions minted before this instant are refused. Set on password reset so
   // "signed out on all other devices" is true rather than a claim in the copy.
   sessions_valid_from DateTime?

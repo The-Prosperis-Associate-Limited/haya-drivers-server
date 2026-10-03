@@ -47,7 +47,9 @@ export class AuthOAuthService {
     const existing = await this.userRepo.findByEmail(identity.email);
 
     if (existing) {
-      if (existing.account_status !== "ACTIVE") throw new ForbiddenError("This account is not active. Please contact support.");
+      const dormant = existing.account_status === "DEACTIVATED" && existing.deactivated_for_inactivity;
+
+      if (existing.account_status !== "ACTIVE" && !dormant) throw new ForbiddenError("This account is not active. Please contact support.");
 
       if (!existing.googleId) {
         await this.userRepo.updateUser(existing.id, { googleId: identity.googleId, has_validated_email: true });

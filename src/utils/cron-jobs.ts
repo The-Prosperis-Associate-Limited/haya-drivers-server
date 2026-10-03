@@ -1,4 +1,5 @@
 import { deleteUnverifiedAccounts } from "../services/scheduled/deleteUnverifiedAccounts.service";
+import { deactivateInactiveAccounts } from "../services/scheduled/deactivateInactiveAccounts.service";
 import { notifyExpiringLicences } from "../services/scheduled/licenceExpiry.service";
 import { recomputeTrustScores } from "../services/scheduled/recomputeTrustScores.service";
 import { releasePendingEarnings } from "../services/scheduled/releasePendingEarnings.service";
@@ -15,6 +16,7 @@ const SCHEDULED_JOBS: Record<ScheduledJobKey, () => Promise<string>> = {
   [SCHEDULED_JOB_KEY.LICENCE_EXPIRY_SWEEP]: notifyExpiringLicences,
   [SCHEDULED_JOB_KEY.DELETE_UNVERIFIED_ACCOUNTS]: deleteUnverifiedAccounts,
   [SCHEDULED_JOB_KEY.RECOMPUTE_TRUST_SCORES]: recomputeTrustScores,
+  [SCHEDULED_JOB_KEY.DEACTIVATE_INACTIVE_ACCOUNTS]: deactivateInactiveAccounts,
 };
 
 const SCHEDULE: { key: ScheduledJobKey; pattern: string }[] = [
@@ -22,6 +24,7 @@ const SCHEDULE: { key: ScheduledJobKey; pattern: string }[] = [
   { key: SCHEDULED_JOB_KEY.LICENCE_EXPIRY_SWEEP, pattern: "0 8 * * *" },
   { key: SCHEDULED_JOB_KEY.DELETE_UNVERIFIED_ACCOUNTS, pattern: "0 3 * * *" },
   { key: SCHEDULED_JOB_KEY.RECOMPUTE_TRUST_SCORES, pattern: "0 4 * * 0" },
+  { key: SCHEDULED_JOB_KEY.DEACTIVATE_INACTIVE_ACCOUNTS, pattern: "30 2 * * *" },
 ];
 
 export const runScheduledJob = async (jobType: ScheduledJobKey) => {

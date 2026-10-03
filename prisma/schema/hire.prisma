@@ -73,6 +73,11 @@ model HireRequest {
   state                  String?
   nearest_area           String?
 
+  // Matching preferences for the human matcher - never hard filters.
+  preferred_ethnicity String?
+  preferred_religion  String?
+  preferred_age_range String?
+
   status          HireRequestStatus @default(PENDING_REVIEW)
   declined_reason String?
   declined_at     DateTime?

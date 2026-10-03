@@ -10,6 +10,9 @@ export const createStaffingRequestSchema = z.object({
   city: z.string().trim().optional(),
   budget: z.coerce.number().positive("Enter a monthly budget"),
   currency: z.string().trim().length(3).toUpperCase().optional().default("NGN"),
+  preferred_ethnicity: z.string().trim().max(40).optional(),
+  preferred_religion: z.string().trim().max(40).optional(),
+  preferred_age_range: z.string().trim().max(20).optional(),
 });
 
 export type CreateStaffingRequestInput = z.infer<typeof createStaffingRequestSchema>;

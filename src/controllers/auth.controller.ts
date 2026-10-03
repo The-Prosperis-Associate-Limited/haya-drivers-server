@@ -65,6 +65,16 @@ export class AuthController {
     }
   };
 
+  reactivateAccount = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.sessionService.reactivate(req.userId as string);
+
+      res.status(200).json({ message: "Welcome back! Your account is active again.", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
   validateEmail = async (req: Request, res: Response) => {
     try {
       const { token } = req.query;

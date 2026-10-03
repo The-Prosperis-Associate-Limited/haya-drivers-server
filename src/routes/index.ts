@@ -1,5 +1,6 @@
 import { Application, Request, Response } from "express";
 import { adminRouter } from "./admin";
+import { analyticsRouter } from "./analyticsRoutes";
 import { authRouter } from "./authRoutes";
 import { chatRouter } from "./chatRoutes";
 import { clientRouter } from "./client";
@@ -20,6 +21,7 @@ export const registerRoutes = (app: Application) => {
   app.use("/api/push", pushRouter);
   app.use("/api/tickets", ticketRouter);
   app.use("/api/chat", chatRouter);
+  app.use("/api/analytics", analyticsRouter);
   app.use("/webhooks", webhookRouter);
 
   app.use("*", (_req: Request, res: Response) => {

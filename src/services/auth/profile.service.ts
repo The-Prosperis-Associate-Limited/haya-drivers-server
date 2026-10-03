@@ -33,6 +33,7 @@ export class ProfileService {
       timezone: true,
       has_validated_email: true,
       account_status: true,
+      deactivated_for_inactivity: true,
       createdAt: true,
       driver_profile: true,
       client_profile: true,

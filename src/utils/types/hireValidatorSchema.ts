@@ -19,6 +19,9 @@ export const createHireRequestSchema = z.object({
   provides_accommodation: z.coerce.boolean().default(false),
   state: z.string().trim().max(60).optional(),
   nearest_area: z.string().trim().max(120).optional(),
+  preferred_ethnicity: z.string().trim().max(40).optional(),
+  preferred_religion: z.string().trim().max(40).optional(),
+  preferred_age_range: z.string().trim().max(20).optional(),
 });
 
 export const submitProofSchema = z.object({

@@ -6,6 +6,7 @@ const dashboard = new AdminDashboardController();
 
 adminDashboardRouter.get("/stats", dashboard.stats);
 adminDashboardRouter.get("/growth", dashboard.growth);
+adminDashboardRouter.get("/visitors", dashboard.visitors);
 adminDashboardRouter.get("/activities", dashboard.activities);
 
 export { adminDashboardRouter };

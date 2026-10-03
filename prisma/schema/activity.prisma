@@ -36,3 +36,16 @@ model Activity {
   @@index([userId, createdAt(sort: Desc)])
   @@index([type, createdAt(sort: Desc)])
 }
+
+// One row per unique visitor per UTC day on the public pages. The key is a
+// hash of ip + user agent - no PII stored, no cookie set.
+model SiteVisit {
+  id          String   @id @default(cuid())
+  day         DateTime
+  visitor_key String
+
+  createdAt DateTime @default(now())
+
+  @@unique([day, visitor_key])
+  @@index([day])
+}

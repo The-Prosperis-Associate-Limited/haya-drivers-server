@@ -44,6 +44,7 @@ authRouter.post("/reset-password", credentialLimiter, authController.resetPasswo
 authRouter.put("/update-password", validateAccessToken, authController.updatePassword);
 
 authRouter.get("/get-profile", validateAccessToken, authController.getProfile);
+authRouter.post("/reactivate", validateAccessToken, authController.reactivateAccount);
 authRouter.put("/update-profile", validateAccessToken, upload.single("profile_pic"), authController.updateProfile);
 authRouter.delete("/deactivate", validateAccessToken, authController.deactivateAccount);
 

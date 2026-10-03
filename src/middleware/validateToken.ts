@@ -23,10 +23,15 @@ const validateAccessToken = async function (req: IUserRequest, res: Response, ne
 
     // A password reset stamps `sessions_valid_from`; anything minted before it
     // is refused so "signed out on all other devices" is true, not just copy.
-    const user = await userRepository.findById(id, { account_status: true, sessions_valid_from: true });
+    const user = await userRepository.findById(id, { account_status: true, sessions_valid_from: true, deactivated_for_inactivity: true });
 
     if (!user) return res.status(401).json({ message: "Account no longer exists" });
-    if (user.account_status !== "ACTIVE") return res.status(403).json({ message: "This account is not active. Please contact support." });
+
+    // Dormant (inactivity-swept) accounts keep access so they can reactivate
+    // from the prompt; everything else non-active is refused.
+    const dormant = user.account_status === "DEACTIVATED" && user.deactivated_for_inactivity;
+
+    if (user.account_status !== "ACTIVE" && !dormant) return res.status(403).json({ message: "This account is not active. Please contact support." });
     if (user.sessions_valid_from && iat && iat * 1000 < user.sessions_valid_from.getTime()) {
       return res.status(401).json({ message: "This session has expired, please sign in again" });
     }

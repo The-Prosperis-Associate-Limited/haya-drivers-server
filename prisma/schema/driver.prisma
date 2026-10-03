@@ -77,6 +77,7 @@ model DriverProfile {
   languages       String[]
   language_count  Int?
   religion        String?
+  ethnicity       String?
 
   // What the driver expects to earn, in minor units of rate_currency. Drives the
   // marketplace budget filter; a null rate never filters the driver out.

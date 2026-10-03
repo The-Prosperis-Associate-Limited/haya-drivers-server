@@ -30,6 +30,11 @@ model StaffingRequest {
   budget   Int // Minor units (kobo), per month
   currency String @default("NGN")
 
+  // Matching preferences for the human matcher - never hard filters.
+  preferred_ethnicity String?
+  preferred_religion  String?
+  preferred_age_range String?
+
   status    StaffingRequestStatus @default(OPEN)
   closed_at DateTime?
 

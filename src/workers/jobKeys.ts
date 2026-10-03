@@ -29,4 +29,5 @@ export const SCHEDULED_JOB_KEY = {
   LICENCE_EXPIRY_SWEEP: "licence_expiry_sweep",
   DELETE_UNVERIFIED_ACCOUNTS: "delete_unverified_accounts",
   RECOMPUTE_TRUST_SCORES: "recompute_trust_scores",
+  DEACTIVATE_INACTIVE_ACCOUNTS: "deactivate_inactive_accounts",
 } as const;

@@ -22,7 +22,9 @@ export class AuthSessionService {
 
     if (!user) throw new BadRequestError("Invalid credentials");
 
-    if (user.account_status === "DEACTIVATED") throw new ForbiddenError("This account has been deactivated. Please contact support.");
+    // Dormant accounts (90-day inactivity sweep) may sign in - the dashboard
+    // prompts them to reactivate. Admin-made deactivation stays a hard block.
+    if (user.account_status === "DEACTIVATED" && !user.deactivated_for_inactivity) throw new ForbiddenError("This account has been deactivated. Please contact support.");
     if (user.account_status === "SUSPENDED") throw new ForbiddenError("This account is suspended. Please contact support.");
     if (user.isLocked) throw new ForbiddenError("Too many failed attempts. Reset your password to unlock this account.");
     if (!user.has_validated_email) throw new BadRequestError("Please verify your email before signing in");
@@ -48,12 +50,52 @@ export class AuthSessionService {
   }
 
   async refresh(userId: string, role: string) {
-    const user = await this.userRepo.findById(userId, { id: true, account_status: true });
+    const user = await this.userRepo.findById(userId, { id: true, account_status: true, deactivated_for_inactivity: true });
 
     if (!user) throw new NotFoundError("Account no longer exists");
-    if (user.account_status !== "ACTIVE") throw new ForbiddenError("This account is not active");
+
+    const dormant = user.account_status === "DEACTIVATED" && user.deactivated_for_inactivity;
+
+    if (user.account_status !== "ACTIVE" && !dormant) throw new ForbiddenError("This account is not active");
+
+    // A refresh is activity - without this, a long-lived session would look
+    // idle to the inactivity sweep and get deactivated mid-use.
+    if (user.account_status === "ACTIVE") this.userRepo.updateUser(userId, { lastLogin: new Date() }).catch(() => {});
 
     return { accessToken: generateAccessToken({ id: userId, role }) };
+  }
+
+  async reactivate(userId: string) {
+    const user = (await this.userRepo.findById(userId, {
+      id: true,
+      account_status: true,
+      deactivated_for_inactivity: true,
+      role: true,
+      driver_profile: { select: { verification_status: true } },
+    })) as {
+      id: string;
+      account_status: string;
+      deactivated_for_inactivity: boolean;
+      role: string;
+      driver_profile: { verification_status: string } | null;
+    } | null;
+
+    if (!user) throw new NotFoundError("Account no longer exists");
+    if (user.account_status === "ACTIVE") return { reactivated: true };
+    if (!(user.account_status === "DEACTIVATED" && user.deactivated_for_inactivity)) throw new ForbiddenError("This account cannot be reactivated here. Please contact support.");
+
+    await this.userRepo.updateUser(userId, {
+      account_status: "ACTIVE",
+      deactivated_for_inactivity: false,
+      lastLogin: new Date(),
+      // The sweep hid dormant drivers from search - an approved driver comes back.
+      ...(user.role === "DRIVER" &&
+        user.driver_profile?.verification_status === "APPROVED" && {
+          driver_profile: { update: { is_discoverable: true } },
+        }),
+    });
+
+    return { reactivated: true };
   }
 
   async validateEmailByToken(token: string) {
