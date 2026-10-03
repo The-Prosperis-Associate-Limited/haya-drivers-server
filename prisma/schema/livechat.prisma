@@ -1,6 +1,6 @@
-// Support live chat - one open conversation per user, admins join from the
-// support pool. No AI: a WAITING conversation is simply one no admin has
-// joined yet.
+// Support live chat - one open conversation per user. While WAITING the AI
+// assistant answers; escalation (or an admin joining from the support pool)
+// flips it to ACTIVE, which silences the AI for good.
 
 enum ConversationStatus {
   WAITING
@@ -47,9 +47,10 @@ model ChatMessage {
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   // Null sender = system notice ("X joined the chat", "marked resolved").
-  senderId  String?
-  sender    User?   @relation(fields: [senderId], references: [id], onDelete: SetNull)
-  is_system Boolean @default(false)
+  senderId   String?
+  sender     User?   @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  is_system  Boolean @default(false)
+  is_from_ai Boolean @default(false)
 
   message String
   sent_at DateTime @default(now())

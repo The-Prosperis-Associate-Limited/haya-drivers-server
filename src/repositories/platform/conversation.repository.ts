@@ -41,10 +41,10 @@ export class ConversationRepository {
   }
 
   // Message insert and conversation preview move together or not at all.
-  async appendMessage(conversationId: string, data: { senderId?: string | null; message: string; is_system?: boolean }) {
+  async appendMessage(conversationId: string, data: { senderId?: string | null; message: string; is_system?: boolean; is_from_ai?: boolean }) {
     const [message] = await prisma.$transaction([
       prisma.chatMessage.create({
-        data: { conversationId, senderId: data.senderId ?? null, message: data.message, is_system: data.is_system ?? false },
+        data: { conversationId, senderId: data.senderId ?? null, message: data.message, is_system: data.is_system ?? false, is_from_ai: data.is_from_ai ?? false },
         include: { sender: SENDER_SELECT },
       }),
       prisma.conversation.update({
