@@ -8,16 +8,14 @@ import { JOB_KEY } from "../../workers/jobKeys";
 import { NotificationService } from "../shared/notification.service";
 import { ActivityService } from "../shared/activity.service";
 import { TrustScoreService } from "../shared/trustScore.service";
-import { WalletService } from "../earnings/wallet.service";
-import { WalletTransactionRepository } from "../../repositories/earnings/walletTransaction.repository";
 
-const { CLIENT_URL, PLATFORM_FEE_PERCENT } = process.env;
+const { CLIENT_URL } = process.env;
 
 /*
   The status machine lives here and nowhere else. Both the driver and the client
-  side call into it, so a transition always writes its event row, notifies the
-  other party and - on completion - moves the money. A service that flipped
-  `status` directly would skip all three.
+  side call into it, so a transition always writes its event row and notifies
+  the other party. No money moves on completion - the client pays the driver's
+  salary directly, outside the platform.
 */
 const ALLOWED_TRANSITIONS: Record<$Enums.BookingStatus, $Enums.BookingStatus[]> = {
   REQUESTED: ["ACCEPTED", "DECLINED", "CANCELLED"],
@@ -29,16 +27,12 @@ const ALLOWED_TRANSITIONS: Record<$Enums.BookingStatus, $Enums.BookingStatus[]> 
   DISPUTED: ["COMPLETED", "CANCELLED"],
 };
 
-const platformFeePercent = Number(PLATFORM_FEE_PERCENT ?? 10);
-
 export class BookingTransitionService {
   private bookingRepo = new BookingRepository();
   private statusEventRepo = new BookingStatusEventRepository();
   private notificationService = new NotificationService();
   private activityService = new ActivityService();
   private trustScoreService = new TrustScoreService();
-  private walletService = new WalletService();
-  private walletTransactionRepo = new WalletTransactionRepository();
 
   async transition(bookingId: string, to: $Enums.BookingStatus, actorId: string, options: { note?: string; reason?: string } = {}) {
     const booking = await this.bookingRepo.findById(bookingId);
@@ -73,39 +67,11 @@ export class BookingTransitionService {
       note: options.note ?? options.reason,
     });
 
-    if (to === "COMPLETED") await this.settleEarnings(updated);
+    if (to === "COMPLETED" && booking.driverId) await this.trustScoreService.recompute(booking.driverId);
 
     await this.announce(updated, to, actorId, options.reason);
 
     return updated;
-  }
-
-  // The driver is credited net of the platform fee, and both legs are written
-  // so the ledger explains the difference between what the client paid and what
-  // the driver sees.
-  private async settleEarnings(booking: Awaited<ReturnType<BookingRepository["findById"]>>) {
-    if (!booking?.driverId) return;
-
-    // An engagement the client already paid through their wallet settles there
-    // - crediting it again here would pay the driver twice.
-    const alreadyPaid = await this.walletTransactionRepo.existsForBooking(booking.id, "BOOKING_PAYMENT");
-
-    if (alreadyPaid) {
-      await this.trustScoreService.recompute(booking.driverId);
-      return;
-    }
-
-    const fee = Math.round((booking.amount * platformFeePercent) / 100);
-
-    await this.walletService.credit(booking.driverId, {
-      amount_minor: booking.amount - fee,
-      currency: booking.currency,
-      type: "BOOKING_PAYMENT",
-      bookingId: booking.id,
-      description: booking.title,
-    });
-
-    await this.trustScoreService.recompute(booking.driverId);
   }
 
   private async announce(booking: NonNullable<Awaited<ReturnType<BookingRepository["findById"]>>>, to: $Enums.BookingStatus, actorId: string, reason?: string) {

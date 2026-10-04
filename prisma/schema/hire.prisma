@@ -62,6 +62,8 @@ model HireRequest {
   // The questionnaire - what the client actually needs.
   package                HirePackage   @default(PRIVATE)
   duration_months        Int?
+  // Contract length in days - picks the pricing bracket at invoice time.
+  duration_days          Int?
   drivers_needed         Int           @default(1)
   driver_type            DriverType?
   schedule               WorkSchedule  @default(WEEKDAYS)
@@ -107,14 +109,17 @@ model HireInvoice {
   issuedById String
   issuedBy   User   @relation("InvoiceIssuer", fields: [issuedById], references: [id])
 
-  // All minor units. amount = per_driver x drivers assigned; total = amount +
-  // vat + fee; each driver receives per_driver in full.
+  // All minor units. The client pays the drivers' salaries DIRECTLY - this
+  // invoice is only the platform service fee plus VAT on that fee.
+  // amount_minor = fee_minor; per_driver_minor records the salary for the
+  // bookings and the client's reference; breakdown holds the display lines.
   amount_minor     Int
   per_driver_minor Int?
   vat_percent      Float
   vat_minor        Int
   fee_minor        Int
   total_minor      Int
+  breakdown        Json?
   currency         String @default("NGN")
 
   status  HireInvoiceStatus @default(UNPAID)

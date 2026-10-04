@@ -3,6 +3,7 @@ import { ClientHireRequestsService } from "../../services/client/client.hireRequ
 import { AdminHiresService } from "../../services/admin/admin.hires.service";
 import { handleErrors } from "../../helper/handleErrors";
 import { createHireRequestSchema, declineHireRequestSchema, generateInvoiceSchema, hireRequestListQuerySchema, submitProofSchema, rejectProofSchema, assignDriverSchema } from "../../utils/types/hireValidatorSchema";
+import { hirePricingGuide } from "../../utils/hirePricing";
 import type { IUserRequest } from "../../interface";
 
 export class HireRequestController {
@@ -118,6 +119,26 @@ export class HireRequestController {
       const result = await this.adminService.generateInvoice(req.params.reference as string, req.userId as string, data);
 
       res.status(200).json({ message: "Invoice generated", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  quoteInvoice = async (req: IUserRequest, res: Response) => {
+    try {
+      const overrides = generateInvoiceSchema.parse(req.query);
+
+      const result = await this.adminService.quoteInvoice(req.params.reference as string, { per_driver_minor: overrides.amount_minor, vat_percent: overrides.vat_percent });
+
+      res.status(200).json({ message: "Invoice quote computed", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  pricingGuide = async (_req: IUserRequest, res: Response) => {
+    try {
+      res.status(200).json({ message: "Pricing guide fetched", data: hirePricingGuide() });
     } catch (error) {
       handleErrors({ res, error });
     }

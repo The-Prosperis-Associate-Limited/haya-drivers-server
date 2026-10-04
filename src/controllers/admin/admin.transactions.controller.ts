@@ -15,24 +15,4 @@ export class AdminTransactionsController {
       handleErrors({ res, error });
     }
   };
-
-  wallets = async (req: IUserRequest, res: Response) => {
-    try {
-      const result = await this.transactionsService.wallets(req.query);
-
-      res.status(200).json({ message: "Client wallets fetched successfully", ...result });
-    } catch (error) {
-      handleErrors({ res, error });
-    }
-  };
-
-  serviceFees = async (req: IUserRequest, res: Response) => {
-    try {
-      const result = await this.transactionsService.serviceFees(req.query);
-
-      res.status(200).json({ message: "Service fees fetched successfully", ...result });
-    } catch (error) {
-      handleErrors({ res, error });
-    }
-  };
 }

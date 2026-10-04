@@ -3,9 +3,7 @@ import { BookingRepository } from "../../repositories/booking/booking.repository
 import { BookingStatusEventRepository } from "../../repositories/booking/bookingStatusEvent.repository";
 import { DriverProfileRepository } from "../../repositories/driver/driverProfile.repository";
 import { UserRepository } from "../../repositories/user/user.repository";
-import { WalletService } from "../earnings/wallet.service";
 import { NotificationService } from "../shared/notification.service";
-import { paymentFeeFor } from "../client/client.wallet.service";
 import { BadRequestError, NotFoundError } from "../../helper/errors";
 import { queueEmail } from "../../workers/globalEmailQueueHandler";
 import { JOB_KEY } from "../../workers/jobKeys";
@@ -13,6 +11,7 @@ import { formatMoney } from "../../utils/money";
 import { paginate } from "../../utils/pagination";
 import { generateReference } from "../../utils/reference";
 import { surfaceUrlFor } from "../../utils/surfaceUrl";
+import { computeHireFee, ContractDurationRequiredError, type HireClientType, type HireFeeQuote } from "../../utils/hirePricing";
 import type { AssignDriverInput, DeclineHireRequestInput, GenerateInvoiceInput, HireRequestListQuery, RejectProofInput } from "../../utils/types/hireValidatorSchema";
 
 // Nigeria's standard VAT unless the invoice overrides it.
@@ -25,7 +24,6 @@ export class AdminHiresService {
   private statusEventRepo = new BookingStatusEventRepository();
   private driverProfileRepo = new DriverProfileRepository();
   private userRepo = new UserRepository();
-  private walletService = new WalletService();
   private notificationService = new NotificationService();
 
   async list(query: HireRequestListQuery) {
@@ -100,41 +98,87 @@ export class AdminHiresService {
   }
 
   /*
-    The invoice is the admin's review artifact: a per-driver salary (defaulting
-    to the highest advertised rate among the assigned drivers) times the head
-    count, VAT on that, and the platform fee - quoted here so the client sees
-    one total that will not drift at payment time.
+    The invoice charges ONLY the platform service fee plus VAT on that fee -
+    the client pays the drivers' salaries directly. The quote shares the exact
+    computation with generation so what the admin previews is what gets issued.
   */
-  async generateInvoice(reference: string, adminId: string, data: GenerateInvoiceInput) {
-    const request = await this.requireRequest(reference);
-
-    if (request.status !== "PENDING_REVIEW") throw new BadRequestError("Only a pending request can be invoiced");
+  private quoteFor(request: Awaited<ReturnType<AdminHiresService["requireRequest"]>>, overrides: { per_driver_minor?: number; vat_percent?: number }) {
     if (request.assignments.length !== request.drivers_needed) {
       throw new BadRequestError(`Trim the shortlist to exactly ${request.drivers_needed} driver(s) before invoicing - ${request.assignments.length} on it now`);
     }
 
     const advertised = request.assignments.map(a => a.driver.driver_profile?.expected_monthly_rate ?? 0);
-    const perDriver = data.amount_minor ?? Math.max(...advertised);
+    const perDriver = overrides.per_driver_minor ?? Math.max(...advertised);
 
-    if (perDriver <= 0) throw new BadRequestError("No assigned driver has an advertised rate - set the per-driver amount");
+    if (perDriver <= 0) throw new BadRequestError("No assigned driver has an advertised rate - set the per-driver salary");
 
-    const amount = perDriver * request.assignments.length;
-    const vatPercent = data.vat_percent ?? defaultVatPercent;
-    const vat = Math.round((amount * vatPercent) / 100);
-    const fee = paymentFeeFor(amount);
+    const clientType: HireClientType = request.client.client_profile?.client_type === "ORGANISATION" ? "ORGANISATION" : "INDIVIDUAL";
+
+    // Brokered hires are only ever MONTHLY or CONTRACT; ONE_OFF lives on the
+    // retired direct-booking rail.
+    const engagement = request.engagement_type === "CONTRACT" ? ("CONTRACT" as const) : ("MONTHLY" as const);
+
+    let quote: HireFeeQuote;
+
+    try {
+      quote = computeHireFee({
+        engagement_type: engagement,
+        client_type: clientType,
+        drivers: request.assignments.length,
+        per_driver_monthly_minor: perDriver,
+        duration_days: request.duration_days,
+      });
+    } catch (error) {
+      if (error instanceof ContractDurationRequiredError) throw new BadRequestError(error.message);
+      throw error;
+    }
+
+    const vatPercent = overrides.vat_percent ?? defaultVatPercent;
+    const vat = Math.round((quote.fee_minor * vatPercent) / 100);
     const currency = request.assignments[0].driver.driver_profile?.rate_currency ?? "NGN";
+
+    return {
+      client_type: clientType,
+      engagement_type: request.engagement_type,
+      duration_days: request.duration_days,
+      drivers: request.assignments.length,
+      per_driver_minor: perDriver,
+      fee_minor: quote.fee_minor,
+      lines: quote.lines,
+      vat_percent: vatPercent,
+      vat_minor: vat,
+      total_minor: quote.fee_minor + vat,
+      currency,
+    };
+  }
+
+  async quoteInvoice(reference: string, overrides: { per_driver_minor?: number; vat_percent?: number }) {
+    const request = await this.requireRequest(reference);
+
+    if (request.status !== "PENDING_REVIEW") throw new BadRequestError("Only a pending request can be quoted");
+
+    return this.quoteFor(request, overrides);
+  }
+
+  async generateInvoice(reference: string, adminId: string, data: GenerateInvoiceInput) {
+    const request = await this.requireRequest(reference);
+
+    if (request.status !== "PENDING_REVIEW") throw new BadRequestError("Only a pending request can be invoiced");
+
+    const quote = this.quoteFor(request, { per_driver_minor: data.amount_minor, vat_percent: data.vat_percent });
 
     await this.hireRepo.createInvoice({
       hireRequestId: request.id,
       issuedById: adminId,
       reference: generateReference("INV"),
-      amount_minor: amount,
-      per_driver_minor: perDriver,
-      vat_percent: vatPercent,
-      vat_minor: vat,
-      fee_minor: fee,
-      total_minor: amount + vat + fee,
-      currency,
+      amount_minor: quote.fee_minor,
+      per_driver_minor: quote.per_driver_minor,
+      vat_percent: quote.vat_percent,
+      vat_minor: quote.vat_minor,
+      fee_minor: quote.fee_minor,
+      total_minor: quote.total_minor,
+      breakdown: quote.lines.map(line => ({ ...line })),
+      currency: quote.currency,
       note: data.note,
     });
 
@@ -145,7 +189,7 @@ export class AdminHiresService {
       senderId: adminId,
       type: "PAYMENT",
       title: "Your hire invoice is ready",
-      message: `Invoice for your request ${request.reference}: ${formatMoney(amount + vat + fee, currency)} (incl. VAT and fees). Transfer to our account and upload your proof of payment to receive your driver's contact details.`,
+      message: `Invoice for your request ${request.reference}: ${formatMoney(quote.total_minor, quote.currency)} (service fee + VAT - your driver's salary is paid to them directly). Transfer to our account and upload your proof of payment to receive your driver's contact details.`,
       actionUrl: `/dashboard/my-hire/requests/${request.reference}`,
       metadata: { reference: request.reference },
     });
@@ -155,7 +199,7 @@ export class AdminHiresService {
       first_name: request.client.first_name ?? "there",
       event: "INVOICE_READY",
       reference: request.reference,
-      amount: formatMoney(amount + vat + fee, currency),
+      amount: formatMoney(quote.total_minor, quote.currency),
       actionUrl: `${surfaceUrlFor("CLIENT")}/dashboard/my-hire/requests/${request.reference}`,
     });
 
@@ -166,10 +210,9 @@ export class AdminHiresService {
     The human oracle for a bare bank transfer: the admin has seen the money in
     the organisation account and confirms it. Only then does the engagement
     exist - one already-ACCEPTED booking per assigned driver (admin-brokered,
-    no driver-acceptance leg), each driver credited their per-driver salary
-    with the standard earnings hold, contact details unlocked. The organisation
-    settles drivers out of its own account; the wallet credits are the ledger
-    of what is owed.
+    no driver-acceptance leg), contact details unlocked. The client pays each
+    driver's salary directly - no money for drivers passes through us, so
+    nothing is credited to driver wallets here.
   */
   async confirmPayment(reference: string, adminId: string) {
     const request = await this.requireRequest(reference);
@@ -213,20 +256,12 @@ export class AdminHiresService {
 
       await this.statusEventRepo.create({ bookingId: booking.id, to_status: "ACCEPTED", changed_by: adminId });
 
-      await this.walletService.credit(assignment.driverId, {
-        amount_minor: perDriver,
-        currency: invoice.currency,
-        type: "BOOKING_PAYMENT",
-        bookingId: booking.id,
-        description: booking.title,
-      });
-
       await this.notificationService.notify({
         recipientId: assignment.driverId,
         senderId: adminId,
         type: "BOOKING_STATUS",
         title: "You've been hired",
-        message: `A client has hired you for ${booking.title} starting ${booking.starts_at.toDateString()}. ${formatMoney(perDriver, invoice.currency)} is on its way to your wallet.`,
+        message: `A client has hired you for ${booking.title} starting ${booking.starts_at.toDateString()}. Your salary of ${formatMoney(perDriver, invoice.currency)}/month is paid to you directly by the client.`,
         actionUrl: `/dashboard/job-request/${booking.reference}`,
         metadata: { bookingId: booking.id, reference: booking.reference },
       });

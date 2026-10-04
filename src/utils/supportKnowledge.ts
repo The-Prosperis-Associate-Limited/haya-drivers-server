@@ -9,7 +9,8 @@ Haya Drivers is a platform where clients (individuals or organisations) hire
 vetted professional drivers near them. Clients search drivers, file hire
 requests and pay by bank transfer to the Haya Drivers organisation account.
 Drivers complete onboarding and verification, receive job offers, work
-engagements and get paid out of their earnings wallet. Admins vet drivers,
+engagements and are paid their salary directly by the client. Admins vet
+drivers,
 match requests and confirm payments. Everything runs on the web app.
 
 === FOR CLIENTS ===
@@ -40,8 +41,13 @@ You can have one open request per driver at a time.
 
 HOW HIRING AND PAYMENT WORK
 After you submit a request, our team shortlists drivers and confirms their
-availability. Once the shortlist is settled, you receive an invoice: the
-drivers' salary plus VAT and the platform fee. You pay by bank transfer to the
+availability. Once the shortlist is settled, you receive an invoice for the
+Haya Drivers service fee plus VAT on that fee - the driver's salary is NOT on
+the invoice; you pay the driver directly once the engagement starts. For
+full-time hires the service fee is a percentage of the driver's annual gross
+salary; for contract hires it is a one-time fee based on the contract length,
+with a discount when hiring several drivers for longer contracts. Exact
+figures are on your invoice. You pay the invoice by bank transfer to the
 Haya Drivers organisation account shown on the request page while the invoice
 is open, then upload your proof of payment (JPG, PNG or PDF, up to 5MB). Our
 team verifies the transfer and activates the engagement - each assigned driver
@@ -96,11 +102,12 @@ job when you begin and Complete when it ends. Starting on time matters: your
 on-time rate is measured from your own start stamp against the scheduled
 start, with a 15-minute grace.
 
-EARNINGS
-Your earnings wallet is credited the full salary for each confirmed
-engagement, with the standard hold before it becomes withdrawable. The client
-pays the platform fee on top - it is never deducted from your salary. Request
-payouts from the earnings page once funds are released.
+EARNINGS AND SALARY
+Your salary is agreed on the engagement and paid to you DIRECTLY by the
+client - it never passes through Haya Drivers and nothing is deducted from
+it. The client separately pays Haya Drivers a service fee. The earnings page
+in the app only shows historical wallet balances from before this change;
+anything still showing as available there can be withdrawn as a payout.
 
 RATE, HOURS AND BIO
 Set your expected monthly rate, weekly hours and bio in Settings > User

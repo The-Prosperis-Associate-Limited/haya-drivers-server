@@ -10,11 +10,6 @@ export class WalletTransactionRepository {
     return prisma.walletTransaction.findUnique({ where: { reference } });
   }
 
-  async existsForBooking(bookingId: string, type: $Enums.WalletTransactionType) {
-    const row = await prisma.walletTransaction.findFirst({ where: { bookingId, type }, select: { id: true } });
-    return !!row;
-  }
-
   // Debits are stored negative; the caller wants a positive figure.
   async sumDebitsByType(walletId: string, type: $Enums.WalletTransactionType, since?: Date) {
     const result = await prisma.walletTransaction.aggregate({
