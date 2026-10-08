@@ -6,7 +6,6 @@ import { initializeSocket } from "./helper/socket";
 import { registerRoutes } from "./routes/index";
 import { initializeCronJobs } from "./utils/cron-jobs";
 import { initializeEmailSystem } from "./utils/emailSystem";
-import "./scripts/seed-test-drivers";
 
 const { PORT } = process.env;
 
