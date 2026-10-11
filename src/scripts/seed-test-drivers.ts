@@ -415,10 +415,13 @@ const emailCredentials = async (credentials: { name: string; email: string }[], 
 };
 
 export const seedTestDrivers = async () => {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn("⚠️  Test driver seed skipped - RESEND_API_KEY is not set, so the credentials could not be delivered.");
-    return;
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_TEST_DRIVER_SEED !== "true") {
+    throw new Error("Test-driver seeding is disabled in production. Set ALLOW_TEST_DRIVER_SEED=true only if this is intentional.");
   }
+
+  const shouldEmailCredentials = process.env.SEED_DRIVER_EMAIL_CREDENTIALS === "true";
+
+  if (shouldEmailCredentials && !process.env.RESEND_API_KEY) throw new Error("SEED_DRIVER_EMAIL_CREDENTIALS=true requires RESEND_API_KEY");
 
   const walletRepo = new WalletRepository();
   const activityService = new ActivityService();
@@ -447,15 +450,27 @@ export const seedTestDrivers = async () => {
 
   if (!created.length) return;
 
-  try {
-    await emailCredentials(created, password);
-  } catch (error) {
-    // Accounts whose password reached nobody are unusable, so they go and the next boot tries again.
-    await prisma.user.deleteMany({ where: { id: { in: created.map(({ id }) => id) } } });
-    throw error;
+  if (shouldEmailCredentials) {
+    try {
+      await emailCredentials(created, password);
+    } catch (error) {
+      // Accounts whose password reached nobody are unusable, so they go and the next run tries again.
+      await prisma.user.deleteMany({ where: { id: { in: created.map(({ id }) => id) } } });
+      throw error;
+    }
+
+    console.log(`🌱 Seeded ${created.length} test driver(s); credentials emailed to ${CREDENTIAL_RECIPIENTS.length} recipient(s).`);
+    return;
   }
 
-  console.log(`🌱 Seeded ${created.length} test driver(s); credentials emailed to ${CREDENTIAL_RECIPIENTS.length} recipient(s).`);
+  console.log(`🌱 Seeded ${created.length} test driver(s).`);
+  console.log(`🔑 Shared password: ${password}`);
+  console.table(created.map(({ name, email }) => ({ name, email })));
 };
 
-seedTestDrivers().catch(error => console.error("❌ Seeding test drivers failed:", error instanceof Error ? error.message : error));
+seedTestDrivers()
+  .catch(error => {
+    console.error("❌ Seeding test drivers failed:", error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());
