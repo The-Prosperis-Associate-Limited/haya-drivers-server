@@ -131,7 +131,7 @@ model ClientProfile {
   assignment_type         AssignmentType?
   primary_location        String?
   hiring_timeline         HiringTimeline?
-  budget_range            BudgetRange?
+  monthly_budget          Int?
   onboarding_completed_at DateTime?
 
   createdAt DateTime @default(now())
@@ -195,9 +195,3 @@ enum HiringTimeline {
   EXPLORING
 }
 
-enum BudgetRange {
-  RANGE_150_200K
-  RANGE_201_250K
-  RANGE_251_300K
-  RANGE_301K_PLUS
-}

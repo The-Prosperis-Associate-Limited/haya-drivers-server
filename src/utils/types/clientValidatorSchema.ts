@@ -8,7 +8,7 @@ export const clientPreferencesSchema = z.object({
   assignment_type: z.enum(["PERMANENT", "TEMPORARY"]).optional(),
   primary_location: z.string().trim().min(2).optional(),
   hiring_timeline: z.enum(["IMMEDIATELY", "WITHIN_TWO_WEEKS", "THIS_MONTH", "EXPLORING"]).optional(),
-  budget_range: z.enum(["RANGE_150_200K", "RANGE_201_250K", "RANGE_251_300K", "RANGE_301K_PLUS"]).optional(),
+  monthly_budget: z.number().int().positive().optional(),
 });
 
 export type ClientPreferencesInput = z.infer<typeof clientPreferencesSchema>;

@@ -9,7 +9,7 @@ export type HireClientType = "INDIVIDUAL" | "ORGANISATION";
 // All naira figures in minor units (kobo).
 const N = (naira: number) => naira * 100;
 
-export const FULL_TIME_ANNUAL_FEE_PERCENT = 12;
+export const FULL_TIME_ANNUAL_FEE_PERCENT = 10;
 
 // Flat fee for the whole engagement, per driver, picked by contract length.
 export const CONTRACT_FEE_BRACKETS = [
