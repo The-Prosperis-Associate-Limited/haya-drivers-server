@@ -7,9 +7,12 @@
     "dev": "tsx watch src/server.ts",
     "type-check": "tsc --noEmit --watch",
     "build": "tsc",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
     "prestart": "prisma migrate deploy && prisma generate",
     "start": "tsx src/server.ts",
-    "seed:courses": "tsx src/scripts/seed-courses.ts"
+    "seed:courses": "tsx src/scripts/seed-courses.ts",
+    "seed:drivers": "tsx src/scripts/seed-test-drivers.ts"
   },
   "keywords": [],
   "license": "ISC",
