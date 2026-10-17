@@ -4,6 +4,7 @@ import { analyticsRouter } from "./analyticsRoutes";
 import { authRouter } from "./authRoutes";
 import { chatRouter } from "./chatRoutes";
 import { clientRouter } from "./client";
+import { createDocsRouter } from "./docsRoutes";
 import { driverRouter } from "./driver";
 import { notificationRouter } from "./notificationRoutes";
 import { pushRouter } from "./pushRoutes";
@@ -23,6 +24,7 @@ export const registerRoutes = (app: Application) => {
   app.use("/api/chat", chatRouter);
   app.use("/api/analytics", analyticsRouter);
   app.use("/webhooks", webhookRouter);
+  app.use("/api/docs", createDocsRouter(app));
 
   app.use("*", (_req: Request, res: Response) => {
     res.status(404).json({

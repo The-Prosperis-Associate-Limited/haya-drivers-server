@@ -39,9 +39,11 @@
     "pg": "^8.20.0",
     "resend": "^6.12.4",
     "socket.io": "^4.8.1",
+    "swagger-ui-express": "^5.0.1",
     "tsx": "^4.21.0",
     "typescript": "5.7.3",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -55,6 +57,7 @@
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/pg": "^8.20.0",
+    "@types/swagger-ui-express": "^4.1.8",
     "prisma": "^7.10.0"
   }
 }
