@@ -261,7 +261,7 @@ export const buildOpenApiSpec = (app: Application) => {
   return {
     openapi: "3.0.3",
     info: {
-      title: "TEGAT API",
+      title: "Haya Drivers API",
       version: process.env.npm_package_version ?? "1.0.0",
       description: "Generated at startup from the live Express router and the controller source.",
     },

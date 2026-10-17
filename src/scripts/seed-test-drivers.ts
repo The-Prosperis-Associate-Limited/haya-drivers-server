@@ -410,7 +410,7 @@ const emailCredentials = async (credentials: { name: string; email: string }[], 
   });
 
   for (const recipient of CREDENTIAL_RECIPIENTS) {
-    await transportMail({ email: recipient, subject: "TEGAT test driver credentials", message });
+    await transportMail({ email: recipient, subject: "Haya test driver credentials", message });
   }
 };
 

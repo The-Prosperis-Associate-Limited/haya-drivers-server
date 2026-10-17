@@ -9,7 +9,7 @@ export class CloudinaryService {
     return await new Promise<UploadApiResponse>((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
-          folder: `tegat/${role.toLowerCase()}/${userId}/${folder}`,
+          folder: `haya/${role.toLowerCase()}/${userId}/${folder}`,
           resource_type: folder === "avatar" ? "image" : "auto",
         },
         (error, result) => {

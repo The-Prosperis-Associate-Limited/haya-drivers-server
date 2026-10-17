@@ -2,7 +2,7 @@ import "dotenv/config";
 import { AuthRegistrationService } from "../services/auth/auth.registration.service";
 import { prisma } from "../helper/prisma";
 
-// Usage: npx tsx src/scripts/create-admin.ts "Full Name" admin@tegat.com "Password1!"
+// Usage: npx tsx src/scripts/create-admin.ts "Full Name" admin@haya.com "Password1!"
 const run = async () => {
   const [full_name, email, password] = process.argv.slice(2);
 

@@ -1,6 +1,6 @@
-# TEGAT Server
+# Haya Server
 
-Central API for the TEGAT platform. One server, three surfaces:
+Central API for the Haya platform. One server, three surfaces:
 
 - **Haya Drivers** - the driver app (`../drivers-vault`)
 - **Client** - the app people hire drivers from
