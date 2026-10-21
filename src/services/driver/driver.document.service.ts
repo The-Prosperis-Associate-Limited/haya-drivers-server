@@ -3,7 +3,7 @@ import { DriverDocumentRepository } from "../../repositories/driver/driverDocume
 import { DriverProfileRepository } from "../../repositories/driver/driverProfile.repository";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../../helper/errors";
 import { advanceStep, DOCUMENT_LABELS, REQUIRED_DOCUMENTS } from "../../utils/onboardingSteps";
-import { CloudinaryService } from "../shared/cloudinary.service";
+import { CloudinaryService, resourceTypeOf } from "../shared/cloudinary.service";
 import { ActivityService } from "../shared/activity.service";
 
 export class DriverDocumentService {
@@ -44,7 +44,7 @@ export class DriverDocumentService {
     // The replaced file is only removed once the row points at the new one, so
     // a failed upload never leaves the driver with no document at all.
     if (existing?.public_id) {
-      await this.cloudinaryService.deleteFile(existing.public_id, existing.mime_type === "application/pdf" ? "raw" : "image").catch(() => undefined);
+      await this.cloudinaryService.deleteFile(existing.public_id, resourceTypeOf(existing.url)).catch(() => undefined);
     }
 
     await this.activityService.record(userId, "DOCUMENT_UPLOADED", `${DOCUMENT_LABELS[type]} uploaded`);
@@ -64,7 +64,7 @@ export class DriverDocumentService {
     await this.documentRepo.delete(id);
 
     if (document.public_id) {
-      await this.cloudinaryService.deleteFile(document.public_id, document.mime_type === "application/pdf" ? "raw" : "image").catch(() => undefined);
+      await this.cloudinaryService.deleteFile(document.public_id, resourceTypeOf(document.url)).catch(() => undefined);
     }
 
     return { id };
