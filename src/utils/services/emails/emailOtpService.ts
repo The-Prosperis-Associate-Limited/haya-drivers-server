@@ -29,7 +29,10 @@ const generateEmailOtpData = (data: EmailOtpData) => {
     type: "verification" as const,
     title: copy.title,
     recipientName: data.first_name,
-    message: `${copy.lead}\n\n${data.code}\n\nThe code expires in ${data.expiresInMinutes} minutes. If you didn't ask for it, you can ignore this email.`,
+    message: copy.lead,
+    code: data.code,
+    codeHint: `Expires in ${data.expiresInMinutes} minutes. Never share this code with anyone, including our team.`,
+    note: "If you didn't ask for this code, you can ignore this email. Your account stays as it is.",
   };
 };
 

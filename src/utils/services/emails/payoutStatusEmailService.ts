@@ -26,21 +26,30 @@ const COPY: Record<PayoutStatusEmailData["status"], { title: string; body: (data
   FAILED: {
     title: "Withdrawal failed",
     body: data =>
-      `We could not complete your withdrawal of ${data.amount}. ${data.failureReason ?? "Your bank rejected the transfer."}\n\nThe money is back in your available balance - check your account details and try again.`,
+      `We could not complete your withdrawal of ${data.amount}. ${data.failureReason ?? "Your bank rejected the transfer."}\n\nCheck your account details, or add a different account, then try again.`,
   },
 };
+
+const TONES = { REQUESTED: "info", PAID: "success", FAILED: "danger" } as const;
 
 const generatePayoutStatusData = (data: PayoutStatusEmailData) => {
   const copy = COPY[data.status];
 
   return {
     type: "payment" as const,
+    tone: TONES[data.status],
+    label: "Earnings",
     title: copy.title,
     recipientName: data.first_name,
     message: copy.body(data),
-    buttonText: "View Earnings",
+    amount: { label: "Withdrawal", value: data.amount, meta: `to ${data.bankName} ···· ${data.accountNumber.slice(-4)}` },
+    callout:
+      data.status === "FAILED"
+        ? { tone: "success" as const, title: "Your money is safe.", body: "The full amount is back in your available balance and can be withdrawn again." }
+        : undefined,
+    buttonText: "View earnings",
     buttonAction: `${data.baseUrl}/dashboard/earnings`,
-    additionalDetails: { amount: data.amount, reference: data.reference },
+    additionalDetails: { reference: data.reference },
   };
 };
 

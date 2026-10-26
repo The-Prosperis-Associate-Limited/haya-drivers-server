@@ -13,10 +13,16 @@ const generateWelcomeEmailData = (data: WelcomeEmailData) => ({
   type: "verification" as const,
   title: "Welcome to Haya Drivers",
   recipientName: data.name,
-  message:
-    "Your account is created. One more step: confirm this email address so we can reach you about verification results and job requests.\n\nVerification takes 24-48 hours once you've uploaded your documents.",
-  buttonText: "Verify Email Address",
+  label: "Welcome",
+  message: "Your account is created. Confirm this email address so we can reach you about verification results and job requests.",
+  buttonText: "Verify email address",
   buttonAction: `${SERVER_URL}/api/auth/verify-email?token=${data.verificationToken}`,
+  steps: [
+    { title: "Verify your email", body: "The button above. It takes a second.", state: "current" as const },
+    { title: "Finish your profile", body: "Seven short steps: licence, ID, guarantor and work history." },
+    { title: "Get verified", body: "Our team reviews your documents within 24-48 hours, then clients can book you." },
+  ],
+  signoff: "Glad to have you on the road with us,",
 });
 
 export const createWelcomeEmail = (data: WelcomeEmailData) => {

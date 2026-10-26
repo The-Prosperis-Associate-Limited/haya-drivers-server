@@ -15,15 +15,18 @@ export interface VerificationRejectedData {
 
 const generateVerificationRejectedData = (data: VerificationRejectedData) => {
   const count = data.documents.length;
-  const list = data.documents.map(doc => `${doc.label} - ${doc.reason}`).join("\n");
 
   return {
     type: "verification_result" as const,
+    tone: "warning" as const,
+    label: "Action needed",
     title: count === 1 ? "We couldn't verify one document" : `We couldn't verify ${count} documents`,
     recipientName: data.first_name,
-    message: `The rest of your application looks good. Fix the items below and resubmit - there's no need to redo anything else.\n\n${list}`,
-    buttonText: "Resubmit Documents",
+    message: "The rest of your application looks good. Fix the items below and resubmit - there's no need to redo anything else.",
+    documents: data.documents,
+    buttonText: "Resubmit documents",
     buttonAction: `${data.baseUrl}/onboarding/documents`,
+    note: "When you resubmit, a reviewer looks at your whole application again, so it may take up to 48 hours.",
   };
 };
 

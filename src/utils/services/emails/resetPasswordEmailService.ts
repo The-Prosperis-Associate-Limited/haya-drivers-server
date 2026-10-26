@@ -11,9 +11,17 @@ const generateResetPasswordData = (data: ResetPasswordData) => ({
   type: "verification" as const,
   title: "Your password was changed",
   recipientName: data.first_name,
-  message: "Your password has been changed successfully. For security, we signed you out on every other device.\n\nIf this wasn't you, reset your password again immediately and contact support.",
-  buttonText: "Sign In",
+  tone: "warning" as const,
+  label: "Security",
+  message: "The password on your Haya Drivers account was just changed. For your security, we signed you out on every other device.",
+  callout: {
+    tone: "warning" as const,
+    title: "Wasn't you?",
+    body: "Reset your password again right away from the sign-in screen and contact support.",
+  },
+  buttonText: "Sign in",
   buttonAction: `${data.baseUrl}/auth/signin`,
+  note: "This is a security notification and can't be turned off.",
 });
 
 export const createResetPasswordEmail = (data: ResetPasswordData) => {

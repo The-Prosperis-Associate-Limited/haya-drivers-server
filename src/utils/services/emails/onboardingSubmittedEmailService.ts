@@ -9,10 +9,20 @@ export interface OnboardingSubmittedData {
 
 const generateOnboardingSubmittedData = (data: OnboardingSubmittedData) => ({
   type: "verification" as const,
-  title: "Thank you for the submission",
+  title: "Thanks - your documents are in",
   recipientName: data.first_name,
-  message: "Our team is going through your documents now and will get back to you shortly. Verification usually takes 24-48 hours.\n\nWhile you wait, you can start a training module - completed courses raise your trust score and unlock more job requests.",
-  buttonText: "Proceed to Dashboard",
+  message: "Our team is going through them now. Verification usually takes 24-48 hours, and we'll email you the moment there's a decision.",
+  steps: [
+    { title: "Application submitted", body: "Your documents and details are with us.", state: "done" as const },
+    { title: "In review", body: "A reviewer checks every document against your details.", state: "current" as const },
+    { title: "Decision", body: "Approved and visible to clients, or a note on what to fix." },
+  ],
+  callout: {
+    tone: "info" as const,
+    title: "While you wait,",
+    body: "start a training module. Each certificate raises your trust score and unlocks more job requests.",
+  },
+  buttonText: "Go to dashboard",
   buttonAction: `${data.baseUrl}/dashboard`,
 });
 
