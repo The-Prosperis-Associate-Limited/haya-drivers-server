@@ -49,11 +49,20 @@ const COPY: Record<HireRequestEmailData["event"], { subject: (data: HireRequestE
   },
 };
 
-const generateHireRequestData = (data: HireRequestEmailData) => {
+const TONES = {
+  INVOICE_READY: "info",
+  PAYMENT_CONFIRMED: "success",
+  PROOF_REJECTED: "warning",
+  DRIVER_HIRED: "success",
+  SHORTLISTED: "info",
+} as const;
+
+const generateHireRequestData =(data: HireRequestEmailData) => {
   const copy = COPY[data.event];
 
   return {
     type: data.event === "DRIVER_HIRED" ? ("booking" as const) : ("payment" as const),
+    tone: TONES[data.event],
     title: copy.title,
     recipientName: data.first_name,
     message: copy.body(data),

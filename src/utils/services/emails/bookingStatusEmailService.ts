@@ -39,6 +39,7 @@ const generateBookingStatusData = (data: BookingStatusEmailData) => {
 
   return {
     type: "booking" as const,
+    tone: data.status === "ACCEPTED" || data.status === "COMPLETED" ? ("success" as const) : ("info" as const),
     title: copy.title,
     recipientName: data.first_name,
     message: data.note ? `${copy.body(data)}\n\n${data.note}` : copy.body(data),
