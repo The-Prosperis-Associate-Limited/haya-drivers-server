@@ -13,8 +13,10 @@ const generateVerificationApprovedData = (data: VerificationApprovedData) => ({
   title: `You're verified, ${data.first_name}`,
   recipientName: data.first_name,
   message: `Your documents cleared review. Your profile is now visible to clients across ${data.location}, and you'll start receiving job requests here and in the app.`,
-  buttonText: "Proceed to Dashboard",
+  label: "Verified",
+  buttonText: "Go to dashboard",
   buttonAction: `${data.baseUrl}/dashboard`,
+  signoff: "Welcome aboard,",
 });
 
 export const createVerificationApprovedEmail = (data: VerificationApprovedData) => {
