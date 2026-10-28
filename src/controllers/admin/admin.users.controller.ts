@@ -2,10 +2,12 @@ import { Response } from "express";
 import type { $Enums } from "../../generated/prisma/client";
 import { handleErrors } from "../../helper/handleErrors";
 import { IUserRequest } from "../../interface";
+import { AdminUserErasureService } from "../../services/admin/admin.userErasure.service";
 import { AdminUsersService } from "../../services/admin/admin.users.service";
 
 export class AdminUsersController {
   private usersService = new AdminUsersService();
+  private erasureService = new AdminUserErasureService();
 
   list = async (req: IUserRequest, res: Response) => {
     try {
@@ -79,9 +81,10 @@ export class AdminUsersController {
 
   remove = async (req: IUserRequest, res: Response) => {
     try {
-      const result = await this.usersService.remove(req.params.id);
+      const result = await this.erasureService.remove(req.params.id);
+      const message = result.outcome === "ANONYMISED" ? "Account anonymised - booking and payment records were kept" : "Account deleted";
 
-      res.status(200).json({ message: "Account deleted", data: result });
+      res.status(200).json({ message, data: result });
     } catch (error) {
       handleErrors({ res, error });
     }

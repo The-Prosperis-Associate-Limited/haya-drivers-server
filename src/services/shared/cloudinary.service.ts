@@ -34,4 +34,12 @@ export class CloudinaryService {
   async deleteFile(publicId: string, resourceType: ResourceType = "image") {
     return cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
   }
+
+  // The admin API deletes one resource type per call, and "auto" uploads may have landed as any of them.
+  async deleteFolder(userId: string, role: string, folder: UploadFolder) {
+    const prefix = `haya/${role.toLowerCase()}/${userId}/${folder}/`;
+    const types: ResourceType[] = ["image", "raw", "video"];
+
+    return Promise.all(types.map(resource_type => cloudinary.api.delete_resources_by_prefix(prefix, { resource_type })));
+  }
 }

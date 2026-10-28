@@ -124,7 +124,7 @@ export class UserRepository {
   // Everything they own cascades, so this is a plain delete.
   async deleteUnverifiedBefore(cutoff: Date) {
     return prisma.user.deleteMany({
-      where: { has_validated_email: false, createdAt: { lt: cutoff } },
+      where: { has_validated_email: false, anonymised_at: null, createdAt: { lt: cutoff } },
     });
   }
 }

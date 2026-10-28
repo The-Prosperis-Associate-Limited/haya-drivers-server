@@ -148,6 +148,15 @@ export class HireRequestRepository {
     return prisma.hireInvoice.update({ where: { id }, data });
   }
 
+  async countOpenForUser(userId: string) {
+    return prisma.hireRequest.count({
+      where: {
+        status: { in: ["PENDING_REVIEW", "INVOICED", "PAYMENT_REVIEW"] },
+        OR: [{ clientId: userId }, { driverId: userId }, { assignments: { some: { driverId: userId } } }],
+      },
+    });
+  }
+
   async countByStatus() {
     const rows = await prisma.hireRequest.groupBy({ by: ["status"], _count: { _all: true } });
 

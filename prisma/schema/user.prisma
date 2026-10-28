@@ -62,6 +62,8 @@ model User {
   // Sessions minted before this instant are refused. Set on password reset so
   // "signed out on all other devices" is true rather than a claim in the copy.
   sessions_valid_from DateTime?
+  // Set when an account with booking history is erased in place of a delete.
+  anonymised_at       DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
