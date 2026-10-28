@@ -40,6 +40,11 @@ model Booking {
   starts_at DateTime
   ends_at   DateTime?
 
+  // Copied from the hire request at payment confirmation; null on pre-brokered bookings.
+  schedule        WorkSchedule?
+  resumption_time String?
+  closing_time    String?
+
   // Minor units (kobo/cents) in `currency`. Never store money as a float.
   amount   Int
   currency String @default("NGN")

@@ -30,6 +30,14 @@ export class DriverProfileService {
     return this.driverProfileRepo.update(userId, payload);
   }
 
+  async setOpenToWork(userId: string, open: boolean) {
+    await this.requireProfile(userId);
+
+    await this.driverProfileRepo.update(userId, { open_to_work: open });
+
+    return { open_to_work: open };
+  }
+
   // Personal information straddles both tables: the parts every account has
   // live on User, the driver-only part on DriverProfile.
   async savePersonalInformation(userId: string, data: PersonalInformationInput) {

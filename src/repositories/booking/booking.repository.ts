@@ -63,12 +63,31 @@ export class BookingRepository {
     return { bookings, total };
   }
 
+  // No date floor: a monthly job started weeks ago is still current work.
   async findUpcomingForDriver(driverId: string, limit: number) {
     return prisma.booking.findMany({
-      where: { driverId, status: { in: ["ACCEPTED", "IN_PROGRESS"] }, starts_at: { gte: new Date() } },
+      where: { driverId, status: { in: ["ACCEPTED", "IN_PROGRESS"] } },
       take: limit,
-      orderBy: { starts_at: "asc" },
+      orderBy: [{ status: "desc" }, { starts_at: "asc" }],
       include: bookingParties,
+    });
+  }
+
+  async findStartedForClient(clientId: string, take: number) {
+    return prisma.booking.findMany({
+      where: { clientId, started_at: { not: null } },
+      select: { starts_at: true, started_at: true },
+      orderBy: { starts_at: "desc" },
+      take,
+    });
+  }
+
+  async findStartedForDriver(driverId: string, take: number) {
+    return prisma.booking.findMany({
+      where: { driverId, started_at: { not: null } },
+      select: { starts_at: true, started_at: true },
+      orderBy: { starts_at: "desc" },
+      take,
     });
   }
 
@@ -152,7 +171,7 @@ export class BookingRepository {
 
     const where: Prisma.BookingWhereInput = {
       clientId,
-      engagement_type: "MONTHLY",
+      engagement_type: { in: ["MONTHLY", "CONTRACT"] },
       status: { in: ["ACCEPTED", "IN_PROGRESS"] },
     };
 

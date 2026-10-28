@@ -35,10 +35,11 @@ export class ClientHireRequestsService {
 
   async create(clientId: string, data: CreateHireRequestInput) {
     if (data.driverId) {
-      const driverProfile = await this.driverProfileRepo.findByUserId(data.driverId, { verification_status: true, is_discoverable: true });
+      const driverProfile = await this.driverProfileRepo.findByUserId(data.driverId, { verification_status: true, is_discoverable: true, open_to_work: true });
 
       if (!driverProfile) throw new NotFoundError("Driver not found");
       if (driverProfile.verification_status !== "APPROVED") throw new BadRequestError("That driver is not available for hire");
+      if (!driverProfile.open_to_work) throw new BadRequestError("That driver isn't taking new jobs right now");
 
       const existing = await this.hireRepo.findOpenForClientAndDriver(clientId, data.driverId);
 
