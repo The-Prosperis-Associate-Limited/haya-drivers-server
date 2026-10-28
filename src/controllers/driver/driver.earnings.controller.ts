@@ -29,6 +29,16 @@ export class DriverEarningsController {
     }
   };
 
+  statement = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.earningsService.statement(req.userId as string, String(req.params.month));
+
+      res.status(200).json({ message: "Statement fetched successfully", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
   trend = async (req: IUserRequest, res: Response) => {
     try {
       const result = await this.earningsService.trend(req.userId as string);

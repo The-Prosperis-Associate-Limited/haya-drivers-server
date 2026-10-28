@@ -7,6 +7,7 @@ const earnings = new DriverEarningsController();
 earningsRouter.get("/", earnings.summary);
 earningsRouter.get("/history", earnings.history);
 earningsRouter.get("/trend", earnings.trend);
+earningsRouter.get("/statements/:month", earnings.statement);
 
 earningsRouter.get("/banks", earnings.listBanks);
 

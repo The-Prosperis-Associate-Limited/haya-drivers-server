@@ -50,6 +50,22 @@ export class WalletTransactionRepository {
     return { transactions, total };
   }
 
+  async findForWalletBetween(walletId: string, from: Date, to: Date) {
+    return prisma.walletTransaction.findMany({
+      where: { walletId, createdAt: { gte: from, lt: to } },
+      orderBy: { createdAt: "asc" },
+      include: {
+        booking: {
+          select: {
+            reference: true,
+            title: true,
+            client: { select: { first_name: true, last_name: true, client_profile: { select: { organisation_name: true } } } },
+          },
+        },
+      },
+    });
+  }
+
   async sumByStatus(walletId: string, status: $Enums.WalletTransactionStatus) {
     const result = await prisma.walletTransaction.aggregate({
       where: { walletId, status },

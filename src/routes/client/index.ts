@@ -4,6 +4,7 @@ import { clientBookingRouter } from "./booking";
 import { clientDashboardRouter } from "./dashboard";
 import { driversRouter } from "./drivers";
 import { clientHireRequestsRouter } from "./hireRequests";
+import { clientInvoicesRouter } from "./invoices";
 import { clientHiresRouter } from "./hires";
 import { clientOnboardingRouter } from "./onboarding";
 import { clientRequestsRouter } from "./requests";
@@ -18,6 +19,7 @@ clientRouter.use("/onboarding", clientOnboardingRouter);
 clientRouter.use("/dashboard", clientDashboardRouter);
 clientRouter.use("/hires", clientHiresRouter);
 clientRouter.use("/hire-requests", clientHireRequestsRouter);
+clientRouter.use("/invoices", clientInvoicesRouter);
 clientRouter.use("/requests", clientRequestsRouter);
 
 export { clientRouter };
