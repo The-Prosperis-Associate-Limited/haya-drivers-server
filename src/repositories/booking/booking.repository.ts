@@ -123,6 +123,16 @@ export class BookingRepository {
     return prisma.booking.count({ where: { status } });
   }
 
+  async countForUser(userId: string) {
+    return prisma.booking.count({ where: { OR: [{ clientId: userId }, { driverId: userId }] } });
+  }
+
+  async countOpenForUser(userId: string) {
+    return prisma.booking.count({
+      where: { OR: [{ clientId: userId }, { driverId: userId }], status: { in: ["REQUESTED", "ACCEPTED", "IN_PROGRESS", "DISPUTED"] } },
+    });
+  }
+
   // What the client owes per month across active monthly hires - drives the
   // "monthly commitment" figure, never a charge.
   async sumActiveMonthlyCommitment(clientId: string) {

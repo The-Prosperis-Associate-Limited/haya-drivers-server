@@ -19,6 +19,7 @@ enum ActivityType {
   ACCOUNT_REACTIVATED
   ADMIN_INVITED
   ADMIN_ROLE_CHANGED
+  ACCOUNT_ANONYMISED
 }
 
 model Activity {
