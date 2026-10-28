@@ -4,7 +4,6 @@ import { UserRepository } from "../../repositories/user/user.repository";
 import { WalletRepository } from "../../repositories/earnings/wallet.repository";
 import { WalletTransactionRepository } from "../../repositories/earnings/walletTransaction.repository";
 import { BadRequestError, NotFoundError } from "../../helper/errors";
-import { prisma } from "../../helper/prisma";
 import { paginate, parsePagination } from "../../utils/pagination";
 import { ActivityService } from "../shared/activity.service";
 import { NotificationService } from "../shared/notification.service";
@@ -35,6 +34,7 @@ export class AdminUsersService {
         role: true,
         account_status: true,
         has_validated_email: true,
+        anonymised_at: true,
         lastLogin: true,
         createdAt: true,
         driver_profile: { select: { driver_type: true, trust_score: true, verification_status: true } },
@@ -87,6 +87,7 @@ export class AdminUsersService {
       state_of_residence: true,
       city: true,
       address: true,
+      anonymised_at: true,
       createdAt: true,
       lastLogin: true,
       driver_profile: { include: { work_experiences: { orderBy: { started_at: "desc" } }, guarantors: true, reference: true } },
@@ -136,9 +137,10 @@ export class AdminUsersService {
     which is worse for the client than for them.
   */
   async setAccountStatus(id: string, status: $Enums.AccountStatus, reason?: string) {
-    const user = await this.userRepo.findById(id, { role: true });
+    const user = await this.userRepo.findById(id, { role: true, anonymised_at: true });
 
     if (!user) throw new NotFoundError("Account not found");
+    if (user.anonymised_at) throw new BadRequestError("This account has been deleted and cannot be reactivated or suspended");
 
     await this.userRepo.updateUser(id, {
       account_status: status,
@@ -165,32 +167,4 @@ export class AdminUsersService {
     return this.get(id);
   }
 
-  /*
-    Hard delete is for accounts with no financial history - spam signups,
-    abandoned onboarding, test accounts. Bookings and wallet transactions are
-    the money ledger for BOTH parties, so an account woven into them cannot be
-    erased without destroying the other side's records; suspension is the tool
-    for those.
-  */
-  async remove(id: string) {
-    const user = await this.userRepo.findById(id, { id: true });
-
-    if (!user) throw new NotFoundError("Account not found");
-
-    const bookings = await prisma.booking.count({ where: { OR: [{ clientId: id }, { driverId: id }] } });
-
-    if (bookings > 0) {
-      throw new BadRequestError("This account has booking history that other accounts' records depend on - suspend it instead of deleting");
-    }
-
-    try {
-      return await this.userRepo.deleteUser(id);
-    } catch (error) {
-      // Any other restricted relation surfaces the same way - never a 500.
-      if ((error as { code?: string }).code === "P2003") {
-        throw new BadRequestError("This account has records that other accounts depend on - suspend it instead of deleting");
-      }
-      throw error;
-    }
-  }
 }
