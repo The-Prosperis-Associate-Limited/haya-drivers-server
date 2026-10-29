@@ -4,18 +4,28 @@ import { DriverProfileRepository } from "../../repositories/driver/driverProfile
 import { prisma } from "../../helper/prisma";
 import { ForbiddenError, NotFoundError } from "../../helper/errors";
 import { paginate, parsePagination } from "../../utils/pagination";
+import { AttendanceService } from "../booking/attendance.service";
 
 export class ClientHiresService {
   private bookingRepo = new BookingRepository();
   private reviewRepo = new ReviewRepository();
   private driverProfileRepo = new DriverProfileRepository();
+  private attendanceService = new AttendanceService();
 
   async list(clientId: string, query: Record<string, unknown>) {
     const pagination = parsePagination(query);
 
     const { bookings, total } = await this.bookingRepo.findActiveHires(clientId, pagination);
 
-    return paginate(bookings, total, pagination);
+    return paginate(await this.attendanceService.todayFor(bookings), total, pagination);
+  }
+
+  async attendance(clientId: string, reference: string, month?: string) {
+    return this.attendanceService.clientLog(clientId, reference, month);
+  }
+
+  async flagAttendance(clientId: string, reference: string, attendanceId: string, reason: string) {
+    return this.attendanceService.flag(clientId, reference, attendanceId, reason);
   }
 
   // The hire detail carries the client's own review (if any) so the form knows
@@ -45,8 +55,10 @@ export class ClientHiresService {
       booking.driverId ? this.reviewRepo.summaryForSubject(booking.driverId) : null,
     ]);
 
+    const [withToday] = await this.attendanceService.todayFor([booking]);
+
     return {
-      ...booking,
+      ...withToday,
       my_review: review,
       driver_details: driver,
       driver_rating: summary?.average ?? 0,

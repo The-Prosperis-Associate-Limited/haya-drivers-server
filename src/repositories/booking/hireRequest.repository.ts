@@ -55,8 +55,23 @@ export class HireRequestRepository {
     });
   }
 
-  async addAssignment(hireRequestId: string, driverId: string) {
-    return prisma.hireAssignment.create({ data: { hireRequestId, driverId } });
+  async addAssignment(hireRequestId: string, driverId: string, respondBy: Date) {
+    return prisma.hireAssignment.create({ data: { hireRequestId, driverId, respond_by: respondBy } });
+  }
+
+  // Only requests still being shortlisted - once invoiced, the crew is settled and nothing should flip.
+  async findOverdueAssignments(now: Date) {
+    return prisma.hireAssignment.findMany({
+      where: { status: "PENDING", respond_by: { lt: now }, hire_request: { status: "PENDING_REVIEW" } },
+      select: { id: true, driverId: true, hire_request: { select: { reference: true } } },
+    });
+  }
+
+  async expireAssignments(ids: string[], now: Date) {
+    return prisma.hireAssignment.updateMany({
+      where: { id: { in: ids }, status: "PENDING" },
+      data: { status: "DECLINED", responded_at: now, expired_at: now },
+    });
   }
 
   async removeAssignment(hireRequestId: string, driverId: string) {
@@ -77,7 +92,12 @@ export class HireRequestRepository {
   // The driver-facing shortlist: engagement facts only, never the client.
   async findPendingAssignmentsForDriver(driverId: string) {
     return prisma.hireAssignment.findMany({
-      where: { driverId, status: "PENDING", hire_request: { status: "PENDING_REVIEW" } },
+      where: {
+        driverId,
+        status: "PENDING",
+        hire_request: { status: "PENDING_REVIEW" },
+        OR: [{ respond_by: null }, { respond_by: { gt: new Date() } }],
+      },
       orderBy: { createdAt: "desc" },
       include: {
         hire_request: {
@@ -125,8 +145,18 @@ export class HireRequestRepository {
     return { requests, total };
   }
 
-  async listForAdmin(params: { page: number; limit: number; status?: $Enums.HireRequestStatus }) {
-    const where: Prisma.HireRequestWhereInput = params.status ? { status: params.status } : {};
+  async listForAdmin(params: { page: number; limit: number; status?: $Enums.HireRequestStatus; q?: string }) {
+    const match = params.q ? { contains: params.q, mode: "insensitive" as const } : undefined;
+    const where: Prisma.HireRequestWhereInput = {
+      ...(params.status && { status: params.status }),
+      ...(match && {
+        OR: [
+          { reference: match },
+          { invoice: { reference: match } },
+          { client: { OR: [{ first_name: match }, { last_name: match }, { email: match }, { client_profile: { organisation_name: match } }] } },
+        ],
+      }),
+    };
 
     const [requests, total] = await Promise.all([
       prisma.hireRequest.findMany({

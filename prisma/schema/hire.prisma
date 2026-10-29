@@ -150,9 +150,13 @@ model HireAssignment {
   // and trims to the confirmed crew before invoicing.
   status       AvailabilityStatus @default(PENDING)
   responded_at DateTime?
+  // The reply window; a sweep declines whatever is still PENDING after it and stamps expired_at.
+  respond_by   DateTime?
+  expired_at   DateTime?
 
   createdAt DateTime @default(now())
 
   @@unique([hireRequestId, driverId])
   @@index([driverId])
+  @@index([status, respond_by])
 }
