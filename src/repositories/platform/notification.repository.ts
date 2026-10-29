@@ -2,6 +2,7 @@ import type { $Enums, Prisma } from "../../generated/prisma/client";
 import { prisma } from "../../helper/prisma";
 import { notifyUser } from "../../helper/socket";
 import { ExpoPushService } from "../../services/shared/expoPush.service";
+import { PREFERENCE_DEFAULTS, PREFERENCE_FOR, type PreferenceKey } from "../../utils/notificationPreferences";
 
 const expoPush = new ExpoPushService();
 
@@ -22,7 +23,15 @@ export class NotificationRepository {
     emit and the push both hang off this one method. Adding a notification
     anywhere gets both for free.
   */
-  async sendNotificationToUser(data: {
+  async wants(userId: string, key: PreferenceKey) {
+    const row = await prisma.notificationPreference.findUnique({ where: { userId } });
+    return row ? row[key] : PREFERENCE_DEFAULTS[key];
+  }
+
+  async sendNotificationToUser({
+    essential,
+    ...data
+  }: {
     recipientId: string;
     senderId?: string;
     type: $Enums.NotificationType;
@@ -32,10 +41,20 @@ export class NotificationRepository {
     actionLabel?: string;
     metadata?: Prisma.InputJsonValue;
     isSystemGenerated?: boolean;
+    // Outcomes a recipient must not miss (a verification decision, a cancelled job) ignore their switches.
+    essential?: boolean;
   }) {
-    const notification = await prisma.notification.create({ data });
+    const preference = essential ? undefined : PREFERENCE_FOR[data.type];
+    const muted = preference ? !(await this.wants(data.recipientId, preference)) : false;
+
+    // A switched-off category is still recorded, already read - no badge, no push, nothing lost.
+    const notification = await prisma.notification.create({
+      data: muted ? { ...data, status: "READ", readAt: new Date() } : data,
+    });
 
     notifyUser(data.recipientId, notification);
+
+    if (muted) return notification;
 
     // Deliberately not awaited. The row exists and the socket has fired, so the
     // user can already see it - a slow Expo call must not hold up the request
