@@ -101,7 +101,7 @@ export class TicketService {
       ...(data.status === "RESOLVED" && { resolved_at: new Date() }),
     });
 
-    if (data.status) {
+    if (data.status && (await this.notificationService.wants(ticket.creatorId, "client_messages"))) {
       await queueEmail(JOB_KEY.UPDATE_TICKET, {
         email: ticket.creator.email,
         first_name: ticket.creator.first_name ?? "there",

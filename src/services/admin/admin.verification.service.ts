@@ -102,6 +102,7 @@ export class AdminVerificationService {
       title: "You are verified",
       message: `Your documents cleared review. Your profile is now visible to clients across ${location}.`,
       actionUrl: "/dashboard",
+      essential: true,
     });
 
     await queueEmail(JOB_KEY.VERIFICATION_APPROVED, {
@@ -131,6 +132,7 @@ export class AdminVerificationService {
       title: "Action needed on your documents",
       message: reason,
       actionUrl: "/onboarding/documents",
+      essential: true,
     });
 
     await queueEmail(JOB_KEY.VERIFICATION_REJECTED, {

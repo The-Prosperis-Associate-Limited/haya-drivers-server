@@ -75,7 +75,7 @@ export class AdminHiresService {
 
     const driverContact = await this.userRepo.findById(data.driverId, { email: true, first_name: true });
 
-    if (driverContact?.email) {
+    if (driverContact?.email && (await this.notificationService.wants(data.driverId, "job_requests"))) {
       await queueEmail(JOB_KEY.HIRE_REQUEST_EVENT, {
         email: driverContact.email as string,
         first_name: (driverContact.first_name as string) ?? "there",

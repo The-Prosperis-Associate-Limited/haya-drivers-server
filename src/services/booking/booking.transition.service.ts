@@ -95,11 +95,14 @@ export class BookingTransitionService {
       message: `${booking.title} is now ${to.toLowerCase().replace(/_/g, " ")}.${reason ? ` ${reason}` : ""}`,
       actionUrl: `/dashboard/job-request/${booking.reference}`,
       metadata: { bookingId: booking.id, reference: booking.reference },
+      essential: to === "CANCELLED",
     });
 
     await this.activityService.record(actorId, ACTIVITY_TYPES[to] ?? "BOOKING_CREATED", `${STATUS_TITLES[to]}: ${booking.title}`);
 
-    if (EMAILED_STATUSES.includes(to) && recipient?.id) {
+    const wantsEmail = to === "CANCELLED" || (await this.notificationService.wants(recipientId, "job_requests"));
+
+    if (EMAILED_STATUSES.includes(to) && recipient?.id && wantsEmail) {
       await queueEmail(JOB_KEY.BOOKING_STATUS, {
         email: (recipient as { email?: string }).email ?? "",
         first_name: recipient.first_name ?? "there",
