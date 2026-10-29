@@ -1,11 +1,12 @@
 import { prisma } from "../../helper/prisma";
 import { BookingRepository } from "../../repositories/booking/booking.repository";
 import { HireRequestRepository } from "../../repositories/booking/hireRequest.repository";
-import { ON_TIME_SAMPLE, onTimeRate } from "../../utils/onTimeRate";
+import { AttendanceService } from "../booking/attendance.service";
 
 export class ClientDashboardService {
   private bookingRepo = new BookingRepository();
   private hireRepo = new HireRequestRepository();
+  private attendanceService = new AttendanceService();
 
   // "In request list" is the applicants waiting across the client's open
   // staffing requests - 0 until driver apply ships, but counted, never assumed.
@@ -37,8 +38,9 @@ export class ClientDashboardService {
     const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     const lastMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
 
-    const [activeDrivers, openCount, hires, openRequests, invoiceDue, recentPayments, spendThisMonth, spendLastMonth, started] = await Promise.all([
+    const [activeDrivers, onDuty, openCount, hires, openRequests, invoiceDue, recentPayments, spendThisMonth, spendLastMonth, onTime] = await Promise.all([
       this.countActiveDrivers(clientId),
+      this.attendanceService.countOnDutyForClient(clientId),
       this.hireRepo.countOpenForClient(clientId),
       this.bookingRepo.findActiveHires(clientId, { page: 1, limit: 4 }),
       this.hireRepo.listOpenForClient(clientId, 3),
@@ -46,19 +48,20 @@ export class ClientDashboardService {
       this.hireRepo.recentPaidInvoicesForClient(clientId, 4),
       this.hireRepo.sumPaidInvoicesForClient(clientId, monthStart),
       this.hireRepo.sumPaidInvoicesForClient(clientId, lastMonthStart, monthStart),
-      this.bookingRepo.findStartedForClient(clientId, ON_TIME_SAMPLE),
+      this.attendanceService.onTimeRate({ clientId }),
     ]);
 
     return {
       stats: {
         active_drivers: activeDrivers,
+        on_duty: onDuty,
         open_requests: openCount,
         monthly_spend_minor: spendThisMonth,
         spend_last_month_minor: spendLastMonth,
         spend_delta_percent: spendLastMonth > 0 ? Math.round(((spendThisMonth - spendLastMonth) / spendLastMonth) * 100) : null,
-        on_time_rate: onTimeRate(started),
+        on_time_rate: onTime,
       },
-      hired_staff: hires.bookings,
+      hired_staff: await this.attendanceService.todayFor(hires.bookings),
       hired_total: hires.total,
       hire_requests: openRequests.map(({ assignments, ...request }) => ({
         ...request,

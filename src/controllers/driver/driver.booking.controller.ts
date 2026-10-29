@@ -3,6 +3,7 @@ import { handleErrors } from "../../helper/handleErrors";
 import { IUserRequest } from "../../interface";
 import { DriverBookingService } from "../../services/driver/driver.booking.service";
 import { jobRequestFilterSchema } from "../../utils/types/bookingValidatorSchema";
+import { attendanceMonthSchema } from "../../utils/types/attendanceValidatorSchema";
 
 export class DriverBookingController {
   private bookingService = new DriverBookingService();
@@ -54,6 +55,38 @@ export class DriverBookingController {
       const result = await this.bookingService.complete(req.userId as string, req.params.reference);
 
       res.status(200).json({ message: "Job marked complete", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  checkIn = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.bookingService.checkIn(req.userId as string, req.params.reference);
+
+      res.status(201).json({ message: "Checked in", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  checkOut = async (req: IUserRequest, res: Response) => {
+    try {
+      const result = await this.bookingService.checkOut(req.userId as string, req.params.reference);
+
+      res.status(200).json({ message: "Checked out", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  attendance = async (req: IUserRequest, res: Response) => {
+    try {
+      const { month } = attendanceMonthSchema.parse(req.query);
+
+      const result = await this.bookingService.attendance(req.userId as string, req.params.reference, month);
+
+      res.status(200).json({ message: "Attendance fetched successfully", data: result });
     } catch (error) {
       handleErrors({ res, error });
     }

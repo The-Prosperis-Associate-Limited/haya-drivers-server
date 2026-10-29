@@ -65,10 +65,46 @@ model Booking {
   review        Review?
   transactions  WalletTransaction[]
   hire_request  HireRequest?
+  attendance    Attendance[]
 
   @@index([driverId, status, starts_at])
   @@index([clientId, status, createdAt])
   @@index([status, starts_at])
+}
+
+// One row per booking per working day (Lagos calendar). Lateness and whether the day was on the schedule are frozen at check-in.
+model Attendance {
+  id        String  @id @default(cuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  driverId  String
+
+  work_date      DateTime  @db.Date
+  checked_in_at  DateTime
+  checked_out_at DateTime?
+  minutes_late   Int?
+  scheduled_day  Boolean   @default(true)
+
+  flagged_at  DateTime?
+  flag_reason String?
+
+  // An admin's ruling on the client's flag; an upheld day counts against the driver's on-time rate.
+  flag_resolution      AttendanceFlagResolution?
+  flag_resolution_note String?
+  flag_resolved_at     DateTime?
+  flag_resolved_by     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([bookingId, work_date])
+  @@index([driverId, checked_in_at])
+  @@index([flagged_at, flag_resolved_at])
+}
+
+enum AttendanceFlagResolution {
+  UPHELD
+  DISMISSED
 }
 
 model BookingStatusEvent {

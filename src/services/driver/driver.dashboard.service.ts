@@ -3,10 +3,11 @@ import { ReviewRepository } from "../../repositories/booking/review.repository";
 import { DriverProfileRepository } from "../../repositories/driver/driverProfile.repository";
 import { WalletRepository } from "../../repositories/earnings/wallet.repository";
 import { NotFoundError } from "../../helper/errors";
-import { ON_TIME_SAMPLE, onTimeRate } from "../../utils/onTimeRate";
+import { AttendanceService } from "../booking/attendance.service";
 
 export class DriverDashboardService {
   private bookingRepo = new BookingRepository();
+  private attendanceService = new AttendanceService();
   private walletRepo = new WalletRepository();
   private driverProfileRepo = new DriverProfileRepository();
   private reviewRepo = new ReviewRepository();
@@ -16,13 +17,13 @@ export class DriverDashboardService {
 
     if (!profile) throw new NotFoundError("Driver profile not found");
 
-    const [wallet, ongoing, completed, activeClients, reviews, started] = await Promise.all([
+    const [wallet, ongoing, completed, activeClients, reviews, onTime] = await Promise.all([
       this.walletRepo.findByUserId(userId),
       this.bookingRepo.countForDriver(userId, "IN_PROGRESS"),
       this.bookingRepo.countForDriver(userId, "COMPLETED"),
       this.bookingRepo.countDistinctClientsForDriver(userId),
       this.reviewRepo.summaryForSubject(userId),
-      this.bookingRepo.findStartedForDriver(userId, ON_TIME_SAMPLE),
+      this.attendanceService.onTimeRate({ driverId: userId }),
     ]);
 
     return {
@@ -37,11 +38,11 @@ export class DriverDashboardService {
       verification_status: profile.verification_status,
       client_review_average: reviews.average,
       client_review_count: reviews.total,
-      on_time_rate: onTimeRate(started),
+      on_time_rate: onTime,
     };
   }
 
   async upcomingJobs(userId: string, limit = 5) {
-    return this.bookingRepo.findUpcomingForDriver(userId, limit);
+    return this.attendanceService.todayFor(await this.bookingRepo.findUpcomingForDriver(userId, limit));
   }
 }

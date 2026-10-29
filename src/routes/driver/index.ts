@@ -7,6 +7,7 @@ import { onboardingRouter } from "./onboarding";
 import { profileRouter } from "./profile";
 import { reviewRouter } from "./reviews";
 import { shortlistRouter } from "./shortlists";
+import { SearchController } from "../../controllers/search.controller";
 
 const driverRouter = Router();
 
@@ -22,5 +23,6 @@ driverRouter.use("/job-requests", bookingRouter);
 driverRouter.use("/earnings", earningsRouter);
 driverRouter.use("/shortlists", shortlistRouter);
 driverRouter.use("/reviews", reviewRouter);
+driverRouter.get("/search", new SearchController().driver);
 
 export { driverRouter };

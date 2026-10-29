@@ -15,5 +15,8 @@ bookingRouter.get("/summary", booking.summary);
 bookingRouter.get("/:reference", booking.get);
 bookingRouter.patch("/:reference/start", booking.start);
 bookingRouter.patch("/:reference/complete", booking.complete);
+bookingRouter.get("/:reference/attendance", booking.attendance);
+bookingRouter.post("/:reference/check-in", booking.checkIn);
+bookingRouter.post("/:reference/check-out", booking.checkOut);
 
 export { bookingRouter };

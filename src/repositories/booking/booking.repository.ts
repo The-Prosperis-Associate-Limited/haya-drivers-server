@@ -73,20 +73,12 @@ export class BookingRepository {
     });
   }
 
-  async findStartedForClient(clientId: string, take: number) {
+  // Jobs started before daily attendance existed - their start stamp is the only arrival on record.
+  async findStartsWithoutAttendance(scope: { driverId: string } | { clientId: string }, take: number) {
     return prisma.booking.findMany({
-      where: { clientId, started_at: { not: null } },
-      select: { starts_at: true, started_at: true },
-      orderBy: { starts_at: "desc" },
-      take,
-    });
-  }
-
-  async findStartedForDriver(driverId: string, take: number) {
-    return prisma.booking.findMany({
-      where: { driverId, started_at: { not: null } },
-      select: { starts_at: true, started_at: true },
-      orderBy: { starts_at: "desc" },
+      where: { ...scope, started_at: { not: null }, attendance: { none: {} } },
+      select: { starts_at: true, started_at: true, resumption_time: true },
+      orderBy: { started_at: "desc" },
       take,
     });
   }

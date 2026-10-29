@@ -8,6 +8,7 @@ import { clientInvoicesRouter } from "./invoices";
 import { clientHiresRouter } from "./hires";
 import { clientOnboardingRouter } from "./onboarding";
 import { clientRequestsRouter } from "./requests";
+import { SearchController } from "../../controllers/search.controller";
 
 const clientRouter = Router();
 
@@ -21,5 +22,6 @@ clientRouter.use("/hires", clientHiresRouter);
 clientRouter.use("/hire-requests", clientHireRequestsRouter);
 clientRouter.use("/invoices", clientInvoicesRouter);
 clientRouter.use("/requests", clientRequestsRouter);
+clientRouter.get("/search", new SearchController().client);
 
 export { clientRouter };

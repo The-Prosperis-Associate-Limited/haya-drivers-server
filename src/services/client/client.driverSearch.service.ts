@@ -3,8 +3,8 @@ import { DriverProfileRepository } from "../../repositories/driver/driverProfile
 import { NotFoundError } from "../../helper/errors";
 import { prisma } from "../../helper/prisma";
 import { paginate, parsePagination } from "../../utils/pagination";
-import { ON_TIME_SAMPLE, onTimeRate } from "../../utils/onTimeRate";
 import type { DriverSearchInput } from "../../utils/types/bookingValidatorSchema";
+import { AttendanceService } from "../booking/attendance.service";
 
 // Verification and matching data the admin team works from - never sent to a client.
 const withoutPrivateFields = <T extends Record<string, unknown>>(profile: T) => {
@@ -15,6 +15,7 @@ const withoutPrivateFields = <T extends Record<string, unknown>>(profile: T) => 
 export class ClientDriverSearchService {
   private driverProfileRepo = new DriverProfileRepository();
   private reviewRepo = new ReviewRepository();
+  private attendanceService = new AttendanceService();
 
   async search(query: Record<string, unknown>, filters: DriverSearchInput) {
     const pagination = parsePagination(query);
@@ -71,11 +72,10 @@ export class ClientDriverSearchService {
     };
   }
 
-  // On-time means the driver's own "start job" stamp landed within the grace
-  // window of the scheduled start. Both rates are null until measured - a
-  // driver nobody has booked has no record, not a bad one.
+  // On-time is the driver's last 50 daily check-ins against each day's start time (see utils/onTimeRate).
+  // Both rates are null until measured - a driver nobody has booked has no record, not a bad one.
   private async quickStats(userId: string) {
-    const [completedJobs, answered, started] = await Promise.all([
+    const [completedJobs, answered, onTime] = await Promise.all([
       prisma.booking.count({ where: { driverId: userId, status: "COMPLETED" } }),
       prisma.booking.findMany({
         where: { driverId: userId, OR: [{ accepted_at: { not: null } }, { declined_at: { not: null } }] },
@@ -83,12 +83,7 @@ export class ClientDriverSearchService {
         orderBy: { createdAt: "desc" },
         take: 50,
       }),
-      prisma.booking.findMany({
-        where: { driverId: userId, started_at: { not: null } },
-        select: { starts_at: true, started_at: true },
-        orderBy: { starts_at: "desc" },
-        take: ON_TIME_SAMPLE,
-      }),
+      this.attendanceService.onTimeRate({ driverId: userId }),
     ]);
 
     const latencies = answered.map(booking => {
@@ -103,7 +98,7 @@ export class ClientDriverSearchService {
     return {
       completed_jobs: completedJobs,
       response_time_minutes: responseTimeMinutes,
-      on_time_rate: onTimeRate(started),
+      on_time_rate: onTime,
     };
   }
 

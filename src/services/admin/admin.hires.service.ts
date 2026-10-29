@@ -13,6 +13,7 @@ import { generateReference } from "../../utils/reference";
 import { surfaceUrlFor } from "../../utils/surfaceUrl";
 import { computeHireFee, ContractDurationRequiredError, type HireClientType, type HireFeeQuote } from "../../utils/hirePricing";
 import type { AssignDriverInput, DeclineHireRequestInput, GenerateInvoiceInput, HireRequestListQuery, RejectProofInput } from "../../utils/types/hireValidatorSchema";
+import { SHORTLIST_WINDOW_HOURS, shortlistRespondBy } from "../../utils/shortlistWindow";
 
 // Nigeria's standard VAT unless the invoice overrides it.
 const { HIRE_VAT_PERCENT } = process.env;
@@ -58,14 +59,16 @@ export class AdminHiresService {
 
     if (open && open.id !== request.id) throw new BadRequestError(`This client already has an open request for that driver (${open.reference})`);
 
-    await this.hireRepo.addAssignment(request.id, data.driverId);
+    const respondBy = shortlistRespondBy();
+
+    await this.hireRepo.addAssignment(request.id, data.driverId, respondBy);
 
     await this.notificationService.notify({
       recipientId: data.driverId,
       senderId: adminId,
       type: "BOOKING_REQUEST",
       title: "You've been shortlisted for an engagement",
-      message: `You're a candidate for a ${request.engagement_type === "MONTHLY" ? "full-time" : "contract"} engagement starting ${request.starts_at.toDateString()}${request.state ? ` in ${request.state}` : ""}. Confirm your availability from your dashboard.`,
+      message: `You're a candidate for a ${request.engagement_type === "MONTHLY" ? "full-time" : "contract"} engagement starting ${request.starts_at.toDateString()}${request.state ? ` in ${request.state}` : ""}. Confirm your availability from your dashboard within ${SHORTLIST_WINDOW_HOURS} hours.`,
       actionUrl: "/dashboard",
       metadata: { reference: request.reference },
     });
