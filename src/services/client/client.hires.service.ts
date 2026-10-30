@@ -15,7 +15,7 @@ export class ClientHiresService {
   async list(clientId: string, query: Record<string, unknown>) {
     const pagination = parsePagination(query);
 
-    const { bookings, total } = await this.bookingRepo.findActiveHires(clientId, pagination);
+    const { bookings, total } = await this.bookingRepo.findActiveHires(clientId, { ...pagination, includeOwed: true });
 
     return paginate(await this.attendanceService.todayFor(bookings), total, pagination);
   }
