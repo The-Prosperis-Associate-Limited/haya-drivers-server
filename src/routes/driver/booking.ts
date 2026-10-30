@@ -1,9 +1,11 @@
 import { Router } from "express";
 import { DriverBookingController } from "../../controllers/driver/driver.booking.controller";
+import { DriverSalaryController } from "../../controllers/driver/driver.salary.controller";
 import { requireVerifiedDriver } from "../../middleware/requireVerifiedDriver";
 
 const bookingRouter = Router();
 const booking = new DriverBookingController();
+const salary = new DriverSalaryController();
 
 // Job requests only reach a verified driver, so the whole router sits behind
 // the gate rather than repeating it per route.
@@ -18,5 +20,8 @@ bookingRouter.patch("/:reference/complete", booking.complete);
 bookingRouter.get("/:reference/attendance", booking.attendance);
 bookingRouter.post("/:reference/check-in", booking.checkIn);
 bookingRouter.post("/:reference/check-out", booking.checkOut);
+bookingRouter.get("/:reference/salary", salary.list);
+bookingRouter.post("/:reference/salary/:id/confirm", salary.confirm);
+bookingRouter.post("/:reference/salary/:id/dispute", salary.dispute);
 
 export { bookingRouter };

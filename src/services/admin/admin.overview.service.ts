@@ -1,4 +1,5 @@
 import type { $Enums } from "../../generated/prisma/client";
+import { SalaryService } from "../booking/salary.service";
 import { prisma } from "../../helper/prisma";
 import { getSocketIO } from "../../helper/socket";
 
@@ -31,13 +32,14 @@ const stageOf = (request: { status: $Enums.HireRequestStatus; drivers_needed: nu
 export class AdminOverviewService {
   // Sidebar counts and who's on shift - polled by the admin shell on every page, so it stays to counts.
   async nav() {
-    const [pendingVerifications, hiresNeedingAction, payoutsNeedingAction, openFlags, chatsWaiting, team] = await Promise.all([
+    const [pendingVerifications, hiresNeedingAction, payoutsNeedingAction, openFlags, chatsWaiting, team, salaries] = await Promise.all([
       prisma.driverProfile.count({ where: { verification_status: "PENDING" } }),
       prisma.hireRequest.count({ where: { status: { in: ["PENDING_REVIEW", "PAYMENT_REVIEW"] } } }),
       prisma.payout.count({ where: { status: { in: ["REQUESTED", "FAILED"] } } }),
       prisma.attendance.count({ where: { flagged_at: { not: null }, flag_resolved_at: null } }),
       prisma.conversation.count({ where: WAITING_CHAT }),
       this.onlineAdmins(),
+      new SalaryService().adminCounts(),
     ]);
 
     return {
@@ -47,6 +49,7 @@ export class AdminOverviewService {
         transactions: payoutsNeedingAction,
         attendance: openFlags,
         support: chatsWaiting,
+        salaries: salaries.disputed + salaries.overdue,
       },
       team,
       chats_waiting: chatsWaiting,

@@ -8,6 +8,7 @@ import { JOB_KEY } from "../../workers/jobKeys";
 import { NotificationService } from "../shared/notification.service";
 import { ActivityService } from "../shared/activity.service";
 import { TrustScoreService } from "../shared/trustScore.service";
+import { SalaryService } from "./salary.service";
 
 const { CLIENT_URL } = process.env;
 
@@ -33,6 +34,7 @@ export class BookingTransitionService {
   private notificationService = new NotificationService();
   private activityService = new ActivityService();
   private trustScoreService = new TrustScoreService();
+  private salaryService = new SalaryService();
 
   async transition(bookingId: string, to: $Enums.BookingStatus, actorId: string, options: { note?: string; reason?: string } = {}) {
     const booking = await this.bookingRepo.findById(bookingId);
@@ -68,6 +70,7 @@ export class BookingTransitionService {
     });
 
     if (to === "COMPLETED" && booking.driverId) await this.trustScoreService.recompute(booking.driverId);
+    if (to === "COMPLETED" || to === "CANCELLED") await this.salaryService.sync(updated);
 
     await this.announce(updated, to, actorId, options.reason);
 

@@ -5,6 +5,7 @@ import { adminDashboardRouter } from "./dashboard";
 import { adminAttendanceRouter } from "./attendance";
 import { adminChatRouter } from "./chat";
 import { adminHiresRouter } from "./hires";
+import { adminSalariesRouter } from "./salaries";
 import { adminTicketRouter } from "./tickets";
 import { payoutsRouter } from "./payouts";
 import { teamRouter } from "./team";
@@ -26,6 +27,7 @@ adminRouter.use("/tickets", guardAdminWrites("tickets"), adminTicketRouter);
 adminRouter.use("/chat", guardAdminWrites("tickets"), adminChatRouter);
 adminRouter.use("/hires", guardAdminWrites("transactions"), adminHiresRouter);
 adminRouter.use("/attendance", guardAdminWrites("tickets"), adminAttendanceRouter);
+adminRouter.use("/salaries", guardAdminWrites("transactions"), adminSalariesRouter);
 adminRouter.use("/team", requireSuperAdmin, teamRouter);
 adminRouter.get("/search", new SearchController().admin);
 
