@@ -13,9 +13,10 @@ import { generateReference } from "../../utils/reference";
 import { surfaceUrlFor } from "../../utils/surfaceUrl";
 import { computeHireFee, ContractDurationRequiredError, type HireClientType, type HireFeeQuote } from "../../utils/hirePricing";
 import type { AssignDriverInput, DeclineHireRequestInput, GenerateInvoiceInput, HireRequestListQuery, RejectProofInput } from "../../utils/types/hireValidatorSchema";
-import { SHORTLIST_WINDOW_HOURS, shortlistRespondBy } from "../../utils/shortlistWindow";
+import { shortlistRespondBy } from "../../utils/shortlistWindow";
 import { engagementEnd } from "../../utils/salarySchedule";
 import { SalaryService } from "../booking/salary.service";
+import { ShortlistInviteService } from "../booking/shortlistInvite.service";
 
 // Nigeria's standard VAT unless the invoice overrides it.
 const { HIRE_VAT_PERCENT } = process.env;
@@ -29,6 +30,7 @@ export class AdminHiresService {
   private userRepo = new UserRepository();
   private notificationService = new NotificationService();
   private salaryService = new SalaryService();
+  private shortlistInviteService = new ShortlistInviteService();
 
   async list(query: HireRequestListQuery) {
     const [{ requests, total }, counts] = await Promise.all([this.hireRepo.listForAdmin(query), this.hireRepo.countByStatus()]);
@@ -66,29 +68,7 @@ export class AdminHiresService {
 
     await this.hireRepo.addAssignment(request.id, data.driverId, respondBy);
 
-    await this.notificationService.notify({
-      recipientId: data.driverId,
-      senderId: adminId,
-      type: "BOOKING_REQUEST",
-      title: "You've been shortlisted for an engagement",
-      message: `You're a candidate for a ${request.engagement_type === "MONTHLY" ? "full-time" : "contract"} engagement starting ${request.starts_at.toDateString()}${request.state ? ` in ${request.state}` : ""}. Confirm your availability from your dashboard within ${SHORTLIST_WINDOW_HOURS} hours.`,
-      actionUrl: "/dashboard",
-      metadata: { reference: request.reference },
-    });
-
-    const driverContact = await this.userRepo.findById(data.driverId, { email: true, first_name: true });
-
-    if (driverContact?.email && (await this.notificationService.wants(data.driverId, "job_requests"))) {
-      await queueEmail(JOB_KEY.HIRE_REQUEST_EVENT, {
-        email: driverContact.email as string,
-        first_name: (driverContact.first_name as string) ?? "there",
-        event: "SHORTLISTED",
-        reference: request.reference,
-        date: request.starts_at.toDateString(),
-        counterpart: request.state ?? undefined,
-        actionUrl: `${surfaceUrlFor("DRIVER")}/dashboard`,
-      });
-    }
+    await this.shortlistInviteService.invite(request, data.driverId, { senderId: adminId });
 
     return this.requireRequest(reference);
   }
