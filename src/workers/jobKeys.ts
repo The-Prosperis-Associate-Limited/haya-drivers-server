@@ -27,6 +27,7 @@ export const JOB_KEY = {
 export const SCHEDULED_JOB_KEY = {
   RELEASE_PENDING_EARNINGS: "release_pending_earnings",
   EXPIRE_SHORTLISTS: "expire_shortlists",
+  SALARY_SWEEP: "salary_sweep",
   LICENCE_EXPIRY_SWEEP: "licence_expiry_sweep",
   DELETE_UNVERIFIED_ACCOUNTS: "delete_unverified_accounts",
   RECOMPUTE_TRUST_SCORES: "recompute_trust_scores",

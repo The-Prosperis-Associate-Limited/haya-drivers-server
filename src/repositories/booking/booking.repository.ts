@@ -37,6 +37,14 @@ export class BookingRepository {
     return prisma.booking.findUnique({ where: { reference }, include: bookingParties });
   }
 
+  async findActiveEngagements() {
+    return prisma.booking.findMany({ where: { status: { in: ["ACCEPTED", "IN_PROGRESS"] }, engagement_type: { in: ["MONTHLY", "CONTRACT"] }, driverId: { not: null } } });
+  }
+
+  async findEndedEngagements(now: Date) {
+    return prisma.booking.findMany({ where: { status: { in: ["ACCEPTED", "IN_PROGRESS"] }, ends_at: { lte: now } }, include: bookingParties });
+  }
+
   async update(id: string, data: Prisma.BookingUncheckedUpdateInput) {
     return prisma.booking.update({ where: { id }, data, include: bookingParties });
   }
