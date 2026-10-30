@@ -16,5 +16,9 @@ export const growthPeriodSchema = z.object({
   period: z.enum(["7d", "14d", "30d"]).optional().default("14d"),
 });
 
+export const overviewPeriodSchema = z.object({
+  period: z.enum(["7d", "30d", "90d"]).optional().default("30d"),
+});
+
 export type InviteAdminInput = z.infer<typeof inviteAdminSchema>;
 export type UpdateAdminRoleInput = z.infer<typeof updateAdminRoleSchema>;

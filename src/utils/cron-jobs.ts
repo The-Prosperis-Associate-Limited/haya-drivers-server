@@ -3,6 +3,8 @@ import { deactivateInactiveAccounts } from "../services/scheduled/deactivateInac
 import { notifyExpiringLicences } from "../services/scheduled/licenceExpiry.service";
 import { recomputeTrustScores } from "../services/scheduled/recomputeTrustScores.service";
 import { releasePendingEarnings } from "../services/scheduled/releasePendingEarnings.service";
+import { expireShortlists } from "../services/scheduled/expireShortlists.service";
+import { salarySweep } from "../services/scheduled/salarySweep.service";
 import { emailQueue } from "../workers/globalEmailQueueHandler";
 import { SCHEDULED_JOB_KEY } from "../workers/jobKeys";
 
@@ -13,6 +15,8 @@ type ScheduledJobKey = (typeof SCHEDULED_JOB_KEY)[keyof typeof SCHEDULED_JOB_KEY
 // in the worker.
 const SCHEDULED_JOBS: Record<ScheduledJobKey, () => Promise<string>> = {
   [SCHEDULED_JOB_KEY.RELEASE_PENDING_EARNINGS]: releasePendingEarnings,
+  [SCHEDULED_JOB_KEY.EXPIRE_SHORTLISTS]: expireShortlists,
+  [SCHEDULED_JOB_KEY.SALARY_SWEEP]: salarySweep,
   [SCHEDULED_JOB_KEY.LICENCE_EXPIRY_SWEEP]: notifyExpiringLicences,
   [SCHEDULED_JOB_KEY.DELETE_UNVERIFIED_ACCOUNTS]: deleteUnverifiedAccounts,
   [SCHEDULED_JOB_KEY.RECOMPUTE_TRUST_SCORES]: recomputeTrustScores,
@@ -21,6 +25,8 @@ const SCHEDULED_JOBS: Record<ScheduledJobKey, () => Promise<string>> = {
 
 const SCHEDULE: { key: ScheduledJobKey; pattern: string }[] = [
   { key: SCHEDULED_JOB_KEY.RELEASE_PENDING_EARNINGS, pattern: "0 * * * *" },
+  { key: SCHEDULED_JOB_KEY.EXPIRE_SHORTLISTS, pattern: "*/15 * * * *" },
+  { key: SCHEDULED_JOB_KEY.SALARY_SWEEP, pattern: "20 * * * *" },
   { key: SCHEDULED_JOB_KEY.LICENCE_EXPIRY_SWEEP, pattern: "0 8 * * *" },
   { key: SCHEDULED_JOB_KEY.DELETE_UNVERIFIED_ACCOUNTS, pattern: "0 3 * * *" },
   { key: SCHEDULED_JOB_KEY.RECOMPUTE_TRUST_SCORES, pattern: "0 4 * * 0" },

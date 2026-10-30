@@ -4,14 +4,18 @@ import { NotFoundError } from "../../helper/errors";
 import { prisma } from "../../helper/prisma";
 import { paginate, parsePagination } from "../../utils/pagination";
 import type { DriverSearchInput } from "../../utils/types/bookingValidatorSchema";
+import { AttendanceService } from "../booking/attendance.service";
 
-// A start stamped within this window of the scheduled time still counts as on
-// time - nobody should be marked late over a parking search.
-const ON_TIME_GRACE_MS = 15 * 60 * 1000;
+// Verification and matching data the admin team works from - never sent to a client.
+const withoutPrivateFields = <T extends Record<string, unknown>>(profile: T) => {
+  const { license_number: _licence, license_expires_at: _expiry, religion: _religion, ethnicity: _ethnicity, state_of_origin: _origin, ...rest } = profile;
+  return rest;
+};
 
 export class ClientDriverSearchService {
   private driverProfileRepo = new DriverProfileRepository();
   private reviewRepo = new ReviewRepository();
+  private attendanceService = new AttendanceService();
 
   async search(query: Record<string, unknown>, filters: DriverSearchInput) {
     const pagination = parsePagination(query);
@@ -23,7 +27,7 @@ export class ClientDriverSearchService {
     const summaries = await this.reviewRepo.summariesForSubjects(userIds);
 
     const withRatings = drivers.map(driver => ({
-      ...driver,
+      ...withoutPrivateFields(driver),
       rating: summaries.get(driver.userId)?.average ?? 0,
       review_count: summaries.get(driver.userId)?.total ?? 0,
     }));
@@ -41,9 +45,22 @@ export class ClientDriverSearchService {
 
     if (!profile || profile.verification_status !== "APPROVED" || !profile.is_discoverable) throw new NotFoundError("Driver not found");
 
+    return this.present(profile, userId);
+  }
+
+  // The driver's own "see what clients see" view - the same shape, no discoverability gate.
+  async getPreviewForDriver(userId: string) {
+    const profile = await this.driverProfileRepo.findByUserIdWithRelations(userId);
+
+    if (!profile) throw new NotFoundError("Driver profile not found");
+
+    return this.present(profile, userId);
+  }
+
+  private async present(profile: NonNullable<Awaited<ReturnType<DriverProfileRepository["findByUserIdWithRelations"]>>>, userId: string) {
     const [reviews, quickStats] = await Promise.all([this.reviewRepo.summaryForSubject(userId), this.quickStats(userId)]);
 
-    const { guarantors: _guarantors, user, ...rest } = profile;
+    const { guarantors: _guarantors, user, ...rest } = withoutPrivateFields(profile);
     const { phone_no: _phone, email: _email, ...publicUser } = user as Record<string, unknown>;
 
     return {
@@ -55,11 +72,10 @@ export class ClientDriverSearchService {
     };
   }
 
-  // On-time means the driver's own "start job" stamp landed within the grace
-  // window of the scheduled start. Both rates are null until measured - a
-  // driver nobody has booked has no record, not a bad one.
+  // On-time is the driver's last 50 daily check-ins against each day's start time (see utils/onTimeRate).
+  // Both rates are null until measured - a driver nobody has booked has no record, not a bad one.
   private async quickStats(userId: string) {
-    const [completedJobs, answered, started] = await Promise.all([
+    const [completedJobs, answered, onTime] = await Promise.all([
       prisma.booking.count({ where: { driverId: userId, status: "COMPLETED" } }),
       prisma.booking.findMany({
         where: { driverId: userId, OR: [{ accepted_at: { not: null } }, { declined_at: { not: null } }] },
@@ -67,12 +83,7 @@ export class ClientDriverSearchService {
         orderBy: { createdAt: "desc" },
         take: 50,
       }),
-      prisma.booking.findMany({
-        where: { driverId: userId, started_at: { not: null } },
-        select: { starts_at: true, started_at: true },
-        orderBy: { starts_at: "desc" },
-        take: 50,
-      }),
+      this.attendanceService.onTimeRate({ driverId: userId }),
     ]);
 
     const latencies = answered.map(booking => {
@@ -84,12 +95,10 @@ export class ClientDriverSearchService {
 
     const responseTimeMinutes = valid.length ? Math.round(valid.reduce((sum, latency) => sum + latency, 0) / valid.length / 60000) : null;
 
-    const onTime = started.filter(booking => booking.started_at!.getTime() <= booking.starts_at.getTime() + ON_TIME_GRACE_MS);
-
     return {
       completed_jobs: completedJobs,
       response_time_minutes: responseTimeMinutes,
-      on_time_rate: started.length ? Math.round((onTime.length / started.length) * 100) : null,
+      on_time_rate: onTime,
     };
   }
 

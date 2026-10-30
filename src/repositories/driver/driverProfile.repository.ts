@@ -95,6 +95,7 @@ export class DriverProfileRepository {
     const where: Prisma.DriverProfileWhereInput = {
       verification_status: "APPROVED",
       is_discoverable: true,
+      open_to_work: true,
       user: { account_status: "ACTIVE" },
     };
 

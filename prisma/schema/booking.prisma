@@ -40,6 +40,11 @@ model Booking {
   starts_at DateTime
   ends_at   DateTime?
 
+  // Copied from the hire request at payment confirmation; null on pre-brokered bookings.
+  schedule        WorkSchedule?
+  resumption_time String?
+  closing_time    String?
+
   // Minor units (kobo/cents) in `currency`. Never store money as a float.
   amount   Int
   currency String @default("NGN")
@@ -60,10 +65,100 @@ model Booking {
   review        Review?
   transactions  WalletTransaction[]
   hire_request  HireRequest?
+  attendance    Attendance[]
+  salary_payments SalaryPayment[]
 
   @@index([driverId, status, starts_at])
   @@index([clientId, status, createdAt])
   @@index([status, starts_at])
+}
+
+// One row per booking per working day (Lagos calendar). Lateness and whether the day was on the schedule are frozen at check-in.
+model Attendance {
+  id        String  @id @default(cuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  driverId  String
+
+  work_date      DateTime  @db.Date
+  checked_in_at  DateTime
+  checked_out_at DateTime?
+  minutes_late   Int?
+  scheduled_day  Boolean   @default(true)
+
+  flagged_at  DateTime?
+  flag_reason String?
+
+  // An admin's ruling on the client's flag; an upheld day counts against the driver's on-time rate.
+  flag_resolution      AttendanceFlagResolution?
+  flag_resolution_note String?
+  flag_resolved_at     DateTime?
+  flag_resolved_by     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([bookingId, work_date])
+  @@index([driverId, checked_in_at])
+  @@index([flagged_at, flag_resolved_at])
+}
+
+// One row per pay period - a month of a MONTHLY engagement counted from its start date, or the whole of a CONTRACT. The client pays the driver directly; this is the record that it happened.
+model SalaryPayment {
+  id        String  @id @default(cuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  clientId  String
+  driverId  String
+
+  period_start DateTime
+  period_end   DateTime
+  due_at       DateTime
+  amount_minor Int
+  currency     String   @default("NGN")
+
+  status SalaryPaymentStatus @default(DUE)
+
+  paid_at     DateTime?
+  receipt_url String?
+  client_note String?
+
+  confirmed_at DateTime?
+
+  disputed_at    DateTime?
+  dispute_reason String?
+
+  resolution      SalaryDisputeResolution?
+  resolution_note String?
+  resolved_at     DateTime?
+  resolved_by     String?
+
+  last_reminded_at DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([bookingId, period_start])
+  @@index([status, due_at])
+  @@index([driverId, paid_at])
+  @@index([clientId, status])
+}
+
+enum SalaryPaymentStatus {
+  DUE
+  PAID
+  CONFIRMED
+  DISPUTED
+}
+
+enum SalaryDisputeResolution {
+  PAID
+  UNPAID
+}
+
+enum AttendanceFlagResolution {
+  UPHELD
+  DISMISSED
 }
 
 model BookingStatusEvent {

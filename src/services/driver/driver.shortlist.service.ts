@@ -24,6 +24,7 @@ export class DriverShortlistService {
     if (assignment.driverId !== driverId) throw new ForbiddenError("That shortlist entry belongs to another driver");
     if (assignment.status !== "PENDING") throw new BadRequestError("You've already responded to this one");
     if (assignment.hire_request.status !== "PENDING_REVIEW") throw new BadRequestError("This engagement is no longer open");
+    if (assignment.respond_by && assignment.respond_by < new Date()) throw new BadRequestError("This invitation expired - the team has moved on");
 
     const updated = await this.hireRepo.respondToAssignment(assignmentId, available ? "CONFIRMED" : "DECLINED");
 

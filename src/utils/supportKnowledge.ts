@@ -105,9 +105,13 @@ start, with a 15-minute grace.
 EARNINGS AND SALARY
 Your salary is agreed on the engagement and paid to you DIRECTLY by the
 client - it never passes through Haya Drivers and nothing is deducted from
-it. The client separately pays Haya Drivers a service fee. The earnings page
-in the app only shows historical wallet balances from before this change;
-anything still showing as available there can be withdrawn as a payout.
+it. The client separately pays Haya Drivers a service fee. Full-time salary is
+due at the end of each month of the engagement (counted from its start date);
+a contract is paid once, at its end. The client marks each payment as paid in
+the app and you confirm you received it on the job page - your earnings page
+shows the payments you've confirmed. If a payment is overdue or never
+arrived, report it from the job page and our team will step in. Any old
+wallet balance from before this change can still be withdrawn as a payout.
 
 RATE, HOURS AND BIO
 Set your expected monthly rate, weekly hours and bio in Settings > User

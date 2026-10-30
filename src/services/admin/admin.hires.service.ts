@@ -13,6 +13,10 @@ import { generateReference } from "../../utils/reference";
 import { surfaceUrlFor } from "../../utils/surfaceUrl";
 import { computeHireFee, ContractDurationRequiredError, type HireClientType, type HireFeeQuote } from "../../utils/hirePricing";
 import type { AssignDriverInput, DeclineHireRequestInput, GenerateInvoiceInput, HireRequestListQuery, RejectProofInput } from "../../utils/types/hireValidatorSchema";
+import { shortlistRespondBy } from "../../utils/shortlistWindow";
+import { engagementEnd } from "../../utils/salarySchedule";
+import { SalaryService } from "../booking/salary.service";
+import { ShortlistInviteService } from "../booking/shortlistInvite.service";
 
 // Nigeria's standard VAT unless the invoice overrides it.
 const { HIRE_VAT_PERCENT } = process.env;
@@ -25,6 +29,8 @@ export class AdminHiresService {
   private driverProfileRepo = new DriverProfileRepository();
   private userRepo = new UserRepository();
   private notificationService = new NotificationService();
+  private salaryService = new SalaryService();
+  private shortlistInviteService = new ShortlistInviteService();
 
   async list(query: HireRequestListQuery) {
     const [{ requests, total }, counts] = await Promise.all([this.hireRepo.listForAdmin(query), this.hireRepo.countByStatus()]);
@@ -58,31 +64,11 @@ export class AdminHiresService {
 
     if (open && open.id !== request.id) throw new BadRequestError(`This client already has an open request for that driver (${open.reference})`);
 
-    await this.hireRepo.addAssignment(request.id, data.driverId);
+    const respondBy = shortlistRespondBy();
 
-    await this.notificationService.notify({
-      recipientId: data.driverId,
-      senderId: adminId,
-      type: "BOOKING_REQUEST",
-      title: "You've been shortlisted for an engagement",
-      message: `You're a candidate for a ${request.engagement_type === "MONTHLY" ? "full-time" : "contract"} engagement starting ${request.starts_at.toDateString()}${request.state ? ` in ${request.state}` : ""}. Confirm your availability from your dashboard.`,
-      actionUrl: "/dashboard",
-      metadata: { reference: request.reference },
-    });
+    await this.hireRepo.addAssignment(request.id, data.driverId, respondBy);
 
-    const driverContact = await this.userRepo.findById(data.driverId, { email: true, first_name: true });
-
-    if (driverContact?.email) {
-      await queueEmail(JOB_KEY.HIRE_REQUEST_EVENT, {
-        email: driverContact.email as string,
-        first_name: (driverContact.first_name as string) ?? "there",
-        event: "SHORTLISTED",
-        reference: request.reference,
-        date: request.starts_at.toDateString(),
-        counterpart: request.state ?? undefined,
-        actionUrl: `${surfaceUrlFor("DRIVER")}/dashboard`,
-      });
-    }
+    await this.shortlistInviteService.invite(request, data.driverId, { senderId: adminId });
 
     return this.requireRequest(reference);
   }
@@ -107,8 +93,10 @@ export class AdminHiresService {
       throw new BadRequestError(`Trim the shortlist to exactly ${request.drivers_needed} driver(s) before invoicing - ${request.assignments.length} on it now`);
     }
 
-    const advertised = request.assignments.map(a => a.driver.driver_profile?.expected_monthly_rate ?? 0);
-    const perDriver = overrides.per_driver_minor ?? Math.max(...advertised);
+    const advertised = Math.max(...request.assignments.map(a => a.driver.driver_profile?.expected_monthly_rate ?? 0));
+    // A contract's pay is for the whole engagement: the advertised monthly rate prorated over its days.
+    const contractDays = request.engagement_type === "CONTRACT" ? request.duration_days : null;
+    const perDriver = overrides.per_driver_minor ?? (contractDays ? Math.round((advertised * contractDays) / 30) : advertised);
 
     if (perDriver <= 0) throw new BadRequestError("No assigned driver has an advertised rate - set the per-driver salary");
 
@@ -227,6 +215,9 @@ export class AdminHiresService {
     const client = await this.userRepo.findById(request.clientId, { address: true, city: true, state_of_residence: true, country: true });
 
     let firstBookingId: string | null = null;
+    const endsAt = engagementEnd(request.starts_at, request.engagement_type, request.duration_days, request.duration_months);
+    const isContract = request.engagement_type === "CONTRACT";
+    const pay = `${formatMoney(perDriver, invoice.currency)}${isContract ? " for the whole contract" : " a month"}`;
 
     for (const assignment of request.assignments) {
       const driver = assignment.driver;
@@ -246,6 +237,10 @@ export class AdminHiresService {
         state: request.state ?? (client?.state_of_residence as string) ?? "Lagos",
         city: (client?.city as string) ?? null,
         starts_at: request.starts_at,
+        ends_at: endsAt,
+        schedule: request.schedule,
+        resumption_time: request.resumption_time,
+        closing_time: request.closing_time,
         amount: perDriver,
         currency: invoice.currency,
         status: "ACCEPTED",
@@ -254,6 +249,8 @@ export class AdminHiresService {
 
       firstBookingId ??= booking.id;
 
+      await this.salaryService.sync(booking);
+
       await this.statusEventRepo.create({ bookingId: booking.id, to_status: "ACCEPTED", changed_by: adminId });
 
       await this.notificationService.notify({
@@ -261,7 +258,7 @@ export class AdminHiresService {
         senderId: adminId,
         type: "BOOKING_STATUS",
         title: "You've been hired",
-        message: `A client has hired you for ${booking.title} starting ${booking.starts_at.toDateString()}. Your salary of ${formatMoney(perDriver, invoice.currency)}/month is paid to you directly by the client.`,
+        message: `A client has hired you for ${booking.title} starting ${booking.starts_at.toDateString()}${endsAt ? ` until ${endsAt.toDateString()}` : ""}. Your pay of ${pay} is paid to you directly by the client.`,
         actionUrl: `/dashboard/job-request/${booking.reference}`,
         metadata: { bookingId: booking.id, reference: booking.reference },
       });
@@ -274,7 +271,7 @@ export class AdminHiresService {
           first_name: (driverContact.first_name as string) ?? "there",
           event: "DRIVER_HIRED",
           reference: booking.reference,
-          amount: formatMoney(perDriver, invoice.currency),
+          amount: pay,
           counterpart: booking.title,
           date: booking.starts_at.toDateString(),
           actionUrl: `${surfaceUrlFor("DRIVER")}/dashboard/job-request/${booking.reference}`,

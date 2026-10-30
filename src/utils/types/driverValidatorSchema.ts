@@ -148,7 +148,9 @@ export const workPreferencesSchema = z.object({
     .optional(),
 });
 
-export type PersonalInformationInput = z.infer<typeof personalInformationSchema>;
+export const openToWorkSchema = z.object({ open_to_work: z.boolean() });
+
+export type PersonalInformationInput =z.infer<typeof personalInformationSchema>;
 export type ExperienceInput = z.infer<typeof experienceSchema>;
 export type AcademicQualificationInput = z.infer<typeof academicQualificationSchema>;
 export type WorkExperienceInput = z.infer<typeof workExperienceSchema>;
