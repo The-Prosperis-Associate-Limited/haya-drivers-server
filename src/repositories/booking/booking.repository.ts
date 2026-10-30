@@ -165,14 +165,16 @@ export class BookingRepository {
 
   // "Hired staff" is not a table - it is the client's active monthly
   // engagements, with the driver's profile alongside for the roster rows.
-  async findActiveHires(clientId: string, params: { page: number; limit: number }) {
-    const { page, limit } = params;
+  async findActiveHires(clientId: string, params: { page: number; limit: number; includeOwed?: boolean }) {
+    const { page, limit, includeOwed } = params;
+    const active: Prisma.BookingWhereInput = { status: { in: ["ACCEPTED", "IN_PROGRESS"] } };
     const skip = (page - 1) * limit;
 
     const where: Prisma.BookingWhereInput = {
       clientId,
       engagement_type: { in: ["MONTHLY", "CONTRACT"] },
-      status: { in: ["ACCEPTED", "IN_PROGRESS"] },
+      // An ended engagement stays listed while it still owes the driver a salary.
+      OR: includeOwed ? [active, { status: { in: ["COMPLETED", "CANCELLED"] }, salary_payments: { some: { status: { in: ["DUE", "DISPUTED"] } } } }] : [active],
     };
 
     const include = {
