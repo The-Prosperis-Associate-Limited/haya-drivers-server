@@ -156,6 +156,35 @@ export class DriverProfileRepository {
     return { drivers, total };
   }
 
+  async findMatchPool(params: { places: string[]; driverTypes?: $Enums.DriverType[] }) {
+    const { places, driverTypes } = params;
+
+    return prisma.driverProfile.findMany({
+      where: {
+        verification_status: "APPROVED",
+        is_discoverable: true,
+        open_to_work: true,
+        user: {
+          account_status: "ACTIVE",
+          ...(places.length && {
+            OR: places.flatMap(place => [{ state_of_residence: { contains: place, mode: "insensitive" as const } }, { city: { contains: place, mode: "insensitive" as const } }]),
+          }),
+        },
+        ...(driverTypes?.length && { driver_type: { in: driverTypes } }),
+      },
+      orderBy: { trust_score: "desc" },
+      take: 2000,
+      select: {
+        userId: true,
+        trust_score: true,
+        expected_monthly_rate: true,
+        driver_type: true,
+        years_of_experience: true,
+        user: { select: { first_name: true, last_name: true, city: true, state_of_residence: true, profile_pic: true } },
+      },
+    });
+  }
+
   async findExpiringLicences(before: Date) {
     return prisma.driverProfile.findMany({
       where: { license_expires_at: { lte: before, gte: new Date() } },

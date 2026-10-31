@@ -2,10 +2,24 @@ import { Response } from "express";
 import { handleErrors } from "../../helper/handleErrors";
 import { IUserRequest } from "../../interface";
 import { ClientOnboardingService } from "../../services/client/client.onboarding.service";
-import { clientPreferencesSchema } from "../../utils/types/clientValidatorSchema";
+import { ClientOnboardingInsightsService } from "../../services/client/client.onboardingInsights.service";
+import { clientPreferencesSchema, onboardingInsightsSchema } from "../../utils/types/clientValidatorSchema";
 
 export class ClientOnboardingController {
   private onboardingService = new ClientOnboardingService();
+  private insightsService = new ClientOnboardingInsightsService();
+
+  insights = async (req: IUserRequest, res: Response) => {
+    try {
+      const query = onboardingInsightsSchema.parse(req.query);
+
+      const result = await this.insightsService.insights(query);
+
+      res.status(200).json({ message: "Insights fetched successfully", data: result });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
 
   get = async (req: IUserRequest, res: Response) => {
     try {

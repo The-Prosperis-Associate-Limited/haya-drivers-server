@@ -5,6 +5,7 @@ const clientOnboardingRouter = Router();
 const onboarding = new ClientOnboardingController();
 
 clientOnboardingRouter.get("/", onboarding.get);
+clientOnboardingRouter.get("/insights", onboarding.insights);
 clientOnboardingRouter.put("/", onboarding.save);
 clientOnboardingRouter.post("/complete", onboarding.complete);
 
