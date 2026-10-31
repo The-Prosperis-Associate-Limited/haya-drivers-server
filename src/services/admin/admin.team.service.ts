@@ -1,4 +1,5 @@
 import type { $Enums } from "../../generated/prisma/client";
+import { UserMediaService } from "../shared/userMedia.service";
 import { BadRequestError, ConflictError, NotFoundError } from "../../helper/errors";
 import { hashPassword } from "../../helper/hashPassword";
 import { AdminProfileRepository } from "../../repositories/user/adminProfile.repository";
@@ -12,6 +13,7 @@ import { ActivityService } from "../shared/activity.service";
 import { paginate, parsePagination } from "../../utils/pagination";
 
 export class AdminTeamService {
+  private mediaService = new UserMediaService();
   private userRepo = new UserRepository();
   private adminProfileRepo = new AdminProfileRepository();
   private activityService = new ActivityService();
@@ -122,7 +124,10 @@ export class AdminTeamService {
       await this.requireAnotherSuperAdmin(userId, "You cannot remove the last super admin");
     }
 
-    return this.userRepo.deleteUser(userId);
+    const removed = await this.userRepo.deleteUser(userId);
+    await this.mediaService.purge(userId, "ADMIN");
+
+    return removed;
   }
 
   private async get(userId: string) {

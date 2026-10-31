@@ -124,11 +124,15 @@ export class UserRepository {
     return prisma.user.delete({ where: { id }, select: { id: true } });
   }
 
-  // Accounts that never proved their email address and have been idle since.
-  // Everything they own cascades, so this is a plain delete.
-  async deleteUnverifiedBefore(cutoff: Date) {
-    return prisma.user.deleteMany({
+  async findUnverifiedBefore(cutoff: Date) {
+    return prisma.user.findMany({
       where: { has_validated_email: false, anonymised_at: null, createdAt: { lt: cutoff } },
+      select: { id: true, role: true },
     });
+  }
+
+  // Re-checks the condition so an account that verified between the find and the delete is kept.
+  async deleteUnverifiedByIds(ids: string[]) {
+    return prisma.user.deleteMany({ where: { id: { in: ids }, has_validated_email: false, anonymised_at: null } });
   }
 }
