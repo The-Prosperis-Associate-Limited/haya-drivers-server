@@ -15,7 +15,8 @@
     "prestart": "prisma migrate deploy && prisma generate",
     "start": "tsx src/server.ts",
     "seed:courses": "tsx src/scripts/seed-courses.ts",
-    "seed:drivers": "tsx src/scripts/seed-test-drivers.ts"
+    "seed:drivers": "tsx src/scripts/seed-test-drivers.ts",
+    "seed:referrals": "tsx src/scripts/seed-demo-referrals.ts"
   },
   "keywords": [],
   "license": "ISC",
