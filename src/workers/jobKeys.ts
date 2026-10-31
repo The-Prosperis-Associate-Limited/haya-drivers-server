@@ -32,4 +32,5 @@ export const SCHEDULED_JOB_KEY = {
   DELETE_UNVERIFIED_ACCOUNTS: "delete_unverified_accounts",
   RECOMPUTE_TRUST_SCORES: "recompute_trust_scores",
   DEACTIVATE_INACTIVE_ACCOUNTS: "deactivate_inactive_accounts",
+  PRUNE_ACCOUNT_SIGNALS: "prune_account_signals",
 } as const;

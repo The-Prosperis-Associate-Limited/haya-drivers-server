@@ -6,6 +6,10 @@ export class GuarantorRepository {
     return prisma.guarantor.findMany({ where: { driverId }, orderBy: { createdAt: "asc" } });
   }
 
+  async findForUsers(userIds: string[]) {
+    return prisma.guarantor.findMany({ where: { driver: { userId: { in: userIds } } }, select: { phone_no: true, nin: true, driver: { select: { userId: true } } } });
+  }
+
   async findById(id: string) {
     return prisma.guarantor.findUnique({ where: { id } });
   }

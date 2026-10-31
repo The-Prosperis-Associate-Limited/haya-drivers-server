@@ -1,0 +1,76 @@
+enum ReferralStatus {
+  SIGNED_UP
+  REWARDED
+  HELD
+  REJECTED
+  REVERSED
+}
+
+enum ReferralChannel {
+  SIGNUP
+  ONBOARDING
+}
+
+enum AccountSignalEvent {
+  SIGNUP
+  LOGIN
+  SUBMIT
+  REFERRAL_ATTACH
+}
+
+model Referral {
+  id String @id @default(cuid())
+
+  referrerId String
+  referrer   User   @relation("ReferralsMade", fields: [referrerId], references: [id], onDelete: Cascade)
+  // Unique: a driver is referred at most once, ever, so a reward can only be earned once per referee.
+  refereeId  String @unique
+  referee    User   @relation("ReferredBy", fields: [refereeId], references: [id], onDelete: Cascade)
+
+  code    String
+  channel ReferralChannel @default(SIGNUP)
+  status  ReferralStatus  @default(SIGNED_UP)
+
+  reward_minor Int    @default(0)
+  currency     String @default("NGN")
+
+  walletTransactionId String?            @unique
+  walletTransaction   WalletTransaction? @relation("ReferralReward", fields: [walletTransactionId], references: [id])
+  reversalTransactionId String?            @unique
+  reversalTransaction   WalletTransaction? @relation("ReferralReversal", fields: [reversalTransactionId], references: [id])
+
+  risk_score Int      @default(0)
+  risk_flags String[] @default([])
+
+  qualified_at DateTime?
+  rewarded_at  DateTime?
+
+  reviewedById String?
+  reviewedBy   User?     @relation("ReferralReviewer", fields: [reviewedById], references: [id])
+  reviewed_at  DateTime?
+  review_note  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([referrerId, createdAt])
+  @@index([status, createdAt])
+}
+
+// IP and device are stored as keyed hashes: enough to tell two accounts share a network or phone, never the address itself.
+model AccountSignal {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  event       AccountSignalEvent
+  ip_hash     String?
+  device_hash String?
+  user_agent  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([ip_hash, createdAt])
+  @@index([device_hash])
+}

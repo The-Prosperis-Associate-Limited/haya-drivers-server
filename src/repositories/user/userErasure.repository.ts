@@ -6,6 +6,7 @@ export class UserErasureRepository {
 
     return prisma.$transaction([
       prisma.emailOtp.deleteMany({ where: { userId } }),
+      prisma.accountSignal.deleteMany({ where: { userId } }),
       prisma.deviceToken.deleteMany({ where: { userId } }),
       prisma.pushSubscription.deleteMany({ where: { userId } }),
       prisma.notificationPreference.deleteMany({ where: { userId } }),

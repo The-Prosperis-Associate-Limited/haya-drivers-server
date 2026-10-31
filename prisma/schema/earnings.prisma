@@ -7,6 +7,7 @@ enum WalletTransactionType {
   ADJUSTMENT
   FUNDING
   BOOKING_CHARGE
+  REFERRAL_BONUS
 }
 
 enum WalletTransactionStatus {
@@ -76,6 +77,9 @@ model WalletTransaction {
   reference    String @unique
 
   available_at DateTime?
+
+  referral_reward   Referral? @relation("ReferralReward")
+  referral_reversal Referral? @relation("ReferralReversal")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

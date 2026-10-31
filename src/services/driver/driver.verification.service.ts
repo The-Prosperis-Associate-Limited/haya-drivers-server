@@ -9,6 +9,9 @@ import { JOB_KEY } from "../../workers/jobKeys";
 import { ActivityService } from "../shared/activity.service";
 import { NotificationService } from "../shared/notification.service";
 import { DriverDocumentService } from "./driver.document.service";
+import type { RequestContext } from "../../utils/requestContext";
+import { AccountSignalService } from "../referral/accountSignal.service";
+import { ReferralRewardService } from "../referral/referral.reward.service";
 
 const { CLIENT_URL } = process.env;
 
@@ -20,6 +23,8 @@ export class DriverVerificationService {
   private documentService = new DriverDocumentService();
   private notificationService = new NotificationService();
   private activityService = new ActivityService();
+  private signalService = new AccountSignalService();
+  private referralRewardService = new ReferralRewardService();
 
   async getStatus(userId: string) {
     const [verification, profile, documents] = await Promise.all([
@@ -46,7 +51,7 @@ export class DriverVerificationService {
     };
   }
 
-  async submit(userId: string) {
+  async submit(userId: string, context?: RequestContext) {
     const profile = await this.driverProfileRepo.findByUserId(userId, { verification_status: true });
 
     if (!profile) throw new NotFoundError("Driver profile not found");
@@ -82,6 +87,10 @@ export class DriverVerificationService {
     });
 
     await this.activityService.record(userId, "ONBOARDING_SUBMITTED", "Submitted documents for verification");
+    await this.signalService.record(userId, "SUBMIT", context);
+
+    // The submission has already succeeded; a fault in the referral checks must not turn it into an error for the driver.
+    await this.referralRewardService.qualify(userId).catch(error => console.error("Referral qualification failed", error));
 
     return this.getStatus(userId);
   }

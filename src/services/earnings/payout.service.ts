@@ -34,27 +34,58 @@ export class PayoutService {
     return this.bankAccountRepo.findForUser(userId);
   }
 
+  async resolveBankAccount(data: { bank_code: string; account_number: string; currency?: string }) {
+    const resolved = await resolveProvider(data.currency ?? "NGN").resolveAccount(data.account_number, data.bank_code);
+
+    return { account_name: resolved.account_name, account_number: data.account_number, bank_code: data.bank_code };
+  }
+
   /*
-    Provider-less rail: the driver types their own account name and no
-    name-enquiry runs - settlement is a manual transfer from the organisation
-    account, and the admin's banking app performs its own name check at the
-    moment money is sent. recipient_code stays null, which is what keeps
-    dispatch() from ever calling a payment provider for these accounts.
+    The account name is never taken from the driver. It comes back from the
+    provider name-enquiry, so a typo cannot send money to someone else and the
+    name on file always matches the name at the bank.
   */
   async addBankAccount(userId: string, data: AddBankAccountInput) {
+    const provider = resolveProvider(data.currency);
+
+    const resolved = await provider.resolveAccount(data.account_number, data.bank_code);
+
+    const recipient = await provider.createTransferRecipient({
+      account_number: data.account_number,
+      bank_code: data.bank_code,
+      account_name: resolved.account_name,
+      currency: data.currency,
+    });
+
     const isFirst = (await this.bankAccountRepo.countForUser(userId)) === 0;
 
     return this.bankAccountRepo.create({
       userId,
-      provider: "MANUAL",
+      provider: provider.name as $Enums.PaymentProvider,
       bank_code: data.bank_code,
       bank_name: data.bank_name,
       account_number: data.account_number,
-      account_name: data.account_name,
+      account_name: resolved.account_name,
       country: data.country,
       currency: data.currency,
+      recipient_code: recipient.recipient_code,
       is_default: isFirst,
     });
+  }
+
+  // Accounts saved while payouts were settled by hand have no recipient; one that cannot be upgraded stays on the admin queue.
+  private async ensureRecipient(account: { id: string; recipient_code: string | null; account_number: string; bank_code: string; currency: string }) {
+    if (account.recipient_code) return;
+
+    try {
+      const provider = resolveProvider(account.currency);
+      const resolved = await provider.resolveAccount(account.account_number, account.bank_code);
+      const recipient = await provider.createTransferRecipient({ account_number: account.account_number, bank_code: account.bank_code, account_name: resolved.account_name, currency: account.currency });
+
+      await this.bankAccountRepo.update(account.id, { provider: provider.name as $Enums.PaymentProvider, account_name: resolved.account_name, recipient_code: recipient.recipient_code });
+    } catch (error) {
+      console.error("Could not upgrade bank account to the provider rail", error);
+    }
   }
 
   async setDefaultBankAccount(userId: string, id: string) {
@@ -93,6 +124,8 @@ export class PayoutService {
 
     if (!account) throw new BadRequestError("Add a bank account before withdrawing");
     if (account.userId !== userId) throw new ForbiddenError("That account belongs to another driver");
+
+    await this.ensureRecipient(account);
 
     const reference = generateReference("PYT");
 

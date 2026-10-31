@@ -10,6 +10,29 @@ export class DriverProfileRepository {
     return prisma.driverProfile.findUnique({ where: { userId }, select });
   }
 
+  async findByReferralCode(referral_code: string) {
+    return prisma.driverProfile.findUnique({
+      where: { referral_code },
+      select: { userId: true, user: { select: { id: true, first_name: true, last_name: true, role: true, account_status: true, anonymised_at: true, createdAt: true } } },
+    });
+  }
+
+  // Only fills an empty slot, so two first visits racing cannot hand the driver two different codes.
+  async claimReferralCode(userId: string, referral_code: string) {
+    const { count } = await prisma.driverProfile.updateMany({ where: { userId, referral_code: null }, data: { referral_code } });
+
+    return count === 1;
+  }
+
+  async userIdsWithLicence(license_number: string, excludeUserId: string) {
+    const rows = await prisma.driverProfile.findMany({
+      where: { license_number: { equals: license_number, mode: "insensitive" }, userId: { not: excludeUserId } },
+      select: { userId: true },
+    });
+
+    return rows.map(row => row.userId);
+  }
+
   async findByUserIdWithUserState(userId: string) {
     return prisma.driverProfile.findUnique({
       where: { userId },

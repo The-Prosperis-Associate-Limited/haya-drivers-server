@@ -32,6 +32,12 @@ export class PayoutRepository {
     return { payouts, total };
   }
 
+  async sumForUser(userId: string, statuses: $Enums.PayoutStatus[]) {
+    const result = await prisma.payout.aggregate({ where: { userId, status: { in: statuses } }, _sum: { amount_minor: true } });
+
+    return result._sum.amount_minor ?? 0;
+  }
+
   async hasOpenPayout(userId: string) {
     const open = await prisma.payout.count({ where: { userId, status: { in: ["REQUESTED", "PROCESSING"] } } });
 

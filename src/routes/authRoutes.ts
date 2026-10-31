@@ -30,6 +30,7 @@ authRouter.get("/google/callback/validate-session/:tokenId", validateGoogleVerif
 authRouter.post("/google/native", credentialLimiter, authController.googleNativeSignIn);
 
 authRouter.post("/create-user", credentialLimiter, authController.createUser);
+authRouter.get("/referral-codes/:code", credentialLimiter, authController.previewReferralCode);
 authRouter.post("/login", credentialLimiter, authController.loginUser);
 authRouter.post("/token", validateRefreshToken, authController.generateNewToken);
 

@@ -20,11 +20,11 @@ export class WalletTransactionRepository {
     return Math.abs(result._sum.amount_minor ?? 0);
   }
 
-  async findForWallet(walletId: string, params: { page: number; limit: number; status?: $Enums.WalletTransactionStatus; type?: $Enums.WalletTransactionType }) {
+  async findForWallet(walletId: string, params: { page: number; limit: number; status?: $Enums.WalletTransactionStatus; type?: $Enums.WalletTransactionType | $Enums.WalletTransactionType[] }) {
     const { page, limit, status, type } = params;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.WalletTransactionWhereInput = { walletId, ...(status && { status }), ...(type && { type }) };
+    const where: Prisma.WalletTransactionWhereInput = { walletId, ...(status && { status }), ...(type && { type: Array.isArray(type) ? { in: type } : type }) };
 
     const [transactions, total] = await Promise.all([
       prisma.walletTransaction.findMany({
@@ -42,6 +42,7 @@ export class WalletTransactionRepository {
               driver: { select: { first_name: true, last_name: true } },
             },
           },
+          payout: { select: { reference: true, status: true, failure_reason: true, bankAccount: { select: { bank_name: true, account_number: true } } } },
         },
       }),
       prisma.walletTransaction.count({ where }),
@@ -84,11 +85,26 @@ export class WalletTransactionRepository {
     return result._sum.amount_minor ?? 0;
   }
 
+  async sumCreditsByType(walletId: string, type: $Enums.WalletTransactionType) {
+    const result = await prisma.walletTransaction.aggregate({
+      where: { walletId, type, amount_minor: { gt: 0 }, status: { not: "REVERSED" } },
+      _sum: { amount_minor: true },
+    });
+
+    return result._sum.amount_minor ?? 0;
+  }
+
   async markAvailable(ids: string[]) {
     return prisma.walletTransaction.updateMany({
       where: { id: { in: ids } },
       data: { status: "AVAILABLE" },
     });
+  }
+
+  async markReversedIfPending(id: string) {
+    const { count } = await prisma.walletTransaction.updateMany({ where: { id, status: "PENDING" }, data: { status: "REVERSED" } });
+
+    return count ? prisma.walletTransaction.findUnique({ where: { id }, select: { id: true, walletId: true } }) : null;
   }
 
   async findDuePending(now: Date) {

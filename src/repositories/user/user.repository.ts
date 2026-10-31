@@ -14,6 +14,10 @@ export class UserRepository {
     return prisma.user.findUnique({ where: { id }, select });
   }
 
+  async findManyByIds<S extends Prisma.UserSelect>(ids: string[], select: S) {
+    return prisma.user.findMany({ where: { id: { in: ids } }, select });
+  }
+
   async findUniqueUser(where: Prisma.UserWhereUniqueInput, select?: Prisma.UserSelect) {
     return prisma.user.findUnique({ where, select });
   }

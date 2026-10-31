@@ -5,6 +5,7 @@ import { DriverProfileService } from "../../services/driver/driver.profile.servi
 import { DriverWorkExperienceService } from "../../services/driver/driver.workExperience.service";
 import { DriverGuarantorService } from "../../services/driver/driver.guarantor.service";
 import { DriverVerificationService } from "../../services/driver/driver.verification.service";
+import { requestContext } from "../../utils/requestContext";
 import {
   academicQualificationSchema,
   additionalInformationSchema,
@@ -138,7 +139,7 @@ export class DriverOnboardingController {
 
   submit = async (req: IUserRequest, res: Response) => {
     try {
-      const result = await this.verificationService.submit(req.userId as string);
+      const result = await this.verificationService.submit(req.userId as string, requestContext(req));
 
       res.status(200).json({ message: "Documents submitted for verification", data: result });
     } catch (error) {
