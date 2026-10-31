@@ -1,10 +1,11 @@
 import type { $Enums } from "../../generated/prisma/client";
 import { UserRepository } from "../../repositories/user/user.repository";
 import { SHORTLIST_WINDOW_HOURS } from "../../utils/shortlistWindow";
-import { surfaceUrlFor } from "../../utils/surfaceUrl";
 import { queueEmail } from "../../workers/globalEmailQueueHandler";
 import { JOB_KEY } from "../../workers/jobKeys";
 import { NotificationService } from "../shared/notification.service";
+
+const { CLIENT_URL } = process.env;
 
 interface InvitedRequest {
   reference: string;
@@ -41,7 +42,7 @@ export class ShortlistInviteService {
         reference: request.reference,
         date: request.starts_at.toDateString(),
         counterpart: request.state ?? undefined,
-        actionUrl: `${surfaceUrlFor("DRIVER")}/dashboard`,
+        actionUrl: `${CLIENT_URL}/dashboard`,
       });
     }
   }

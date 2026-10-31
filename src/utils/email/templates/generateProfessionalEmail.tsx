@@ -40,7 +40,7 @@ interface EmailTemplateProps {
   };
 }
 
-const { CLIENT_APP_URL, SUPPORT_EMAIL, EMAIL_LOGO_URL } = process.env;
+const { CLIENT_URL, SUPPORT_EMAIL, EMAIL_LOGO_URL } = process.env;
 
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
@@ -78,8 +78,7 @@ const TYPE_LABELS: Record<EmailTypes, string> = {
   general: "Notification",
 };
 
-const escapeHtml = (value: string) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+const escapeHtml = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
 const paragraphs = (text: string, style: string) =>
   text
@@ -150,12 +149,7 @@ const stepsBlock = (steps: EmailStep[]) =>
                   ${steps
                     .map((step, index) => {
                       const state = step.state ?? "upcoming";
-                      const marker =
-                        state === "done"
-                          ? { bg: "#047857", fg: "#ffffff", text: "&#10003;" }
-                          : state === "current"
-                            ? { bg: "#2f6bf6", fg: "#ffffff", text: String(index + 1) }
-                            : { bg: "#eef4ff", fg: "#2f6bf6", text: String(index + 1) };
+                      const marker = state === "done" ? { bg: "#047857", fg: "#ffffff", text: "&#10003;" } : state === "current" ? { bg: "#2f6bf6", fg: "#ffffff", text: String(index + 1) } : { bg: "#eef4ff", fg: "#2f6bf6", text: String(index + 1) };
                       const border = index === steps.length - 1 ? "" : `border-bottom:1px solid ${LINE_SOFT};`;
 
                       return `<tr>
@@ -173,10 +167,9 @@ const stepsBlock = (steps: EmailStep[]) =>
 
 const documentsBlock = (documents: EmailDocumentIssue[]) =>
   documents
-    .map(
-      (doc, index) =>
-        panel(
-          `
+    .map((doc, index) =>
+      panel(
+        `
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                   <tr>
                     <td valign="top" width="62" style="width:62px;padding:14px 0 14px 16px;">
@@ -188,8 +181,8 @@ const documentsBlock = (documents: EmailDocumentIssue[]) =>
                     </td>
                   </tr>
                 </table>`,
-          { background: "#fffbfa", border: "#fddcd8", margin: index === 0 ? "24px 0 0" : "10px 0 0" },
-        ),
+        { background: "#fffbfa", border: "#fddcd8", margin: index === 0 ? "24px 0 0" : "10px 0 0" },
+      ),
     )
     .join("");
 
@@ -228,7 +221,7 @@ export const generateProfessionalEmail = ({
 }: EmailTemplateProps): string => {
   const year = new Date().getFullYear();
   const supportEmail = SUPPORT_EMAIL ?? "support@hayadrivers.com";
-  const siteUrl = CLIENT_APP_URL ?? "https://hayadrivers.com";
+  const siteUrl = CLIENT_URL ?? "https://hayadrivers.com";
   const logoUrl = EMAIL_LOGO_URL ?? "https://www.hayadrivers.com/icons/icon-192.png";
   const toneKey = toneOverride ?? TYPE_TONES[type] ?? "info";
   const tone = TONES[toneKey];

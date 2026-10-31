@@ -7,11 +7,11 @@ import morgan from "morgan";
 import passport from "passport";
 import { passportSetup } from "./utils/passportSetup";
 
-const { CLIENT_URL, ADMIN_URL, ALLOWED_ORIGINS } = process.env;
+const { CLIENT_URL, ALLOWED_ORIGINS } = process.env;
 
 // Three surfaces plus local development. Extra origins come from the
 // environment so a new regional domain does not need a deploy of this file.
-const allowedOrigins = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", CLIENT_URL, ADMIN_URL, ...(ALLOWED_ORIGINS?.split(",").map(origin => origin.trim()) ?? [])].filter(Boolean) as string[];
+const allowedOrigins = [CLIENT_URL, ...(ALLOWED_ORIGINS?.split(",").map(origin => origin.trim()) ?? [])].filter(Boolean) as string[];
 
 export const configureApp = (app: Application) => {
   // Render terminates TLS at its proxy - without this every request would

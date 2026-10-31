@@ -2,7 +2,6 @@ import type { $Enums, Prisma } from "../generated/prisma/client";
 import { prisma } from "../helper/prisma";
 import { generateProfessionalEmail } from "../utils/email/templates/generateProfessionalEmail";
 import { transportMail } from "../utils/email/transportMail";
-import { surfaceUrlFor } from "../utils/surfaceUrl";
 import { generateRandomPassword, hashPassword } from "../helper/hashPassword";
 import { WalletRepository } from "../repositories/earnings/wallet.repository";
 import { ActivityService } from "../services/shared/activity.service";
@@ -397,7 +396,7 @@ const buildUser = (driver: SeedDriver, index: number, email: string, password: s
 });
 
 const emailCredentials = async (credentials: { name: string; email: string }[], password: string) => {
-  const signInUrl = `${surfaceUrlFor("DRIVER")}/driver/auth/signin`;
+  const signInUrl = `${process.env.CLIENT_URL}/driver/auth/signin`;
   const lines = credentials.map(({ name, email }) => `${name} - ${email}`).join("\n");
 
   const message = generateProfessionalEmail({

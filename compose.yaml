@@ -40,8 +40,6 @@ services:
       EMAIL_VERIFICATION_TOKEN: local-email-verification-secret
       GOOGLE_VERIFICATION_TOKEN: local-google-verification-secret
       CLIENT_URL: http://localhost:3000
-      CLIENT_APP_URL: http://localhost:3001
-      ADMIN_URL: http://localhost:3002
       SERVER_URL: http://localhost:8080
       SEED_DRIVER_PASSWORD: ${SEED_DRIVER_PASSWORD:-LocalDrivers123!}
       SEED_DRIVER_EMAIL_CREDENTIALS: "false"

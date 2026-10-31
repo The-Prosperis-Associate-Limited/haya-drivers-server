@@ -3,7 +3,7 @@ import { UserRepository } from "../../repositories/user/user.repository";
 import { BadRequestError, NotFoundError } from "../../helper/errors";
 import { generateReferralCode, normaliseReferralCode, REFERRAL_CODE_PATTERN } from "../../utils/referralCode";
 
-const { CLIENT_APP_URL, CLIENT_URL } = process.env;
+const { CLIENT_URL } = process.env;
 
 const INVALID_CODE = "We couldn't find that referral code. Check it with the driver who sent it, or leave it blank.";
 
@@ -35,7 +35,7 @@ export class ReferralCodeService {
   }
 
   inviteLink(code: string) {
-    return `${CLIENT_APP_URL ?? CLIENT_URL}/driver/auth/signup?ref=${encodeURIComponent(code)}`;
+    return `${CLIENT_URL}/driver/auth/signup?ref=${encodeURIComponent(code)}`;
   }
 
   async resolve(rawCode: string) {

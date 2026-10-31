@@ -5,7 +5,6 @@ import { generateGoogleVerificationToken } from "../helper/generateToken";
 import { IUserRequest } from "../interface";
 import { validateAccessToken, validateGoogleVerificationToken, validateRefreshToken } from "../middleware/validateToken";
 import { credentialLimiter, emailSendLimiter } from "../middleware/rateLimit";
-import { surfaceUrlFor } from "../utils/surfaceUrl";
 import { upload } from "../utils/multerConfig";
 
 const authRouter = Router();
@@ -23,7 +22,7 @@ authRouter.get("/google/callback", passport.authenticate("google", { session: fa
 
   const google_token = generateGoogleVerificationToken({ id: user.id, role: user.role });
 
-  res.redirect(`${surfaceUrlFor(user.role)}/auth/signin?token=${google_token}`);
+  res.redirect(`${process.env.CLIENT_URL}/auth/signin?token=${google_token}`);
 });
 
 authRouter.get("/google/callback/validate-session/:tokenId", validateGoogleVerificationToken, authController.validateOAuthSession);

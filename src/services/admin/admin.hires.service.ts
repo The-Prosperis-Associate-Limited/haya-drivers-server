@@ -10,7 +10,6 @@ import { JOB_KEY } from "../../workers/jobKeys";
 import { formatMoney } from "../../utils/money";
 import { paginate } from "../../utils/pagination";
 import { generateReference } from "../../utils/reference";
-import { surfaceUrlFor } from "../../utils/surfaceUrl";
 import { computeHireFee, ContractDurationRequiredError, type HireClientType, type HireFeeQuote } from "../../utils/hirePricing";
 import type { AssignDriverInput, DeclineHireRequestInput, GenerateInvoiceInput, HireRequestListQuery, RejectProofInput } from "../../utils/types/hireValidatorSchema";
 import { shortlistRespondBy } from "../../utils/shortlistWindow";
@@ -19,7 +18,7 @@ import { SalaryService } from "../booking/salary.service";
 import { ShortlistInviteService } from "../booking/shortlistInvite.service";
 
 // Nigeria's standard VAT unless the invoice overrides it.
-const { HIRE_VAT_PERCENT } = process.env;
+const { HIRE_VAT_PERCENT, CLIENT_URL } = process.env;
 const defaultVatPercent = Number(HIRE_VAT_PERCENT ?? 7.5);
 
 export class AdminHiresService {
@@ -188,7 +187,7 @@ export class AdminHiresService {
       event: "INVOICE_READY",
       reference: request.reference,
       amount: formatMoney(quote.total_minor, quote.currency),
-      actionUrl: `${surfaceUrlFor("CLIENT")}/dashboard/my-hire/requests/${request.reference}`,
+      actionUrl: `${CLIENT_URL}/dashboard/my-hire/requests/${request.reference}`,
     });
 
     return updated;
@@ -274,7 +273,7 @@ export class AdminHiresService {
           amount: pay,
           counterpart: booking.title,
           date: booking.starts_at.toDateString(),
-          actionUrl: `${surfaceUrlFor("DRIVER")}/dashboard/job-request/${booking.reference}`,
+          actionUrl: `${CLIENT_URL}/dashboard/job-request/${booking.reference}`,
         });
       }
     }
@@ -301,7 +300,7 @@ export class AdminHiresService {
       reference: request.reference,
       amount: formatMoney(invoice.total_minor, invoice.currency),
       counterpart: count > 1 ? `Your ${count} drivers` : [request.assignments[0].driver.first_name, request.assignments[0].driver.last_name].filter(Boolean).join(" ") || "Your driver",
-      actionUrl: `${surfaceUrlFor("CLIENT")}/dashboard/my-hire/requests/${request.reference}`,
+      actionUrl: `${CLIENT_URL}/dashboard/my-hire/requests/${request.reference}`,
     });
 
     return updated;
@@ -333,7 +332,7 @@ export class AdminHiresService {
       event: "PROOF_REJECTED",
       reference: request.reference,
       reason: data.reason,
-      actionUrl: `${surfaceUrlFor("CLIENT")}/dashboard/my-hire/requests/${request.reference}`,
+      actionUrl: `${CLIENT_URL}/dashboard/my-hire/requests/${request.reference}`,
     });
 
     return updated;

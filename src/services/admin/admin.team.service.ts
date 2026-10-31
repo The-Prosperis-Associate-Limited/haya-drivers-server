@@ -5,12 +5,13 @@ import { hashPassword } from "../../helper/hashPassword";
 import { AdminProfileRepository } from "../../repositories/user/adminProfile.repository";
 import { UserRepository } from "../../repositories/user/user.repository";
 import { generateTemporaryPassword } from "../../utils/reference";
-import { surfaceUrlFor } from "../../utils/surfaceUrl";
 import type { InviteAdminInput, UpdateAdminRoleInput } from "../../utils/types/adminValidatorSchema";
 import { queueEmail } from "../../workers/globalEmailQueueHandler";
 import { JOB_KEY } from "../../workers/jobKeys";
 import { ActivityService } from "../shared/activity.service";
 import { paginate, parsePagination } from "../../utils/pagination";
+
+const { CLIENT_URL } = process.env;
 
 export class AdminTeamService {
   private mediaService = new UserMediaService();
@@ -64,7 +65,7 @@ export class AdminTeamService {
       first_name: user.first_name ?? "there",
       inviter_name: [inviter?.first_name, inviter?.last_name].filter(Boolean).join(" ") || (inviter?.email as string) || "A Haya Drivers admin",
       role_label: this.roleLabel(data.admin_role),
-      baseUrl: surfaceUrlFor("ADMIN"),
+      baseUrl: CLIENT_URL as string,
     });
 
     await this.activityService.record(user.id, "ADMIN_INVITED", "Admin invited", `Invited as ${this.roleLabel(data.admin_role)}`);
