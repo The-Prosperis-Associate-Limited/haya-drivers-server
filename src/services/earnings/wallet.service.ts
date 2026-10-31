@@ -18,7 +18,7 @@ export class WalletService {
   async credit(userId: string, input: { amount_minor: number; currency?: string; type: $Enums.WalletTransactionType; bookingId?: string; description?: string; available_at?: Date }) {
     const wallet = await this.ensure(userId, input.currency ?? "NGN");
 
-    await this.transactionRepo.create({
+    const transaction = await this.transactionRepo.create({
       walletId: wallet.id,
       bookingId: input.bookingId,
       type: input.type,
@@ -30,13 +30,15 @@ export class WalletService {
       available_at: input.available_at ?? new Date(Date.now() + EARNINGS_HOLD_DAYS * 24 * 60 * 60 * 1000),
     });
 
-    return this.rebuildBalances(wallet.id);
+    await this.rebuildBalances(wallet.id);
+
+    return transaction;
   }
 
   async debit(userId: string, input: { amount_minor: number; type: $Enums.WalletTransactionType; payoutId?: string; description?: string }) {
     const wallet = await this.ensure(userId);
 
-    await this.transactionRepo.create({
+    const transaction = await this.transactionRepo.create({
       walletId: wallet.id,
       payoutId: input.payoutId,
       type: input.type,
@@ -50,7 +52,20 @@ export class WalletService {
       available_at: new Date(),
     });
 
-    return this.rebuildBalances(wallet.id);
+    await this.rebuildBalances(wallet.id);
+
+    return transaction;
+  }
+
+  // Only a credit still on hold can be voided outright; once it is withdrawable the money may already have left, so it is clawed back with a debit instead.
+  async voidPending(transactionId: string) {
+    const voided = await this.transactionRepo.markReversedIfPending(transactionId);
+
+    if (!voided) return false;
+
+    await this.rebuildBalances(voided.walletId);
+
+    return true;
   }
 
   /*

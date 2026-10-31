@@ -2,7 +2,7 @@ import { Readable } from "stream";
 import cloudinary from "../../utils/cloudinaryConfig";
 import { UploadApiResponse } from "cloudinary";
 
-type UploadFolder = "avatar" | "documents" | "guarantors" | "certificates" | "payments";
+export type UploadFolder = "avatar" | "documents" | "guarantors" | "certificates" | "payments";
 type ResourceType = "image" | "raw" | "video";
 
 // "auto" uploads pick the type themselves (PDFs land as image), so the stored url is the only reliable record of it.

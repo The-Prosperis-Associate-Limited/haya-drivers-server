@@ -8,6 +8,8 @@ import { formatMoney } from "../../utils/money";
 import { paginate } from "../../utils/pagination";
 import { generateReference } from "../../utils/reference";
 import type { CreateHireRequestInput, HireRequestListQuery, SubmitProofInput } from "../../utils/types/hireValidatorSchema";
+import { shortlistRespondBy } from "../../utils/shortlistWindow";
+import { ShortlistInviteService } from "../booking/shortlistInvite.service";
 
 const { ORG_BANK_NAME, ORG_ACCOUNT_NAME, ORG_ACCOUNT_NUMBER } = process.env;
 
@@ -30,15 +32,17 @@ export class ClientHireRequestsService {
   private hireRepo = new HireRequestRepository();
   private driverProfileRepo = new DriverProfileRepository();
   private userRepo = new UserRepository();
+  private shortlistInviteService = new ShortlistInviteService();
   private cloudinaryService = new CloudinaryService();
   private notificationService = new NotificationService();
 
   async create(clientId: string, data: CreateHireRequestInput) {
     if (data.driverId) {
-      const driverProfile = await this.driverProfileRepo.findByUserId(data.driverId, { verification_status: true, is_discoverable: true });
+      const driverProfile = await this.driverProfileRepo.findByUserId(data.driverId, { verification_status: true, is_discoverable: true, open_to_work: true });
 
       if (!driverProfile) throw new NotFoundError("Driver not found");
       if (driverProfile.verification_status !== "APPROVED") throw new BadRequestError("That driver is not available for hire");
+      if (!driverProfile.open_to_work) throw new BadRequestError("That driver isn't taking new jobs right now");
 
       const existing = await this.hireRepo.findOpenForClientAndDriver(clientId, data.driverId);
 
@@ -49,11 +53,17 @@ export class ClientHireRequestsService {
       ...data,
       clientId,
       reference: generateReference("HRQ"),
-      // A named driver is also the first assignment; concierge starts empty.
-      ...(data.driverId && { assignments: { create: { driverId: data.driverId } } }),
+      // A named driver is the first shortlisted candidate, on the same reply window as one an admin adds.
+      ...(data.driverId && { assignments: { create: { driverId: data.driverId, respond_by: shortlistRespondBy() } } }),
     });
 
-    await this.notifyAdmins(clientId, "New hire request", `${request.reference}: ${data.driverId ? "a specific driver was requested" : `concierge request for ${data.drivers_needed} driver(s)`}. Review and invoice it.`);
+    if (data.driverId) await this.shortlistInviteService.invite(request, data.driverId, { requestedByName: true });
+
+    await this.notifyAdmins(
+      clientId,
+      "New hire request",
+      `${request.reference}: ${data.driverId ? "a specific driver was requested and has been asked to confirm availability" : `concierge request for ${data.drivers_needed} driver(s)`}. Review and invoice it.`,
+    );
 
     return request;
   }

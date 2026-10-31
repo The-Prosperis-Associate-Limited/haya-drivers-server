@@ -113,6 +113,11 @@ model User {
   reviewed_documents     DriverDocument[]     @relation("DocumentReviewer")
   reviewed_verifications DriverVerification[] @relation("VerificationReviewer")
 
+  referrals_made     Referral[]      @relation("ReferralsMade")
+  referred_by        Referral?       @relation("ReferredBy")
+  reviewed_referrals Referral[]      @relation("ReferralReviewer")
+  account_signals    AccountSignal[]
+
   @@index([role, account_status])
 }
 

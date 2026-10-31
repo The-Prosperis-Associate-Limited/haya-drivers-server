@@ -6,7 +6,7 @@ import { UserRepository } from "../../repositories/user/user.repository";
 import { UserErasureRepository } from "../../repositories/user/userErasure.repository";
 import { BadRequestError, NotFoundError } from "../../helper/errors";
 import { ActivityService } from "../shared/activity.service";
-import { CloudinaryService } from "../shared/cloudinary.service";
+import { UserMediaService } from "../shared/userMedia.service";
 import { WalletService } from "../earnings/wallet.service";
 
 export class AdminUserErasureService {
@@ -17,7 +17,7 @@ export class AdminUserErasureService {
   private payoutRepo = new PayoutRepository();
   private walletRepo = new WalletRepository();
   private walletService = new WalletService();
-  private cloudinaryService = new CloudinaryService();
+  private mediaService = new UserMediaService();
   private activityService = new ActivityService();
 
   /*
@@ -37,6 +37,7 @@ export class AdminUserErasureService {
 
     try {
       await this.userRepo.deleteUser(id);
+      await this.mediaService.purge(id, user.role, { includePayments: true });
 
       return { id, outcome: "DELETED" as const };
     } catch (error) {
@@ -53,13 +54,7 @@ export class AdminUserErasureService {
 
     await this.erasureRepo.anonymise(id);
 
-    const results = await Promise.allSettled(
-      (["avatar", "documents", "guarantors", "certificates"] as const).map(folder => this.cloudinaryService.deleteFolder(id, role, folder)),
-    );
-
-    for (const result of results) {
-      if (result.status === "rejected") console.error(`Anonymise ${id}: Cloudinary cleanup failed`, result.reason);
-    }
+    await this.mediaService.purge(id, role);
 
     await this.activityService.record(id, "ACCOUNT_ANONYMISED", "Account anonymised", "Personal data erased; booking and payment records kept");
 

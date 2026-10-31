@@ -36,13 +36,19 @@ export const initializeSocket = function (server: HttpServer): TypedServer {
 
       socket.join(id);
 
-      if (role === "ADMIN") socket.join("support-pool");
+      // The admin console's "Team on shift" reads this room, so tell the pool whenever its membership changes.
+      if (role === "ADMIN") {
+        socket.join("support-pool");
+        io.to("support-pool").emit("presence-changed");
+      }
     } catch {
       socket.disconnect();
       return;
     }
 
-    socket.on("disconnect", () => {});
+    socket.on("disconnect", () => {
+      if (socket.data.userRole === "ADMIN") io.to("support-pool").emit("presence-changed");
+    });
   });
 
   return io;

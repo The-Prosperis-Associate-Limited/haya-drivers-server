@@ -94,8 +94,13 @@ model DriverProfile {
   verification_status DriverVerificationStatus @default(UNSUBMITTED)
   is_discoverable     Boolean                  @default(false)
 
+  // Off hides the driver from search and direct requests; running engagements are untouched.
+  open_to_work Boolean @default(true)
+
   // 0-100. Recomputed by TrustScoreService, never written by hand.
   trust_score Int @default(0)
+
+  referral_code String? @unique
 
   onboarding_step         OnboardingStep @default(PERSONAL_INFORMATION)
   onboarding_completed_at DateTime?

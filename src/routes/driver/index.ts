@@ -5,8 +5,11 @@ import { dashboardRouter } from "./dashboard";
 import { earningsRouter } from "./earnings";
 import { onboardingRouter } from "./onboarding";
 import { profileRouter } from "./profile";
+import { referralRouter } from "./referrals";
 import { reviewRouter } from "./reviews";
 import { shortlistRouter } from "./shortlists";
+import { walletRouter } from "./wallet";
+import { SearchController } from "../../controllers/search.controller";
 
 const driverRouter = Router();
 
@@ -20,7 +23,10 @@ driverRouter.use("/profile", profileRouter);
 driverRouter.use("/dashboard", dashboardRouter);
 driverRouter.use("/job-requests", bookingRouter);
 driverRouter.use("/earnings", earningsRouter);
+driverRouter.use("/wallet", walletRouter);
+driverRouter.use("/referrals", referralRouter);
 driverRouter.use("/shortlists", shortlistRouter);
 driverRouter.use("/reviews", reviewRouter);
+driverRouter.get("/search", new SearchController().driver);
 
 export { driverRouter };

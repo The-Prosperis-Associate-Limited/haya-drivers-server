@@ -10,6 +10,10 @@ import { BadRequestError } from "../../helper/errors";
 import { RegisterInput } from "../../utils/types/authValidatorSchema";
 import { ActivityService } from "../shared/activity.service";
 import { AuthOtpService } from "./auth.otp.service";
+import type { RequestContext } from "../../utils/requestContext";
+import { AccountSignalService } from "../referral/accountSignal.service";
+import { ReferralCodeService } from "../referral/referral.code.service";
+import { ReferralService } from "../referral/referral.service";
 
 export class AuthRegistrationService {
   private userRepo = new UserRepository();
@@ -18,13 +22,19 @@ export class AuthRegistrationService {
   private walletRepo = new WalletRepository();
   private activityService = new ActivityService();
   private otpService = new AuthOtpService();
+  private signalService = new AccountSignalService();
+  private referralCodeService = new ReferralCodeService();
+  private referralService = new ReferralService();
 
-  async register(data: RegisterInput) {
+  async register(data: RegisterInput, context?: RequestContext) {
     const existingUser = await this.userRepo.findByEmail(data.email);
 
     if (existingUser) throw new BadRequestError("An account with this email already exists");
 
-    const { confirm_password: _, client, accepted_terms, full_name, client_type, organisation_name, ...rest } = data;
+    const { confirm_password: _, client, accepted_terms, full_name, client_type, organisation_name, referral_code, ...rest } = data;
+
+    // Resolved before the account exists, so a mistyped code is a form error rather than an account created without its referral.
+    const referral = rest.role === "DRIVER" && referral_code ? await this.referralCodeService.resolve(referral_code) : null;
 
     const [first_name, ...remaining] = full_name.trim().split(/\s+/);
 
@@ -56,6 +66,15 @@ export class AuthRegistrationService {
     }
 
     await this.activityService.record(user.id, "ACCOUNT_CREATED", "Account created");
+    await this.signalService.record(user.id, "SIGNUP", context);
+
+    if (referral) {
+      try {
+        await this.referralService.attach(user.id, referral.code, "SIGNUP", context);
+      } catch (error) {
+        console.error("Referral could not be attached at signup", error);
+      }
+    }
 
     // The design verifies with a 6-digit code on both surfaces, so a code goes
     // out by default; the emailed link stays available for anyone who prefers it.
@@ -77,7 +96,7 @@ export class AuthRegistrationService {
 
     if (existingUser) throw new BadRequestError("An account with this email already exists");
 
-    const { confirm_password: _, client: __, accepted_terms: ___, full_name, ...rest } = data;
+    const { confirm_password: _, client: __, accepted_terms: ___, referral_code: ____, full_name, ...rest } = data;
     const [first_name, ...remaining] = full_name.trim().split(/\s+/);
 
     return this.userRepo.createUser({

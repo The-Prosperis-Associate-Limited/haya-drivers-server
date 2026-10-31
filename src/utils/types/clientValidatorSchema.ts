@@ -12,3 +12,14 @@ export const clientPreferencesSchema = z.object({
 });
 
 export type ClientPreferencesInput = z.infer<typeof clientPreferencesSchema>;
+
+export const onboardingInsightsSchema = z.object({
+  location: z.string().trim().max(120).optional(),
+  budget: z.coerce.number().int().positive().optional(),
+  categories: z.preprocess(
+    value => (typeof value === "string" && value ? value.split(",") : undefined),
+    z.array(z.enum(["CONTRACT", "PRIVATE", "CORPORATE", "EXECUTIVE", "SPY", "EXPATRIATE"])).optional(),
+  ),
+});
+
+export type OnboardingInsightsInput = z.infer<typeof onboardingInsightsSchema>;

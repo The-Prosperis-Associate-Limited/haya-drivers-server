@@ -19,6 +19,9 @@ import { AuthSessionService } from "../services/auth/auth.session.service";
 import { AuthPasswordService } from "../services/auth/auth.password.service";
 import { AuthOAuthService } from "../services/auth/auth.oauth.service";
 import { ProfileService } from "../services/auth/profile.service";
+import { AccountSignalService } from "../services/referral/accountSignal.service";
+import { ReferralCodeService } from "../services/referral/referral.code.service";
+import { requestContext } from "../utils/requestContext";
 
 export class AuthController {
   private registrationService = new AuthRegistrationService();
@@ -26,6 +29,8 @@ export class AuthController {
   private passwordService = new AuthPasswordService();
   private oauthService = new AuthOAuthService();
   private profileService = new ProfileService();
+  private signalService = new AccountSignalService();
+  private referralCodeService = new ReferralCodeService();
 
   testApi = async (_req: Request, res: Response) => {
     res.status(200).json({ message: "SERVERS ARE LIVE!!!" });
@@ -35,7 +40,7 @@ export class AuthController {
     try {
       const data = registerValidationSchema.parse(req.body);
 
-      await this.registrationService.register(data);
+      await this.registrationService.register(data, requestContext(req));
 
       res.status(201).json({ message: "Account created successfully. Check your email to verify it." });
     } catch (error) {
@@ -48,6 +53,8 @@ export class AuthController {
       const { email, password } = loginValidationSchema.parse(req.body);
 
       const { user, tokens } = await this.sessionService.login(email, password);
+
+      await this.signalService.record(user.id, "LOGIN", requestContext(req));
 
       res.status(200).json({ message: "Login Successful", data: { user, token: tokens } });
     } catch (error) {
@@ -184,6 +191,8 @@ export class AuthController {
 
       const { user, tokens } = await this.oauthService.nativeSignIn(idToken, role);
 
+      await this.signalService.record(user.id, "LOGIN", requestContext(req));
+
       res.status(200).json({ message: "Login Successful", data: { user, token: tokens } });
     } catch (error) {
       handleErrors({ res, error });
@@ -194,7 +203,19 @@ export class AuthController {
     try {
       const { user, tokens } = await this.oauthService.validateOAuthSession(req.userId as string);
 
+      await this.signalService.record(user.id, "LOGIN", requestContext(req));
+
       res.status(200).json({ message: "Login Successful", data: { user, token: tokens } });
+    } catch (error) {
+      handleErrors({ res, error });
+    }
+  };
+
+  previewReferralCode = async (req: Request, res: Response) => {
+    try {
+      const result = await this.referralCodeService.preview(String(req.params.code));
+
+      res.status(200).json({ message: "Referral code is valid", data: result });
     } catch (error) {
       handleErrors({ res, error });
     }

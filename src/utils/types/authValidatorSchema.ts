@@ -1,5 +1,6 @@
 import z from "zod";
 import { isDisposableEmailDomain } from "../emailDomain";
+import { referralCodeField } from "./referralValidatorSchema";
 
 // Mirrors the four rules the signup screen lists under the password field.
 const passwordValidationRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&#^()\-_=+.])[A-Za-z\d@$!%*?&#^()\-_=+.]{8,}$/;
@@ -42,6 +43,7 @@ export const registerValidationSchema = z
     // sends a code, because a link that opens the web app cannot finish a
     // signup still on screen in the app.
     client: z.enum(["web", "mobile"]).optional().default("web"),
+    referral_code: z.preprocess(value => (typeof value === "string" && !value.trim() ? undefined : value), referralCodeField.optional()),
   })
   .superRefine((data, ctx) => {
     if (data.accepted_terms !== true) {

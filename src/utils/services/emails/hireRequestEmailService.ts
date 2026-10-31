@@ -37,7 +37,7 @@ const COPY: Record<HireRequestEmailData["event"], { subject: (data: HireRequestE
     subject: () => "You've been hired",
     title: "You've been hired",
     body: data =>
-      `Congratulations - a client has hired you for ${data.counterpart ?? "a new engagement"}${data.date ? ` starting ${data.date}` : ""}. ${data.amount ? `${data.amount} is on its way to your earnings balance. ` : ""}Check the engagement details and be ready for day one.`,
+      `Congratulations - a client has hired you for ${data.counterpart ?? "a new engagement"}${data.date ? ` starting ${data.date}` : ""}. ${data.amount ? `Your pay is ${data.amount}, paid to you directly by the client - confirm each payment in the app when it arrives. ` : ""}Check the engagement details and be ready for day one.`,
     buttonText: "View engagement",
   },
   SHORTLISTED: {

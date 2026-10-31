@@ -61,6 +61,13 @@ export const hireRequestListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(10),
   status: z.enum(["PENDING_REVIEW", "INVOICED", "PAYMENT_REVIEW", "PAID", "DECLINED", "CANCELLED"]).optional(),
+  q: z.string().trim().min(1).max(80).optional(),
+});
+
+export const invoiceListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+  status: z.enum(["UNPAID", "PAYMENT_REVIEW", "PAID", "VOID"]).optional(),
 });
 
 export type CreateHireRequestInput = z.infer<typeof createHireRequestSchema>;

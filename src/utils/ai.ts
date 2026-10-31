@@ -34,7 +34,7 @@ const buildAttempts = (): Attempt[] => {
         url: OPENROUTER_URL,
         apiKey: openRouterKey,
         model,
-        extraHeaders: { "HTTP-Referer": process.env.CLIENT_APP_URL ?? "https://hayadrivers.com", "X-Title": "Haya Drivers" },
+        extraHeaders: { "HTTP-Referer": process.env.CLIENT_URL ?? "https://hayadrivers.com", "X-Title": "Haya Drivers" },
       });
     }
   }

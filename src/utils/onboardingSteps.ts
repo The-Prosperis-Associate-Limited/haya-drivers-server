@@ -33,3 +33,14 @@ export const DOCUMENT_LABELS: Record<$Enums.DocumentType, string> = {
   GUARANTOR_PASSPORT: "Guarantor passport photo",
   GUARANTOR_NIN_SLIP: "Guarantor NIN slip",
 };
+
+export const ONBOARDING_STEP_LABELS: Record<$Enums.OnboardingStep, string> = {
+  PERSONAL_INFORMATION: "step 1 of 8 (Personal information)",
+  EXPERIENCE: "step 2 of 8 (Experience)",
+  ACADEMIC_QUALIFICATION: "step 3 of 8 (Academic qualification)",
+  WORK_EXPERIENCE: "step 4 of 8 (Work experience)",
+  GUARANTORS: "step 5 of 8 (Guarantors)",
+  ADDITIONAL_INFORMATION: "step 6 of 8 (Additional information)",
+  DOCUMENTS: "step 7 of 8 (Documents)",
+  REVIEW: "step 8 of 8 (Review)",
+};

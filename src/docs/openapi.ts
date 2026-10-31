@@ -14,6 +14,7 @@ import * as driverSchemas from "../utils/types/driverValidatorSchema";
 import * as earningsSchemas from "../utils/types/earningsValidatorSchema";
 import * as hireSchemas from "../utils/types/hireValidatorSchema";
 import * as notificationSchemas from "../utils/types/notificationValidatorSchema";
+import * as referralSchemas from "../utils/types/referralValidatorSchema";
 import * as requestSchemas from "../utils/types/requestValidatorSchema";
 import * as ticketSchemas from "../utils/types/ticketValidatorSchema";
 import * as trainingSchemas from "../utils/types/trainingValidatorSchema";
@@ -64,6 +65,7 @@ const ZOD_SCHEMAS = new Map(
     earningsSchemas,
     hireSchemas,
     notificationSchemas,
+    referralSchemas,
     requestSchemas,
     ticketSchemas,
     trainingSchemas,

@@ -7,10 +7,9 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "../../helper/err
 import { CustomJwtPayload } from "../../interface";
 import { queueEmail } from "../../workers/globalEmailQueueHandler";
 import { JOB_KEY } from "../../workers/jobKeys";
-import { surfaceUrlFor } from "../../utils/surfaceUrl";
 import { AuthOtpService } from "./auth.otp.service";
 
-const { EMAIL_VERIFICATION_TOKEN } = process.env;
+const { EMAIL_VERIFICATION_TOKEN, CLIENT_URL } = process.env;
 
 export class AuthSessionService {
   private userRepo = new UserRepository();
@@ -106,7 +105,7 @@ export class AuthSessionService {
     if (!user) throw new NotFoundError("Account not found");
 
     const name = encodeURIComponent(user.first_name ?? "there");
-    const baseUrl = surfaceUrlFor(user.role);
+    const baseUrl = CLIENT_URL as string;
 
     if (user.has_validated_email) return `${baseUrl}/auth/email-verified?name=${name}`;
 
@@ -146,7 +145,7 @@ export class AuthSessionService {
       await queueEmail(JOB_KEY.EMAIL_VERIFIED, {
         email: user.email,
         first_name: user.first_name ?? "there",
-        baseUrl: surfaceUrlFor(user.role),
+        baseUrl: CLIENT_URL as string,
       });
     }
 

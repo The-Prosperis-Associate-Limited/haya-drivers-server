@@ -2,6 +2,7 @@ import type { $Enums, Prisma } from "../../generated/prisma/client";
 import { NotificationRepository } from "../../repositories/platform/notification.repository";
 import { parsePagination, paginate } from "../../utils/pagination";
 import type { NotificationPreferenceInput } from "../../utils/types/notificationValidatorSchema";
+import type { PreferenceKey } from "../../utils/notificationPreferences";
 
 export class NotificationService {
   private notificationRepo = new NotificationRepository();
@@ -15,8 +16,14 @@ export class NotificationService {
     actionUrl?: string;
     actionLabel?: string;
     metadata?: Prisma.InputJsonValue;
+    essential?: boolean;
   }) {
     return this.notificationRepo.sendNotificationToUser({ ...data, isSystemGenerated: !data.senderId });
+  }
+
+  // Emails in a category follow the same switch as its in-app notifications.
+  async wants(userId: string, key: PreferenceKey) {
+    return this.notificationRepo.wants(userId, key);
   }
 
   async getPreferences(userId: string) {
