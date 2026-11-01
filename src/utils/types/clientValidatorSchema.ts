@@ -9,6 +9,12 @@ export const clientPreferencesSchema = z.object({
   primary_location: z.string().trim().min(2).optional(),
   hiring_timeline: z.enum(["IMMEDIATELY", "WITHIN_TWO_WEEKS", "THIS_MONTH", "EXPLORING"]).optional(),
   monthly_budget: z.number().int().positive().optional(),
+  // Only drivers the client hires ever see it - it reaches them through the booking.
+  phone_no: z
+    .string()
+    .trim()
+    .regex(/^\+[1-9]\d{7,14}$/, "Enter the number in international format, e.g. +2348012345678")
+    .optional(),
 });
 
 export type ClientPreferencesInput = z.infer<typeof clientPreferencesSchema>;

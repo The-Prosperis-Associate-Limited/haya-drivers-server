@@ -24,6 +24,8 @@ export class AdminUsersService {
       search: query.search as string | undefined,
       role: query.role as $Enums.UserRole | undefined,
       status: query.status as $Enums.AccountStatus | undefined,
+      // The hires shortlist picker only ever wants drivers who can be assigned.
+      verifiedDriversOnly: query.verified === "true",
       select: {
         id: true,
         first_name: true,
@@ -37,7 +39,8 @@ export class AdminUsersService {
         anonymised_at: true,
         lastLogin: true,
         createdAt: true,
-        driver_profile: { select: { driver_type: true, trust_score: true, verification_status: true } },
+        state_of_residence: true,
+        driver_profile: { select: { driver_type: true, trust_score: true, verification_status: true, expected_monthly_rate: true, rate_currency: true, open_to_work: true } },
         client_profile: { select: { client_type: true, organisation_name: true } },
       },
     });

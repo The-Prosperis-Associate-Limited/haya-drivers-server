@@ -1,6 +1,7 @@
 import { DriverDocumentRepository } from "../../repositories/driver/driverDocument.repository";
 import { DriverProfileRepository } from "../../repositories/driver/driverProfile.repository";
 import { DriverVerificationRepository } from "../../repositories/driver/driverVerification.repository";
+import { GuarantorRepository } from "../../repositories/driver/guarantor.repository";
 import { UserRepository } from "../../repositories/user/user.repository";
 import { BadRequestError, NotFoundError } from "../../helper/errors";
 import { DOCUMENT_LABELS } from "../../utils/onboardingSteps";
@@ -19,6 +20,7 @@ export class DriverVerificationService {
   private verificationRepo = new DriverVerificationRepository();
   private driverProfileRepo = new DriverProfileRepository();
   private documentRepo = new DriverDocumentRepository();
+  private guarantorRepo = new GuarantorRepository();
   private userRepo = new UserRepository();
   private documentService = new DriverDocumentService();
   private notificationService = new NotificationService();
@@ -52,11 +54,23 @@ export class DriverVerificationService {
   }
 
   async submit(userId: string, context?: RequestContext) {
-    const profile = await this.driverProfileRepo.findByUserId(userId, { verification_status: true });
+    const profile = await this.driverProfileRepo.findByUserId(userId, {
+      verification_status: true,
+      expected_monthly_rate: true,
+      availability: true,
+      id: true,
+    });
 
     if (!profile) throw new NotFoundError("Driver profile not found");
     if (profile.verification_status === "PENDING") throw new BadRequestError("Your documents are already being reviewed");
     if (profile.verification_status === "APPROVED") throw new BadRequestError("You are already verified");
+    if (!profile.expected_monthly_rate || !Array.isArray(profile.availability) || !profile.availability.length) {
+      throw new BadRequestError("Set your monthly rate and working hours on the experience step before submitting");
+    }
+    const [guarantorCount, reference] = await Promise.all([this.guarantorRepo.countForDriver(profile.id), this.guarantorRepo.findReferenceByDriver(profile.id)]);
+    if (!guarantorCount || !reference) {
+      throw new BadRequestError("Add your guarantor and previous employer reference before submitting");
+    }
 
     await this.documentService.assertRequiredDocumentsPresent(userId);
 

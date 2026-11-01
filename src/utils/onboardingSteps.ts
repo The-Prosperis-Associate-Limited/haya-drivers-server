@@ -21,9 +21,8 @@ export const advanceStep = (current: $Enums.OnboardingStep, completed: $Enums.On
   return ONBOARDING_ORDER.indexOf(next) > ONBOARDING_ORDER.indexOf(current) ? next : current;
 };
 
-// The three the review screen refuses to submit without. Proof of address and
-// the guarantor files are collected but do not block a first submission.
-export const REQUIRED_DOCUMENTS: $Enums.DocumentType[] = ["NIN_SLIP", "PASSPORT_PHOTO", "DRIVERS_LICENCE"];
+// Every document blocks submission - the owner made the guarantor files and proof of address mandatory on 1 Nov 2026.
+export const REQUIRED_DOCUMENTS: $Enums.DocumentType[] = ["NIN_SLIP", "PASSPORT_PHOTO", "DRIVERS_LICENCE", "PROOF_OF_ADDRESS", "GUARANTOR_PASSPORT", "GUARANTOR_NIN_SLIP"];
 
 export const DOCUMENT_LABELS: Record<$Enums.DocumentType, string> = {
   NIN_SLIP: "NIN slip",
