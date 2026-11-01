@@ -67,8 +67,8 @@ export class UserRepository {
     });
   }
 
-  async findMany(params: { page: number; limit: number; search?: string; role?: $Enums.UserRole; status?: $Enums.AccountStatus; select?: Prisma.UserSelect }) {
-    const { page, limit, search, role, status, select } = params;
+  async findMany(params: { page: number; limit: number; search?: string; role?: $Enums.UserRole; status?: $Enums.AccountStatus; verifiedDriversOnly?: boolean; select?: Prisma.UserSelect }) {
+    const { page, limit, search, role, status, verifiedDriversOnly, select } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.UserWhereInput = { role: role ?? { not: "ADMIN" } };
@@ -78,6 +78,7 @@ export class UserRepository {
     }
 
     if (status) where.account_status = status;
+    if (verifiedDriversOnly) where.driver_profile = { is: { verification_status: "APPROVED" } };
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({

@@ -27,6 +27,12 @@ export const personalInformationSchema = z.object({
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
 });
 
+const availabilitySlotSchema = z.object({
+  day_range: z.string().trim().min(1, "Name the day or range"),
+  start: z.string().trim().min(1, "Set a start time"),
+  end: z.string().trim().min(1, "Set an end time"),
+});
+
 export const experienceSchema = z.object({
   years_of_experience: z.coerce.number().int().min(0, "Years of experience cannot be negative").max(60),
   driver_type: z.enum(["CORPORATE_DRIVER", "PRIVATE_DRIVER", "LOGISTICS_DRIVER", "RIDE_HAILING_DRIVER", "HEAVY_DUTY_DRIVER"]),
@@ -40,6 +46,9 @@ export const experienceSchema = z.object({
 
     return value >= oneYearOut;
   }, "Your licence must be valid for at least one more year"),
+  // Required here so no verified driver reaches a shortlist without a rate - invoicing needs one.
+  expected_monthly_rate: z.coerce.number().int().min(1, "Enter what you expect to earn each month"),
+  availability: z.array(availabilitySlotSchema).min(1, "Add the hours you work").max(7, "Seven rows cover every day of the week"),
 });
 
 // Optional by design - the screen says so, and a driver without a degree is
