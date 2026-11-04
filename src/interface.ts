@@ -10,7 +10,6 @@ export interface IUserRequest extends Request {
   refreshToken?: string;
   role?: Role;
   adminRole?: AdminRole;
-  rawBody?: string;
 }
 
 export interface CustomJwtPayload extends JwtPayload {

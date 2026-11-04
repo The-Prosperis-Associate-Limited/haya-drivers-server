@@ -2,6 +2,8 @@ import type { $Enums } from "../../generated/prisma/client";
 import { PayoutRepository } from "../../repositories/earnings/payout.repository";
 import { WalletTransactionRepository } from "../../repositories/earnings/walletTransaction.repository";
 import { paginate, parsePagination } from "../../utils/pagination";
+import { PAYOUT_STEP_MINOR, withdrawableMinor } from "../../utils/payoutRules";
+import { REFERRAL_CONFIG } from "../../utils/referralConfig";
 import { WalletService } from "../earnings/wallet.service";
 
 const TYPE_FILTERS: Record<string, $Enums.WalletTransactionType[]> = {
@@ -24,6 +26,8 @@ export class DriverWalletService {
       this.payoutRepo.hasOpenPayout(userId),
     ]);
 
+    const toNextStep = PAYOUT_STEP_MINOR - (Math.max(0, wallet.available_minor) % PAYOUT_STEP_MINOR);
+
     return {
       currency: wallet.currency,
       available_minor: wallet.available_minor,
@@ -32,7 +36,10 @@ export class DriverWalletService {
       withdrawn_minor: withdrawn,
       referral_earned_minor: referralEarned,
       has_open_payout: open,
-      minimum_payout_minor: Math.round(Number(process.env.MINIMUM_PAYOUT_MAJOR ?? 1000) * 100),
+      payout_step_minor: PAYOUT_STEP_MINOR,
+      withdrawable_minor: withdrawableMinor(wallet.available_minor),
+      to_next_step_minor: toNextStep,
+      referrals_to_next_step: Math.ceil(Math.max(0, toNextStep - wallet.pending_minor) / REFERRAL_CONFIG.rewardMinor),
     };
   }
 

@@ -9,7 +9,6 @@ import { driverRouter } from "./driver";
 import { notificationRouter } from "./notificationRoutes";
 import { pushRouter } from "./pushRoutes";
 import { ticketRouter } from "./ticketRoutes";
-import { webhookRouter } from "./webhookRoutes";
 
 export const registerRoutes = (app: Application) => {
   app.get("/api", (_req: Request, res: Response) => res.status(200).json({ message: "SERVERS ARE LIVE!!!" }));
@@ -23,7 +22,6 @@ export const registerRoutes = (app: Application) => {
   app.use("/api/tickets", ticketRouter);
   app.use("/api/chat", chatRouter);
   app.use("/api/analytics", analyticsRouter);
-  app.use("/webhooks", webhookRouter);
   app.use("/api/docs", createDocsRouter(app));
 
   app.use("*", (_req: Request, res: Response) => {
