@@ -158,7 +158,6 @@ const describe = (endpoint: Endpoint, source: RouteSource | undefined) => {
     role && `**Role:** ${role}`,
     writeDomain && `**Admin write access:** an admin role permitted to change \`${writeDomain}\`.`,
     rateLimit && `**Rate limit:** ${rateLimit}.`,
-    endpoint.path.startsWith("/webhooks") && "Called by the payment provider and authenticated by its signature header, not a token.",
     ...names.map((name) => GUARD_NOTES[name]),
     source && `**Handler:** \`${source.handler}\``,
   ]

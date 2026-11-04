@@ -5,6 +5,7 @@ import { DriverProfileRepository } from "../../repositories/driver/driverProfile
 import { BadRequestError, NotFoundError } from "../../helper/errors";
 import { paginate, parsePagination } from "../../utils/pagination";
 import { REFERRAL_CONFIG } from "../../utils/referralConfig";
+import { PAYOUT_STEP_MINOR } from "../../utils/payoutRules";
 import type { RequestContext } from "../../utils/requestContext";
 import { ONBOARDING_STEP_LABELS } from "../../utils/onboardingSteps";
 import { ActivityService } from "../shared/activity.service";
@@ -103,6 +104,7 @@ export class ReferralService {
       reward_minor: REFERRAL_CONFIG.rewardMinor,
       currency: REFERRAL_CONFIG.currency,
       hold_hours: REFERRAL_CONFIG.holdHours,
+      payout_step_minor: PAYOUT_STEP_MINOR,
       stats: {
         invited: count("SIGNED_UP", "REWARDED", "HELD", "REJECTED", "REVERSED"),
         invited_this_month: thisMonth,

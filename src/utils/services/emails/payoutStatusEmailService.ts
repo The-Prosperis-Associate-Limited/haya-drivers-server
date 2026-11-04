@@ -15,9 +15,9 @@ export interface PayoutStatusEmailData {
 
 const COPY: Record<PayoutStatusEmailData["status"], { title: string; body: (data: PayoutStatusEmailData) => string }> = {
   REQUESTED: {
-    title: "Withdrawal on its way",
+    title: "Withdrawal requested",
     body: data =>
-      `We have received your withdrawal request for ${data.amount}. It is headed to your ${data.bankName} account ending ${data.accountNumber.slice(-4)} and usually lands within one business day.`,
+      `We have received your withdrawal request for ${data.amount}. Our team will transfer it to your ${data.bankName} account ending ${data.accountNumber.slice(-4)} and we'll email you as soon as it has been sent.`,
   },
   PAID: {
     title: "Withdrawal paid",
@@ -26,7 +26,7 @@ const COPY: Record<PayoutStatusEmailData["status"], { title: string; body: (data
   FAILED: {
     title: "Withdrawal failed",
     body: data =>
-      `We could not complete your withdrawal of ${data.amount}. ${data.failureReason ?? "Your bank rejected the transfer."}\n\nCheck your account details, or add a different account, then try again.`,
+      `We could not complete your withdrawal of ${data.amount}. ${data.failureReason ?? "The transfer did not go through."}\n\nThe money is back in your wallet. Check your account details, or add a different account, then try again.`,
   },
 };
 

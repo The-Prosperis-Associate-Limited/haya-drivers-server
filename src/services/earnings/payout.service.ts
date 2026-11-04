@@ -7,16 +7,15 @@ import { formatMoney, toMinorUnits } from "../../utils/money";
 import { generateReference } from "../../utils/reference";
 import { queueEmail } from "../../workers/globalEmailQueueHandler";
 import { JOB_KEY } from "../../workers/jobKeys";
+import { NIGERIAN_BANKS } from "../../utils/nigerianBanks";
 import { paginate, parsePagination } from "../../utils/pagination";
-import { resolveProvider } from "../payments/provider.registry";
+import { PAYOUT_STEP_MINOR, withdrawableMinor } from "../../utils/payoutRules";
 import { ActivityService } from "../shared/activity.service";
 import { NotificationService } from "../shared/notification.service";
 import { WalletService } from "./wallet.service";
 import type { AddBankAccountInput } from "../../utils/types/earningsValidatorSchema";
 
-const { CLIENT_URL, MINIMUM_PAYOUT_MAJOR } = process.env;
-
-const minimumPayoutMinor = toMinorUnits(Number(MINIMUM_PAYOUT_MAJOR ?? 1000));
+const { CLIENT_URL } = process.env;
 
 export class PayoutService {
   private payoutRepo = new PayoutRepository();
@@ -26,66 +25,32 @@ export class PayoutService {
   private notificationService = new NotificationService();
   private activityService = new ActivityService();
 
-  async listBanks(country: string, currency: string) {
-    return resolveProvider(currency).listBanks(country);
+  listBanks() {
+    return NIGERIAN_BANKS;
   }
 
   async listBankAccounts(userId: string) {
     return this.bankAccountRepo.findForUser(userId);
   }
 
-  async resolveBankAccount(data: { bank_code: string; account_number: string; currency?: string }) {
-    const resolved = await resolveProvider(data.currency ?? "NGN").resolveAccount(data.account_number, data.bank_code);
-
-    return { account_name: resolved.account_name, account_number: data.account_number, bank_code: data.bank_code };
-  }
-
-  /*
-    The account name is never taken from the driver. It comes back from the
-    provider name-enquiry, so a typo cannot send money to someone else and the
-    name on file always matches the name at the bank.
-  */
   async addBankAccount(userId: string, data: AddBankAccountInput) {
-    const provider = resolveProvider(data.currency);
+    const bank = NIGERIAN_BANKS.find(option => option.code === data.bank_code);
 
-    const resolved = await provider.resolveAccount(data.account_number, data.bank_code);
-
-    const recipient = await provider.createTransferRecipient({
-      account_number: data.account_number,
-      bank_code: data.bank_code,
-      account_name: resolved.account_name,
-      currency: data.currency,
-    });
+    if (!bank) throw new BadRequestError("Select your bank");
 
     const isFirst = (await this.bankAccountRepo.countForUser(userId)) === 0;
 
     return this.bankAccountRepo.create({
       userId,
-      provider: provider.name as $Enums.PaymentProvider,
-      bank_code: data.bank_code,
-      bank_name: data.bank_name,
+      provider: "MANUAL",
+      bank_code: bank.code,
+      bank_name: bank.name,
       account_number: data.account_number,
-      account_name: resolved.account_name,
+      account_name: data.account_name,
       country: data.country,
       currency: data.currency,
-      recipient_code: recipient.recipient_code,
       is_default: isFirst,
     });
-  }
-
-  // Accounts saved while payouts were settled by hand have no recipient; one that cannot be upgraded stays on the admin queue.
-  private async ensureRecipient(account: { id: string; recipient_code: string | null; account_number: string; bank_code: string; currency: string }) {
-    if (account.recipient_code) return;
-
-    try {
-      const provider = resolveProvider(account.currency);
-      const resolved = await provider.resolveAccount(account.account_number, account.bank_code);
-      const recipient = await provider.createTransferRecipient({ account_number: account.account_number, bank_code: account.bank_code, account_name: resolved.account_name, currency: account.currency });
-
-      await this.bankAccountRepo.update(account.id, { provider: provider.name as $Enums.PaymentProvider, account_name: resolved.account_name, recipient_code: recipient.recipient_code });
-    } catch (error) {
-      console.error("Could not upgrade bank account to the provider rail", error);
-    }
   }
 
   async setDefaultBankAccount(userId: string, id: string) {
@@ -106,15 +71,26 @@ export class PayoutService {
     if (account.userId !== userId) throw new ForbiddenError("That account belongs to another driver");
     if (await this.payoutRepo.hasOpenPayout(userId)) throw new BadRequestError("You have a withdrawal in progress. Try again once it settles.");
 
-    return this.bankAccountRepo.delete(id);
+    const removed = await this.bankAccountRepo.delete(id);
+
+    if (account.is_default) {
+      const [next] = await this.bankAccountRepo.findForUser(userId);
+
+      if (next) await this.bankAccountRepo.setDefault(userId, next.id);
+    }
+
+    return removed;
   }
 
   async requestPayout(userId: string, amountMajor: number, bankAccountId?: string) {
     const wallet = await this.walletService.getWallet(userId);
     const amount_minor = toMinorUnits(amountMajor);
 
-    if (amount_minor < minimumPayoutMinor) throw new BadRequestError(`The minimum withdrawal is ${formatMoney(minimumPayoutMinor, wallet.currency)}`);
-    if (amount_minor > wallet.available_minor) throw new BadRequestError(`You can withdraw up to ${formatMoney(wallet.available_minor, wallet.currency)} right now`);
+    const withdrawable = withdrawableMinor(wallet.available_minor);
+
+    if (withdrawable === 0) throw new BadRequestError(`Withdrawals open once your balance reaches ${formatMoney(PAYOUT_STEP_MINOR, wallet.currency)}`);
+    if (amount_minor % PAYOUT_STEP_MINOR !== 0) throw new BadRequestError(`You can only withdraw in multiples of ${formatMoney(PAYOUT_STEP_MINOR, wallet.currency)}`);
+    if (amount_minor > withdrawable) throw new BadRequestError(`You can withdraw up to ${formatMoney(withdrawable, wallet.currency)} right now`);
 
     // One open payout at a time. Two in flight against a balance that is only
     // debited on request would let a driver withdraw the same money twice.
@@ -125,15 +101,13 @@ export class PayoutService {
     if (!account) throw new BadRequestError("Add a bank account before withdrawing");
     if (account.userId !== userId) throw new ForbiddenError("That account belongs to another driver");
 
-    await this.ensureRecipient(account);
-
     const reference = generateReference("PYT");
 
     const payout = await this.payoutRepo.create({
       reference,
       userId,
       bankAccountId: account.id,
-      provider: account.provider,
+      provider: "MANUAL",
       amount_minor,
       currency: wallet.currency,
       status: "REQUESTED",
@@ -147,8 +121,6 @@ export class PayoutService {
       payoutId: payout.id,
       description: `Withdrawal to ${account.bank_name}`,
     });
-
-    await this.dispatch(payout.id);
 
     const user = await this.userRepo.findById(userId, { email: true, first_name: true });
 
@@ -165,6 +137,21 @@ export class PayoutService {
 
     await this.activityService.record(userId, "PAYOUT_REQUESTED", `Withdrawal of ${formatMoney(amount_minor, wallet.currency)} requested`);
 
+    const adminIds = await this.userRepo.findAdminIds();
+
+    await Promise.all(
+      adminIds.map(recipientId =>
+        this.notificationService.notify({
+          recipientId,
+          senderId: userId,
+          type: "PAYOUT",
+          title: "Withdrawal to pay",
+          message: `${reference}: transfer ${formatMoney(amount_minor, wallet.currency)} to ${account.account_name}, then mark it paid.`,
+          actionUrl: "/dashboard/transactions",
+        }),
+      ),
+    );
+
     return this.payoutRepo.findById(payout.id);
   }
 
@@ -176,39 +163,11 @@ export class PayoutService {
     return paginate(payouts, total, pagination);
   }
 
-  // A provider failure here is not fatal: the payout stays REQUESTED and an
-  // admin can retry it, which is better than a driver whose balance is gone and
-  // whose withdrawal does not exist.
-  private async dispatch(payoutId: string) {
-    const payout = await this.payoutRepo.findById(payoutId);
-
-    if (!payout?.bankAccount?.recipient_code) return;
-
-    try {
-      const provider = resolveProvider(payout.currency);
-
-      const result = await provider.transfer({
-        amount_minor: payout.amount_minor,
-        currency: payout.currency,
-        recipient_code: payout.bankAccount.recipient_code,
-        reference: payout.reference,
-      });
-
-      await this.payoutRepo.update(payoutId, {
-        provider_ref: result.provider_ref,
-        status: result.status === "PAID" ? "PAID" : "PROCESSING",
-        processed_at: result.status === "PAID" ? new Date() : null,
-      });
-    } catch (error) {
-      console.error("Payout dispatch failed:", error);
-    }
-  }
-
   async settle(reference: string, status: $Enums.PayoutStatus, failureReason?: string) {
     const payout = await this.payoutRepo.findByReference(reference);
 
     if (!payout) throw new NotFoundError("Payout not found");
-    if (payout.status === "PAID" || payout.status === "REVERSED") return payout;
+    if (payout.status === "PAID" || payout.status === "FAILED" || payout.status === "REVERSED") return payout;
 
     await this.payoutRepo.update(payout.id, {
       status,
@@ -233,7 +192,7 @@ export class PayoutService {
       type: "PAYOUT",
       title: status === "PAID" ? "Withdrawal paid" : "Withdrawal failed",
       message: status === "PAID" ? `${formatMoney(payout.amount_minor, payout.currency)} has been sent to your bank account.` : `We could not complete your withdrawal. ${failureReason ?? "The money is back in your balance."}`,
-      actionUrl: "/dashboard/earnings",
+      actionUrl: "/dashboard/wallet",
     });
 
     await queueEmail(JOB_KEY.PAYOUT_STATUS, {

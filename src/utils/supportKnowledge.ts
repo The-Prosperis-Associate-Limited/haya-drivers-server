@@ -110,8 +110,17 @@ due at the end of each month of the engagement (counted from its start date);
 a contract is paid once, at its end. The client marks each payment as paid in
 the app and you confirm you received it on the job page - your earnings page
 shows the payments you've confirmed. If a payment is overdue or never
-arrived, report it from the job page and our team will step in. Any old
-wallet balance from before this change can still be withdrawn as a payout.
+arrived, report it from the job page and our team will step in.
+
+WALLET AND WITHDRAWALS
+Your wallet holds referral rewards and any balance from before direct salaries.
+You can withdraw only in multiples of NGN 10,000, so nothing can be withdrawn
+below NGN 10,000. With NGN 15,000 you can withdraw NGN 10,000, and the NGN 5,000
+left needs another NGN 5,000 before it can be withdrawn. Referral rewards are on
+hold for a few days before they count. Withdrawal requests are paid by our team
+by bank transfer to the account you saved under Wallet, and you are notified
+once it is sent. We do not check bank details automatically, so make sure the
+bank, account number and account name are right.
 
 RATE, HOURS AND BIO
 Set your expected monthly rate, weekly hours and bio in Settings > User

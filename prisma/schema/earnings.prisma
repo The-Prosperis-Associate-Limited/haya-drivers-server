@@ -93,7 +93,7 @@ model BankAccount {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  provider        PaymentProvider @default(PAYSTACK)
+  provider        PaymentProvider @default(MANUAL)
   bank_code       String
   bank_name       String
   account_number  String
@@ -124,7 +124,7 @@ model Payout {
   bankAccountId String?
   bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
 
-  provider        PaymentProvider @default(PAYSTACK)
+  provider        PaymentProvider @default(MANUAL)
   provider_ref    String?
   amount_minor    Int
   fee_minor       Int             @default(0)

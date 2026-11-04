@@ -19,15 +19,7 @@ export const configureApp = (app: Application) => {
   app.set("trust proxy", 1);
   app.use(morgan("dev"));
   app.use(cors({ origin: allowedOrigins, credentials: true }));
-  app.use(
-    express.json({
-      limit: "10mb",
-      // Paystack signs the raw body, so it has to survive the parser.
-      verify: (req, _res, buf) => {
-        (req as unknown as { rawBody: string }).rawBody = buf.toString("utf8");
-      },
-    }),
-  );
+  app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: false, limit: "10mb" }));
   app.use(cookieParser());
   app.use(helmet());
