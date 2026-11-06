@@ -21,6 +21,9 @@ export const JOB_KEY = {
   UPDATE_TICKET: "update_ticket",
 
   ADMIN_INVITE: "admin_invite",
+
+  REQUIRED_DOCUMENTS: "required_documents",
+  ONBOARDING_REMINDER: "onboarding_reminder",
 } as const;
 
 // Must stay in step with the repeatable definitions in utils/cron-jobs.ts
@@ -33,4 +36,6 @@ export const SCHEDULED_JOB_KEY = {
   RECOMPUTE_TRUST_SCORES: "recompute_trust_scores",
   DEACTIVATE_INACTIVE_ACCOUNTS: "deactivate_inactive_accounts",
   PRUNE_ACCOUNT_SIGNALS: "prune_account_signals",
+  ENFORCE_REQUIRED_DOCUMENTS: "enforce_required_documents",
+  ONBOARDING_REMINDERS: "onboarding_reminders",
 } as const;

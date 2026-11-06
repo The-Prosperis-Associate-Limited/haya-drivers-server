@@ -1,5 +1,6 @@
 import type { $Enums, Prisma } from "../generated/prisma/client";
 import { prisma } from "../helper/prisma";
+import { REQUIRED_DOCUMENTS } from "../utils/onboardingSteps";
 import { generateProfessionalEmail } from "../utils/email/templates/generateProfessionalEmail";
 import { transportMail } from "../utils/email/transportMail";
 import { generateRandomPassword, hashPassword } from "../helper/hashPassword";
@@ -37,7 +38,7 @@ interface SeedDriver {
 const EMAIL_DOMAIN = "hayadrivers.com";
 const CREDENTIAL_RECIPIENTS = ["officialayo540@gmail.com", "prosperisassociates@gmail.com"];
 const PLACEHOLDER_IMAGE = "https://res.cloudinary.com/demo/image/upload/sample.jpg";
-const ALL_DOCUMENTS: $Enums.DocumentType[] = ["NIN_SLIP", "PASSPORT_PHOTO", "DRIVERS_LICENCE", "PROOF_OF_ADDRESS", "GUARANTOR_PASSPORT", "GUARANTOR_NIN_SLIP"];
+const ALL_DOCUMENTS: $Enums.DocumentType[] = REQUIRED_DOCUMENTS;
 
 const GUARANTOR_NAMES = ["Samuel Ogunleye", "Fatima Lawal", "John Okon", "Grace Effiong", "Yusuf Danjuma", "Chiamaka Obi"];
 

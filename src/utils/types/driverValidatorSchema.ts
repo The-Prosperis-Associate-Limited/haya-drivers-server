@@ -113,7 +113,7 @@ export const additionalInformationSchema = z.object({
 });
 
 export const uploadDocumentSchema = z.object({
-  type: z.enum(["NIN_SLIP", "PASSPORT_PHOTO", "DRIVERS_LICENCE", "PROOF_OF_ADDRESS", "GUARANTOR_PASSPORT", "GUARANTOR_NIN_SLIP"]),
+  type: z.enum(["NIN_SLIP", "PASSPORT_PHOTO", "DRIVERS_LICENCE", "PROOF_OF_ADDRESS", "GUARANTOR_PASSPORT", "GUARANTOR_NIN_SLIP", "CV"]),
 });
 
 export const reviewDocumentSchema = z

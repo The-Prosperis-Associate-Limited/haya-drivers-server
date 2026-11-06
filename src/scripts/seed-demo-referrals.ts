@@ -1,6 +1,7 @@
 import "dotenv/config";
 import type { $Enums } from "../generated/prisma/client";
 import { prisma } from "../helper/prisma";
+import { REQUIRED_DOCUMENTS } from "../utils/onboardingSteps";
 import { generateRandomPassword, hashPassword } from "../helper/hashPassword";
 import { generateReference } from "../utils/reference";
 import { REFERRAL_CONFIG } from "../utils/referralConfig";
@@ -28,7 +29,7 @@ interface DemoReferee {
 
 const DEMO_DOMAIN = "tegat.test";
 const PLACEHOLDER_IMAGE = "https://res.cloudinary.com/demo/image/upload/sample.jpg";
-const DOCUMENTS: $Enums.DocumentType[] = ["NIN_SLIP", "PASSPORT_PHOTO", "DRIVERS_LICENCE", "PROOF_OF_ADDRESS", "GUARANTOR_PASSPORT", "GUARANTOR_NIN_SLIP"];
+const DOCUMENTS: $Enums.DocumentType[] = REQUIRED_DOCUMENTS;
 const DAY = 24 * 60 * 60 * 1000;
 
 const REFERRERS: Record<string, string> = {

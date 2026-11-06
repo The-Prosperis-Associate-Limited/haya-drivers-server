@@ -11,6 +11,8 @@ import { ResetPasswordData, sendResetPasswordEmail } from "../utils/services/ema
 import { sendTicketCreatedEmail, sendTicketUpdateEmail, TicketCreatedEmailData, TicketUpdateEmailData } from "../utils/services/emails/ticketEmailService";
 import { sendVerificationApprovedEmail, VerificationApprovedData } from "../utils/services/emails/verificationApprovedEmailService";
 import { sendVerificationRejectedEmail, VerificationRejectedData } from "../utils/services/emails/verificationRejectedEmailService";
+import { RequiredDocumentsEmailData, sendRequiredDocumentsEmail } from "../utils/services/emails/requiredDocumentsEmailService";
+import { OnboardingReminderEmailData, sendOnboardingReminderEmail } from "../utils/services/emails/onboardingReminderEmailService";
 import { sendWelcomeEmail, WelcomeEmailData } from "../utils/services/emails/welcomeEmailService";
 import { registerEmailHandler } from "./globalEmailQueueHandler";
 import { JOB_KEY } from "./jobKeys";
@@ -45,4 +47,8 @@ export const initializeEmailHandlers = function () {
   registerEmailHandler(JOB_KEY.UPDATE_TICKET, async (data: TicketUpdateEmailData) => await sendTicketUpdateEmail(data));
 
   registerEmailHandler(JOB_KEY.ADMIN_INVITE, async (data: AdminInviteEmailData) => await sendAdminInviteEmail(data));
+
+  registerEmailHandler(JOB_KEY.REQUIRED_DOCUMENTS, async (data: RequiredDocumentsEmailData) => await sendRequiredDocumentsEmail(data));
+
+  registerEmailHandler(JOB_KEY.ONBOARDING_REMINDER, async (data: OnboardingReminderEmailData) => await sendOnboardingReminderEmail(data));
 };

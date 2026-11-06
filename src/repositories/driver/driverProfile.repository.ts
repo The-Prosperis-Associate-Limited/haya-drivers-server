@@ -221,4 +221,47 @@ export class DriverProfileRepository {
   async countByStatus(status: $Enums.DriverVerificationStatus) {
     return prisma.driverProfile.count({ where: { verification_status: status } });
   }
+
+  async findDocumentsOverdue(now: Date) {
+    return prisma.driverProfile.findMany({
+      where: { verification_status: "APPROVED", documents_due_at: { lte: now } },
+      select: { userId: true, documents_due_at: true, user: { select: { email: true, first_name: true, last_name: true } } },
+    });
+  }
+
+  async findWithoutDocumentsNotice() {
+    return prisma.driverProfile.findMany({
+      where: { documents_notice_sent_at: null, user: { has_validated_email: true, account_status: "ACTIVE", anonymised_at: null } },
+      select: { userId: true, verification_status: true, documents_due_at: true, user: { select: { email: true, first_name: true, documents: { select: { type: true, status: true } } } } },
+    });
+  }
+
+  async findOnboardingReminderCandidates(signedUpAfter: Date, maxSent: number) {
+    return prisma.driverProfile.findMany({
+      where: {
+        verification_status: "UNSUBMITTED",
+        onboarding_reminders_sent: { lt: maxSent },
+        user: { has_validated_email: true, account_status: "ACTIVE", anonymised_at: null, createdAt: { gte: signedUpAfter } },
+      },
+      select: {
+        userId: true,
+        onboarding_step: true,
+        onboarding_reminders_sent: true,
+        user: { select: { email: true, first_name: true, createdAt: true, documents: { select: { type: true, status: true } } } },
+      },
+    });
+  }
+
+  async findDocumentsReminderCandidates(remindedBefore: Date) {
+    return prisma.driverProfile.findMany({
+      where: {
+        verification_status: "APPROVED",
+        documents_due_at: { gt: new Date() },
+        documents_notice_sent_at: { lte: remindedBefore },
+        OR: [{ last_documents_reminder_at: null }, { last_documents_reminder_at: { lte: remindedBefore } }],
+        user: { account_status: "ACTIVE", anonymised_at: null },
+      },
+      select: { userId: true, documents_due_at: true, user: { select: { email: true, first_name: true } } },
+    });
+  }
 }

@@ -32,8 +32,9 @@ const stageOf = (request: { status: $Enums.HireRequestStatus; drivers_needed: nu
 export class AdminOverviewService {
   // Sidebar counts and who's on shift - polled by the admin shell on every page, so it stays to counts.
   async nav() {
-    const [pendingVerifications, hiresNeedingAction, payoutsNeedingAction, openFlags, chatsWaiting, team, salaries, heldReferrals] = await Promise.all([
+    const [pendingVerifications, documentUpdates, hiresNeedingAction, payoutsNeedingAction, openFlags, chatsWaiting, team, salaries, heldReferrals] = await Promise.all([
       prisma.driverProfile.count({ where: { verification_status: "PENDING" } }),
+      prisma.driverDocument.count({ where: { status: "PENDING", user: { driver_profile: { verification_status: "APPROVED" } } } }),
       prisma.hireRequest.count({ where: { status: { in: ["PENDING_REVIEW", "PAYMENT_REVIEW"] } } }),
       prisma.payout.count({ where: { status: { in: ["REQUESTED", "FAILED"] } } }),
       prisma.attendance.count({ where: { flagged_at: { not: null }, flag_resolved_at: null } }),
@@ -45,7 +46,7 @@ export class AdminOverviewService {
 
     return {
       counts: {
-        drivers: pendingVerifications,
+        drivers: pendingVerifications + documentUpdates,
         hires: hiresNeedingAction,
         transactions: payoutsNeedingAction,
         attendance: openFlags,

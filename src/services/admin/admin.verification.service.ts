@@ -4,13 +4,14 @@ import { DriverProfileRepository } from "../../repositories/driver/driverProfile
 import { DriverVerificationRepository } from "../../repositories/driver/driverVerification.repository";
 import { UserRepository } from "../../repositories/user/user.repository";
 import { BadRequestError, NotFoundError } from "../../helper/errors";
-import { DOCUMENT_LABELS } from "../../utils/onboardingSteps";
+import { DOCUMENT_LABELS, REQUIRED_DOCUMENTS } from "../../utils/onboardingSteps";
 import { paginate, parsePagination } from "../../utils/pagination";
 import { queueEmail } from "../../workers/globalEmailQueueHandler";
 import { JOB_KEY } from "../../workers/jobKeys";
 import { ActivityService } from "../shared/activity.service";
 import { NotificationService } from "../shared/notification.service";
 import { TrustScoreService } from "../shared/trustScore.service";
+import { RequiredDocumentsService } from "../driver/driver.requiredDocuments.service";
 import type { ReviewDocumentInput, ReviewVerificationInput } from "../../utils/types/driverValidatorSchema";
 
 const { CLIENT_URL } = process.env;
@@ -23,6 +24,7 @@ export class AdminVerificationService {
   private notificationService = new NotificationService();
   private activityService = new ActivityService();
   private trustScoreService = new TrustScoreService();
+  private requiredDocumentsService = new RequiredDocumentsService();
 
   async queue(query: Record<string, unknown>) {
     const pagination = parsePagination(query);
@@ -49,11 +51,40 @@ export class AdminVerificationService {
 
     if (!document) throw new NotFoundError("Document not found");
 
-    return this.documentRepo.review(documentId, {
+    const reviewed = await this.documentRepo.review(documentId, {
       status: data.status,
       rejection_reason: data.status === "REJECTED" ? data.rejection_reason : null,
       reviewerId,
     });
+
+    const profile = await this.driverProfileRepo.findByUserId(document.userId, { verification_status: true });
+
+    // Outside a submission the driver hears nothing else about this review, so tell them and close their deadline once nothing is left.
+    if (profile?.verification_status === "APPROVED") {
+      await this.requiredDocumentsService.notifyDocumentReviewed(document.userId, document.type, data.status, data.status === "REJECTED" ? data.rejection_reason : null);
+      await this.requiredDocumentsService.settle(document.userId);
+    }
+
+    return reviewed;
+  }
+
+  async requiredDocumentsNotice() {
+    return { pending: (await this.requiredDocumentsService.noticeAudience()).length };
+  }
+
+  async sendRequiredDocumentsNotice() {
+    return this.requiredDocumentsService.announce();
+  }
+
+  async documentUpdates() {
+    const documents = await this.documentRepo.findPendingForVerifiedDrivers();
+
+    return documents.map(({ user, ...document }) => ({
+      ...document,
+      label: DOCUMENT_LABELS[document.type],
+      driver: { id: user.id, first_name: user.first_name, last_name: user.last_name, email: user.email, profile_pic: user.profile_pic },
+      documents_due_at: user.driver_profile?.documents_due_at ?? null,
+    }));
   }
 
   /*
@@ -75,6 +106,11 @@ export class AdminVerificationService {
 
       if (rejected > 0) throw new BadRequestError("Clear or re-review the rejected documents before approving this driver");
 
+      const uploaded = new Set((await this.documentRepo.findByUser(userId)).map(document => document.type));
+      const missing = REQUIRED_DOCUMENTS.filter(type => !uploaded.has(type));
+
+      if (missing.length) throw new BadRequestError(`This driver has not uploaded their ${missing.map(type => DOCUMENT_LABELS[type]).join(", ")} yet`);
+
       return this.approve(userId, reviewerId, user);
     }
 
@@ -93,6 +129,7 @@ export class AdminVerificationService {
     // Verification is 40 of the 100 trust-score points, so the score has to be
     // recomputed here or an approved driver sorts below an unapproved one.
     await this.trustScoreService.recompute(userId);
+    await this.driverProfileRepo.update(userId, { documents_due_at: null });
 
     const location = (user.state_of_residence as string) ?? (user.country as string) ?? "your area";
 
