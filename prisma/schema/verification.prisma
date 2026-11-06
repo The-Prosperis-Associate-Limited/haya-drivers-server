@@ -12,6 +12,7 @@ enum DocumentType {
   PROOF_OF_ADDRESS
   GUARANTOR_PASSPORT
   GUARANTOR_NIN_SLIP
+  CV
 }
 
 enum DocumentStatus {

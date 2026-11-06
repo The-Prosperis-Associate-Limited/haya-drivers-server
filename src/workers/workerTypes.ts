@@ -11,6 +11,8 @@ import { ResetPasswordData } from "../utils/services/emails/resetPasswordEmailSe
 import { TicketCreatedEmailData, TicketUpdateEmailData } from "../utils/services/emails/ticketEmailService";
 import { VerificationApprovedData } from "../utils/services/emails/verificationApprovedEmailService";
 import { VerificationRejectedData } from "../utils/services/emails/verificationRejectedEmailService";
+import { RequiredDocumentsEmailData } from "../utils/services/emails/requiredDocumentsEmailService";
+import { OnboardingReminderEmailData } from "../utils/services/emails/onboardingReminderEmailService";
 import { WelcomeEmailData } from "../utils/services/emails/welcomeEmailService";
 import { JOB_KEY } from "./jobKeys";
 
@@ -37,4 +39,6 @@ export type EmailPayloadMap = {
   [JOB_KEY.UPDATE_TICKET]: TicketUpdateEmailData;
 
   [JOB_KEY.ADMIN_INVITE]: AdminInviteEmailData;
+  [JOB_KEY.REQUIRED_DOCUMENTS]: RequiredDocumentsEmailData;
+  [JOB_KEY.ONBOARDING_REMINDER]: OnboardingReminderEmailData;
 };

@@ -6,6 +6,8 @@ import { releasePendingEarnings } from "../services/scheduled/releasePendingEarn
 import { expireShortlists } from "../services/scheduled/expireShortlists.service";
 import { salarySweep } from "../services/scheduled/salarySweep.service";
 import { pruneAccountSignals } from "../services/scheduled/pruneAccountSignals.service";
+import { enforceRequiredDocuments } from "../services/scheduled/enforceRequiredDocuments.service";
+import { onboardingReminders } from "../services/scheduled/onboardingReminders.service";
 import { emailQueue } from "../workers/globalEmailQueueHandler";
 import { SCHEDULED_JOB_KEY } from "../workers/jobKeys";
 
@@ -23,6 +25,8 @@ const SCHEDULED_JOBS: Record<ScheduledJobKey, () => Promise<string>> = {
   [SCHEDULED_JOB_KEY.RECOMPUTE_TRUST_SCORES]: recomputeTrustScores,
   [SCHEDULED_JOB_KEY.DEACTIVATE_INACTIVE_ACCOUNTS]: deactivateInactiveAccounts,
   [SCHEDULED_JOB_KEY.PRUNE_ACCOUNT_SIGNALS]: pruneAccountSignals,
+  [SCHEDULED_JOB_KEY.ENFORCE_REQUIRED_DOCUMENTS]: enforceRequiredDocuments,
+  [SCHEDULED_JOB_KEY.ONBOARDING_REMINDERS]: onboardingReminders,
 };
 
 const SCHEDULE: { key: ScheduledJobKey; pattern: string }[] = [
@@ -34,6 +38,8 @@ const SCHEDULE: { key: ScheduledJobKey; pattern: string }[] = [
   { key: SCHEDULED_JOB_KEY.RECOMPUTE_TRUST_SCORES, pattern: "0 4 * * 0" },
   { key: SCHEDULED_JOB_KEY.DEACTIVATE_INACTIVE_ACCOUNTS, pattern: "30 2 * * *" },
   { key: SCHEDULED_JOB_KEY.PRUNE_ACCOUNT_SIGNALS, pattern: "45 3 * * *" },
+  { key: SCHEDULED_JOB_KEY.ENFORCE_REQUIRED_DOCUMENTS, pattern: "0 7 * * *" },
+  { key: SCHEDULED_JOB_KEY.ONBOARDING_REMINDERS, pattern: "0 9 * * *" },
 ];
 
 export const runScheduledJob = async (jobType: ScheduledJobKey) => {

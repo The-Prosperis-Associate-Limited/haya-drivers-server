@@ -15,6 +15,8 @@ export class CloudinaryService {
         {
           folder: `haya/${role.toLowerCase()}/${userId}/${folder}`,
           resource_type: folder === "avatar" ? "image" : "auto",
+          // Word files land as raw resources, which are served without a type unless the public id keeps the extension.
+          ...(/^(image\/|application\/pdf$)/.test(file.mimetype) ? {} : { use_filename: true, unique_filename: true, filename_override: file.originalname }),
         },
         (error, result) => {
           if (error) return reject(error);

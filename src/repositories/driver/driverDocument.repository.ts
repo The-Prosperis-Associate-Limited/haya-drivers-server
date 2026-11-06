@@ -56,4 +56,16 @@ export class DriverDocumentRepository {
       data: { status: "APPROVED", rejection_reason: null, reviewerId, reviewed_at: new Date() },
     });
   }
+
+  async findPendingForVerifiedDrivers() {
+    return prisma.driverDocument.findMany({
+      where: { status: "PENDING", user: { driver_profile: { verification_status: "APPROVED" } } },
+      orderBy: { updatedAt: "asc" },
+      select: { id: true, type: true, file_name: true, updatedAt: true, user: { select: { id: true, first_name: true, last_name: true, email: true, profile_pic: true, driver_profile: { select: { documents_due_at: true } } } } },
+    });
+  }
+
+  async countPendingForVerifiedDrivers() {
+    return prisma.driverDocument.count({ where: { status: "PENDING", user: { driver_profile: { verification_status: "APPROVED" } } } });
+  }
 }

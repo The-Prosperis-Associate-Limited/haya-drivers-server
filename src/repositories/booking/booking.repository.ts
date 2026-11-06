@@ -198,4 +198,8 @@ export class BookingRepository {
 
     return { bookings, total };
   }
+
+  async countActiveForDriver(driverId: string) {
+    return prisma.booking.count({ where: { driverId, status: { in: ["ACCEPTED", "IN_PROGRESS"] } } });
+  }
 }

@@ -97,6 +97,15 @@ model DriverProfile {
   // Off hides the driver from search and direct requests; running engagements are untouched.
   open_to_work Boolean @default(true)
 
+  // Set when a document became required after this driver was verified; the sweep unverifies them once it passes.
+  documents_due_at         DateTime?
+  documents_notice_sent_at DateTime?
+  last_documents_reminder_at DateTime?
+
+  // Unsubmitted drivers are nudged on a fixed schedule from signup; the count is how far along it they are.
+  onboarding_reminders_sent   Int       @default(0)
+  last_onboarding_reminder_at DateTime?
+
   // 0-100. Recomputed by TrustScoreService, never written by hand.
   trust_score Int @default(0)
 

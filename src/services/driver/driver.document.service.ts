@@ -5,15 +5,18 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "../../helper/err
 import { advanceStep, DOCUMENT_LABELS, REQUIRED_DOCUMENTS } from "../../utils/onboardingSteps";
 import { CloudinaryService, resourceTypeOf } from "../shared/cloudinary.service";
 import { ActivityService } from "../shared/activity.service";
+import { WORD_DOCUMENT_TYPES } from "../../utils/multerConfig";
+import { RequiredDocumentsService } from "./driver.requiredDocuments.service";
 
 export class DriverDocumentService {
   private documentRepo = new DriverDocumentRepository();
   private driverProfileRepo = new DriverProfileRepository();
   private cloudinaryService = new CloudinaryService();
   private activityService = new ActivityService();
+  private requiredDocumentsService = new RequiredDocumentsService();
 
   async list(userId: string) {
-    const documents = await this.documentRepo.findByUser(userId);
+    const [documents, profile] = await Promise.all([this.documentRepo.findByUser(userId), this.driverProfileRepo.findByUserId(userId, { documents_due_at: true })]);
     const uploaded = new Set(documents.map(document => document.type));
 
     return {
@@ -21,15 +24,20 @@ export class DriverDocumentService {
       // The screen renders a row per required document whether or not it has
       // been uploaded, so it needs the gaps as well as what is there.
       missing: REQUIRED_DOCUMENTS.filter(type => !uploaded.has(type)).map(type => ({ type, label: DOCUMENT_LABELS[type] })),
+      documents_due_at: profile?.documents_due_at ?? null,
     };
   }
 
   async upload(userId: string, type: $Enums.DocumentType, file: Express.Multer.File) {
     const profile = await this.requireProfile(userId);
 
-    if (profile.verification_status === "APPROVED") throw new ForbiddenError("Your documents are already verified. Contact support to change them.");
+    if (type !== "CV" && WORD_DOCUMENT_TYPES.includes(file.mimetype)) throw new BadRequestError(`Upload your ${DOCUMENT_LABELS[type]} as a photo or PDF`);
 
     const existing = await this.documentRepo.findByUserAndType(userId, type);
+    const verified = profile.verification_status === "APPROVED";
+
+    // A verified driver may only fill a gap - a document that became required after approval, or one not yet accepted.
+    if (verified && existing?.status === "APPROVED") throw new ForbiddenError("Your documents are already verified. Contact support to change them.");
 
     const upload = await this.cloudinaryService.uploadFile(userId, "driver", file, "documents");
 
@@ -50,6 +58,8 @@ export class DriverDocumentService {
     await this.activityService.record(userId, "DOCUMENT_UPLOADED", `${DOCUMENT_LABELS[type]} uploaded`);
 
     await this.maybeAdvanceStep(userId, profile.onboarding_step);
+
+    if (verified) await this.requiredDocumentsService.notifyAdminsOfUpload(userId, type);
 
     return document;
   }

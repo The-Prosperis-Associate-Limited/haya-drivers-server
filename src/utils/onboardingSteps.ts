@@ -21,8 +21,8 @@ export const advanceStep = (current: $Enums.OnboardingStep, completed: $Enums.On
   return ONBOARDING_ORDER.indexOf(next) > ONBOARDING_ORDER.indexOf(current) ? next : current;
 };
 
-// Every document blocks submission - the owner made the guarantor files and proof of address mandatory on 1 Nov 2026.
-export const REQUIRED_DOCUMENTS: $Enums.DocumentType[] = ["NIN_SLIP", "PASSPORT_PHOTO", "DRIVERS_LICENCE", "PROOF_OF_ADDRESS", "GUARANTOR_PASSPORT", "GUARANTOR_NIN_SLIP"];
+// Every document blocks submission - guarantor files and proof of address since 1 Nov 2026, the CV since 6 Nov 2026.
+export const REQUIRED_DOCUMENTS: $Enums.DocumentType[] = ["NIN_SLIP", "PASSPORT_PHOTO", "DRIVERS_LICENCE", "PROOF_OF_ADDRESS", "GUARANTOR_PASSPORT", "GUARANTOR_NIN_SLIP", "CV"];
 
 export const DOCUMENT_LABELS: Record<$Enums.DocumentType, string> = {
   NIN_SLIP: "NIN slip",
@@ -31,6 +31,7 @@ export const DOCUMENT_LABELS: Record<$Enums.DocumentType, string> = {
   PROOF_OF_ADDRESS: "Proof of address",
   GUARANTOR_PASSPORT: "Guarantor passport photo",
   GUARANTOR_NIN_SLIP: "Guarantor NIN slip",
+  CV: "CV",
 };
 
 export const ONBOARDING_STEP_LABELS: Record<$Enums.OnboardingStep, string> = {
