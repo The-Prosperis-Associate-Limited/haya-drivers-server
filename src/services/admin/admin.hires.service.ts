@@ -10,7 +10,7 @@ import { JOB_KEY } from "../../workers/jobKeys";
 import { formatMoney } from "../../utils/money";
 import { paginate } from "../../utils/pagination";
 import { generateReference } from "../../utils/reference";
-import { computeHireFee, ContractDurationRequiredError, type HireClientType, type HireFeeQuote } from "../../utils/hirePricing";
+import { computeHireFee, ContractDurationRequiredError, defaultVatPercent, type HireClientType, type HireFeeQuote } from "../../utils/hirePricing";
 import type { AssignDriverInput, DeclineHireRequestInput, GenerateInvoiceInput, HireRequestListQuery, RejectProofInput } from "../../utils/types/hireValidatorSchema";
 import { shortlistRespondBy } from "../../utils/shortlistWindow";
 import { engagementEnd } from "../../utils/salarySchedule";
@@ -18,8 +18,7 @@ import { SalaryService } from "../booking/salary.service";
 import { ShortlistInviteService } from "../booking/shortlistInvite.service";
 
 // Nigeria's standard VAT unless the invoice overrides it.
-const { HIRE_VAT_PERCENT, CLIENT_URL } = process.env;
-const defaultVatPercent = Number(HIRE_VAT_PERCENT ?? 7.5);
+const { CLIENT_URL } = process.env;
 
 export class AdminHiresService {
   private hireRepo = new HireRequestRepository();
@@ -110,9 +109,8 @@ export class AdminHiresService {
     try {
       quote = computeHireFee({
         engagement_type: engagement,
-        client_type: clientType,
         drivers: request.assignments.length,
-        per_driver_monthly_minor: perDriver,
+        per_driver_minor: perDriver,
         duration_days: request.duration_days,
       });
     } catch (error) {

@@ -2,6 +2,7 @@ import { HireRequestRepository } from "../../repositories/booking/hireRequest.re
 import { UserRepository } from "../../repositories/user/user.repository";
 import { NotificationService } from "../shared/notification.service";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../../helper/errors";
+import { readShortlistReplyToken } from "../../utils/shortlistReplyToken";
 
 /*
   The driver's half of the availability handshake. They see engagement facts
@@ -47,5 +48,37 @@ export class DriverShortlistService {
     );
 
     return updated;
+  }
+
+  private async requireReply(token: string) {
+    const assignmentId = readShortlistReplyToken(token);
+    const assignment = assignmentId ? await this.hireRepo.findAssignmentForReply(assignmentId) : null;
+
+    if (!assignment) throw new NotFoundError("This link is not valid any more - open your dashboard to see your invitations");
+
+    return assignment;
+  }
+
+  async replyPreview(token: string) {
+    const { expired_at, driver, hire_request, id, status, respond_by } = await this.requireReply(token);
+    const { status: requestStatus, ...job } = hire_request;
+
+    const lapsed = status === "PENDING" && !!respond_by && respond_by < new Date();
+
+    let state: "PENDING" | "CONFIRMED" | "DECLINED" | "EXPIRED" | "CLOSED" = "PENDING";
+
+    if (expired_at || lapsed) state = "EXPIRED";
+    else if (status === "CONFIRMED" || status === "DECLINED") state = status;
+    else if (requestStatus !== "PENDING_REVIEW") state = "CLOSED";
+
+    return { id, state, respond_by, first_name: driver.first_name, job };
+  }
+
+  async replyByEmail(token: string, available: boolean) {
+    const assignment = await this.requireReply(token);
+
+    await this.respond(assignment.driverId, assignment.id, available);
+
+    return this.replyPreview(token);
   }
 }

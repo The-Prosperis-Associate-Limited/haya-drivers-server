@@ -11,6 +11,7 @@ export interface HireRequestEmailData {
   counterpart?: string;
   date?: string;
   actionUrl: string;
+  reply?: { yesUrl: string; noUrl: string };
 }
 
 const COPY: Record<HireRequestEmailData["event"], { subject: (data: HireRequestEmailData) => string; title: string; body: (data: HireRequestEmailData) => string; buttonText: string }> = {
@@ -44,7 +45,7 @@ const COPY: Record<HireRequestEmailData["event"], { subject: (data: HireRequestE
     subject: () => "You've been shortlisted - confirm your availability",
     title: "You've been shortlisted",
     body: data =>
-      `A client is hiring and you're one of the candidates for an engagement${data.date ? ` starting ${data.date}` : ""}${data.counterpart ? ` in ${data.counterpart}` : ""}. Confirm whether you're available from your dashboard - quick replies keep you at the top of the list.`,
+      `A client is hiring and you're one of the candidates for an engagement${data.date ? ` starting ${data.date}` : ""}${data.counterpart ? ` in ${data.counterpart}` : ""}. ${data.reply ? "Tap a button below to answer - no need to sign in." : "Confirm whether you're available from your dashboard."} Quick replies keep you at the top of the list.`,
     buttonText: "Confirm availability",
   },
 };
@@ -66,8 +67,9 @@ const generateHireRequestData =(data: HireRequestEmailData) => {
     title: copy.title,
     recipientName: data.first_name,
     message: copy.body(data),
-    buttonText: copy.buttonText,
-    buttonAction: data.actionUrl,
+    ...(data.reply
+      ? { buttonText: "I'm available", buttonAction: data.reply.yesUrl, secondaryButtonText: "Not available", secondaryButtonAction: data.reply.noUrl, note: "You'll confirm your answer on the next screen. You can also answer from your dashboard." }
+      : { buttonText: copy.buttonText, buttonAction: data.actionUrl }),
     additionalDetails: {
       reference: data.reference,
       amount: data.amount,

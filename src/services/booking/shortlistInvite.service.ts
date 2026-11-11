@@ -1,5 +1,7 @@
 import type { $Enums } from "../../generated/prisma/client";
+import { HireRequestRepository } from "../../repositories/booking/hireRequest.repository";
 import { UserRepository } from "../../repositories/user/user.repository";
+import { signShortlistReplyToken } from "../../utils/shortlistReplyToken";
 import { SHORTLIST_WINDOW_HOURS } from "../../utils/shortlistWindow";
 import { queueEmail } from "../../workers/globalEmailQueueHandler";
 import { JOB_KEY } from "../../workers/jobKeys";
@@ -8,6 +10,7 @@ import { NotificationService } from "../shared/notification.service";
 const { CLIENT_URL } = process.env;
 
 interface InvitedRequest {
+  id: string;
   reference: string;
   engagement_type: $Enums.EngagementType;
   starts_at: Date;
@@ -17,6 +20,7 @@ interface InvitedRequest {
 // The invitation never names the client - drivers only see job facts until they're hired.
 export class ShortlistInviteService {
   private userRepo = new UserRepository();
+  private hireRepo = new HireRequestRepository();
   private notificationService = new NotificationService();
 
   async invite(request: InvitedRequest, driverId: string, options: { senderId?: string; requestedByName?: boolean } = {}) {
@@ -35,6 +39,9 @@ export class ShortlistInviteService {
     const driver = await this.userRepo.findById(driverId, { email: true, first_name: true });
 
     if (driver?.email && (await this.notificationService.wants(driverId, "job_requests"))) {
+      const assignment = await this.hireRepo.findPendingAssignment(request.id, driverId);
+      const replyUrl = assignment ? `${CLIENT_URL}/shortlist-reply/${signShortlistReplyToken(assignment.id)}` : null;
+
       await queueEmail(JOB_KEY.HIRE_REQUEST_EVENT, {
         email: driver.email as string,
         first_name: (driver.first_name as string) ?? "there",
@@ -42,7 +49,8 @@ export class ShortlistInviteService {
         reference: request.reference,
         date: request.starts_at.toDateString(),
         counterpart: request.state ?? undefined,
-        actionUrl: `${CLIENT_URL}/dashboard`,
+        actionUrl: `${CLIENT_URL}/driver/dashboard`,
+        ...(replyUrl && { reply: { yesUrl: `${replyUrl}?answer=yes`, noUrl: `${replyUrl}?answer=no` } }),
       });
     }
   }
