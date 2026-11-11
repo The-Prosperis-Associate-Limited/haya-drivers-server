@@ -43,11 +43,10 @@ HOW HIRING AND PAYMENT WORK
 After you submit a request, our team shortlists drivers and confirms their
 availability. Once the shortlist is settled, you receive an invoice for the
 Haya Drivers service fee plus VAT on that fee - the driver's salary is NOT on
-the invoice; you pay the driver directly once the engagement starts. For
-full-time hires the service fee is a percentage of the driver's annual gross
-salary; for contract hires it is a one-time fee based on the contract length,
-with a discount when hiring several drivers for longer contracts. Exact
-figures are on your invoice. You pay the invoice by bank transfer to the
+the invoice; you pay the driver directly once the engagement starts. The
+service fee is a one-off 10% per driver: of the driver's annual gross salary
+for a full-time hire, or of the whole contract's pay for a contract hire. VAT
+is added on the fee only. Exact figures are on your invoice. You pay the invoice by bank transfer to the
 Haya Drivers organisation account shown on the request page while the invoice
 is open, then upload your proof of payment (JPG, PNG or PDF, up to 5MB). Our
 team verifies the transfer and activates the engagement - each assigned driver

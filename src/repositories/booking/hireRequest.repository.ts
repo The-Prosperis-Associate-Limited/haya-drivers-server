@@ -85,6 +85,43 @@ export class HireRequestRepository {
     });
   }
 
+  async findPendingAssignment(hireRequestId: string, driverId: string) {
+    return prisma.hireAssignment.findFirst({ where: { hireRequestId, driverId, status: "PENDING" }, select: { id: true } });
+  }
+
+  // The emailed reply page: engagement facts only, never the client.
+  async findAssignmentForReply(id: string) {
+    return prisma.hireAssignment.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        driverId: true,
+        status: true,
+        respond_by: true,
+        expired_at: true,
+        driver: { select: { first_name: true } },
+        hire_request: {
+          select: {
+            reference: true,
+            status: true,
+            engagement_type: true,
+            starts_at: true,
+            schedule: true,
+            resumption_time: true,
+            closing_time: true,
+            duration_days: true,
+            duration_months: true,
+            transmission: true,
+            driver_type: true,
+            provides_accommodation: true,
+            state: true,
+            nearest_area: true,
+          },
+        },
+      },
+    });
+  }
+
   async respondToAssignment(id: string, status: "CONFIRMED" | "DECLINED") {
     return prisma.hireAssignment.update({ where: { id }, data: { status, responded_at: new Date() } });
   }

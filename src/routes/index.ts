@@ -7,7 +7,9 @@ import { clientRouter } from "./client";
 import { createDocsRouter } from "./docsRoutes";
 import { driverRouter } from "./driver";
 import { notificationRouter } from "./notificationRoutes";
+import { pricingRouter } from "./pricingRoutes";
 import { pushRouter } from "./pushRoutes";
+import { shortlistReplyRouter } from "./shortlistReplyRoutes";
 import { ticketRouter } from "./ticketRoutes";
 
 export const registerRoutes = (app: Application) => {
@@ -22,6 +24,8 @@ export const registerRoutes = (app: Application) => {
   app.use("/api/tickets", ticketRouter);
   app.use("/api/chat", chatRouter);
   app.use("/api/analytics", analyticsRouter);
+  app.use("/api/pricing", pricingRouter);
+  app.use("/api/shortlist-replies", shortlistReplyRouter);
   app.use("/api/docs", createDocsRouter(app));
 
   app.use("*", (_req: Request, res: Response) => {

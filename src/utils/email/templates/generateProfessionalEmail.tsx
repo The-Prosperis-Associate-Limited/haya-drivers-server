@@ -20,6 +20,8 @@ interface EmailTemplateProps {
   message: string;
   buttonText?: string;
   buttonAction?: string;
+  secondaryButtonText?: string;
+  secondaryButtonAction?: string;
   tone?: EmailTone;
   label?: string;
   code?: string;
@@ -207,6 +209,8 @@ export const generateProfessionalEmail = ({
   message,
   buttonText,
   buttonAction,
+  secondaryButtonText,
+  secondaryButtonAction,
   tone: toneOverride,
   label,
   code,
@@ -241,7 +245,22 @@ export const generateProfessionalEmail = ({
 
   const bodyStyle = `margin:14px 0 0;font-size:15px;line-height:24px;color:${MUTED};`;
 
-  const buttonBlock = hasButton
+  const hasSecondary = !!(hasButton && secondaryButtonText && secondaryButtonAction);
+
+  const buttonBlock = hasSecondary
+    ? `
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 0;">
+            <tr>
+              <td class="hd-btn" align="center" bgcolor="${tone.button}" style="background-color:${tone.button};border-radius:10px;">
+                <a href="${escapeHtml(buttonAction!)}" target="_blank" style="display:inline-block;padding:14px 24px;font-family:${FONT};font-size:15px;line-height:20px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">${escapeHtml(buttonText!)}</a>
+              </td>
+              <td style="width:12px;font-size:0;line-height:0;">&nbsp;</td>
+              <td align="center" bgcolor="#ffffff" style="background-color:#ffffff;border:1px solid ${LINE};border-radius:10px;">
+                <a href="${escapeHtml(secondaryButtonAction!)}" target="_blank" style="display:inline-block;padding:13px 24px;font-family:${FONT};font-size:15px;line-height:20px;font-weight:600;color:${INK};text-decoration:none;border-radius:10px;">${escapeHtml(secondaryButtonText!)}</a>
+              </td>
+            </tr>
+          </table>`
+    : hasButton
     ? `
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 0;">
             <tr>

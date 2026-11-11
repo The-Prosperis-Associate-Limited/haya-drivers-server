@@ -26,7 +26,7 @@ export const createHireRequestSchema = z
     preferred_age_range: z.string().trim().max(20).optional(),
   })
   .superRefine((data, ctx) => {
-    // Contract pricing is bracketed by length - it cannot be invoiced blind.
+    // A contract's pay and end date both come from its length.
     if (data.engagement_type === "CONTRACT" && !data.duration_days) {
       ctx.addIssue({ code: "custom", path: ["duration_days"], message: "How many days is the contract for?" });
     }
